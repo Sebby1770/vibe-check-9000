@@ -1,250 +1,266 @@
-/* ===========================================
-   VIBE CHECK 9000™ — JAVASCRIPT
-   absolutely scientific. trust me.
-   =========================================== */
+/* VIBE CHECK 9000™ -- entirely unserious cyberpunk diagnostics. */
 
-// ====== DATA: VIBE QUESTIONS ======
+const REPO_URL = "https://github.com/Sebby1770/vibe-check-9000";
+const LIVE_URL = "https://sebby1770.github.io/vibe-check-9000/";
+
 const QUESTIONS = [
     {
-        prompt: "It's 3:47 AM. You are awake. WHY?",
+        prompt: "It is 3:47 AM. Your screen is glowing. What are you doing?",
         opts: [
-            { text: "thinking about a conversation from 2014", chaos: 30, charisma: 20, cosmic: 70, raccoon: 40 },
-            { text: "watching a documentary about ducks", chaos: 10, charisma: 50, cosmic: 30, raccoon: 90 },
-            { text: "spiraling, but make it fashion", chaos: 80, charisma: 60, cosmic: 80, raccoon: 50 },
-            { text: "the cat needed me", chaos: 5, charisma: 90, cosmic: 40, raccoon: 30 },
-            { text: "i refuse to acknowledge time", chaos: 95, charisma: 70, cosmic: 99, raccoon: 60 },
+            { text: "renaming files until my identity returns", chaos: 52, charm: 38, cosmic: 44, static: 76 },
+            { text: "watching a tutorial for software I do not own", chaos: 42, charm: 56, cosmic: 51, static: 46 },
+            { text: "having a full emotional subplot with a progress bar", chaos: 86, charm: 66, cosmic: 78, static: 58 },
+            { text: "optimizing my calendar for a version of me that never arrives", chaos: 36, charm: 70, cosmic: 45, static: 34 },
+            { text: "refusing the concept of tomorrow on technical grounds", chaos: 95, charm: 62, cosmic: 88, static: 80 },
         ],
     },
     {
-        prompt: "Pick your weapon of mass distraction:",
+        prompt: "Choose your illegal accessory:",
         opts: [
-            { text: "an unread group chat with 47 messages", chaos: 90, charisma: 30, cosmic: 20, raccoon: 60 },
-            { text: "a podcast at 1.75x speed", chaos: 50, charisma: 80, cosmic: 60, raccoon: 20 },
-            { text: "reorganizing the sock drawer", chaos: 10, charisma: 40, cosmic: 50, raccoon: 70 },
-            { text: "wikipedia → 'list of unusual deaths'", chaos: 70, charisma: 50, cosmic: 90, raccoon: 80 },
-            { text: "staring at a wall (high effort)", chaos: 95, charisma: 99, cosmic: 99, raccoon: 95 },
+            { text: "mirror sunglasses with prescription anxiety", chaos: 63, charm: 84, cosmic: 42, static: 49 },
+            { text: "a USB drive labeled DEFINITELY TAXES", chaos: 82, charm: 48, cosmic: 39, static: 91 },
+            { text: "a jacket with too many mysterious zippers", chaos: 69, charm: 76, cosmic: 58, static: 55 },
+            { text: "a notebook full of passwords and dramatic arrows", chaos: 50, charm: 52, cosmic: 72, static: 64 },
+            { text: "one perfect pen that only works when judged", chaos: 34, charm: 67, cosmic: 83, static: 32 },
         ],
     },
     {
-        prompt: "A wizard offers you free knowledge of ONE thing. Choose:",
+        prompt: "The elevator voice asks for your destination. You say:",
         opts: [
-            { text: "what your dog actually thinks of you", chaos: 40, charisma: 70, cosmic: 30, raccoon: 80 },
-            { text: "the exact moment you'll die", chaos: 99, charisma: 20, cosmic: 95, raccoon: 50 },
-            { text: "every wifi password in a 5-mile radius", chaos: 60, charisma: 50, cosmic: 10, raccoon: 95 },
-            { text: "the name of every bird", chaos: 20, charisma: 60, cosmic: 80, raccoon: 30 },
-            { text: "i would punch the wizard", chaos: 95, charisma: 85, cosmic: 50, raccoon: 70 },
+            { text: "the roof, but emotionally", chaos: 62, charm: 58, cosmic: 91, static: 44 },
+            { text: "wherever the side quest starts", chaos: 75, charm: 88, cosmic: 64, static: 50 },
+            { text: "floor 404, obviously", chaos: 84, charm: 41, cosmic: 70, static: 92 },
+            { text: "home, but with better lighting", chaos: 36, charm: 74, cosmic: 46, static: 29 },
+            { text: "surprise me, corporate architecture", chaos: 92, charm: 65, cosmic: 73, static: 81 },
         ],
     },
     {
-        prompt: "You find $20 on the ground. What now?",
+        prompt: "A vending machine grants you one cursed snack. Pick fast.",
         opts: [
-            { text: "leave it. probably cursed", chaos: 50, charisma: 30, cosmic: 90, raccoon: 60 },
-            { text: "buy 4 bags of dried mango", chaos: 30, charisma: 60, cosmic: 40, raccoon: 70 },
-            { text: "donate it to a confused-looking bird", chaos: 70, charisma: 80, cosmic: 60, raccoon: 90 },
-            { text: "frame it. memorialize the moment", chaos: 60, charisma: 50, cosmic: 70, raccoon: 30 },
-            { text: "deeply suspicious. commence investigation", chaos: 80, charisma: 70, cosmic: 50, raccoon: 85 },
+            { text: "glow-in-the-dark trail mix of uncertain origin", chaos: 66, charm: 38, cosmic: 82, static: 74 },
+            { text: "a protein bar that tastes like ambition", chaos: 31, charm: 79, cosmic: 35, static: 39 },
+            { text: "sparkling water with a terms-of-service aftertaste", chaos: 47, charm: 61, cosmic: 55, static: 69 },
+            { text: "hot chips called EXECUTIVE FIREWALL", chaos: 88, charm: 71, cosmic: 44, static: 67 },
+            { text: "plain crackers, but ominous", chaos: 58, charm: 43, cosmic: 76, static: 84 },
         ],
     },
     {
-        prompt: "Honestly, what's your relationship with WATER?",
+        prompt: "Your ideal notification sound is:",
         opts: [
-            { text: "drink it sometimes. usually under duress", chaos: 60, charisma: 40, cosmic: 30, raccoon: 70 },
-            { text: "i am water. water is me. we are one", chaos: 90, charisma: 70, cosmic: 99, raccoon: 80 },
-            { text: "exclusively flavored, never plain", chaos: 40, charisma: 80, cosmic: 50, raccoon: 30 },
-            { text: "i have a designated water bottle. her name is gretchen", chaos: 50, charisma: 90, cosmic: 60, raccoon: 50 },
-            { text: "it's fine. i am fine. everything is fine", chaos: 99, charisma: 20, cosmic: 70, raccoon: 60 },
+            { text: "a tiny cash register with unresolved feelings", chaos: 46, charm: 81, cosmic: 41, static: 54 },
+            { text: "the Windows error noise, slowed down 800%", chaos: 90, charm: 37, cosmic: 63, static: 96 },
+            { text: "a calm voice saying 'not again'", chaos: 69, charm: 58, cosmic: 48, static: 82 },
+            { text: "one tasteful synth stab from the future", chaos: 40, charm: 87, cosmic: 71, static: 36 },
+            { text: "no sound. only pressure.", chaos: 73, charm: 45, cosmic: 86, static: 62 },
+        ],
+    },
+    {
+        prompt: "When the simulation glitches, your first instinct is to:",
+        opts: [
+            { text: "document everything in a spreadsheet with tabs", chaos: 24, charm: 52, cosmic: 62, static: 33 },
+            { text: "act natural, which makes it worse", chaos: 72, charm: 65, cosmic: 54, static: 68 },
+            { text: "try to monetize it immediately", chaos: 88, charm: 92, cosmic: 37, static: 76 },
+            { text: "ask whether this counts as personal growth", chaos: 51, charm: 49, cosmic: 94, static: 47 },
+            { text: "turn it off and on again, including myself", chaos: 79, charm: 58, cosmic: 79, static: 90 },
         ],
     },
 ];
 
-// ====== DATA: VIBE RESULTS ======
 const VIBES = [
     {
-        title: "FERAL BUT POLITE",
-        emoji: "🦝",
-        desc: "you contain multitudes. one of those multitudes is a raccoon in a tiny vest. you say 'sorry' to inanimate objects but would also fight a goose with no hesitation. people trust you, which is honestly their mistake.",
-        animal: "a raccoon who reads philosophy",
-        color: "#9D4EDD",
-        pair: "someone with strong opinions about cheese",
-        avoid: "open windows after 11 PM",
-        prophecy: "you will accidentally adopt something within 3 weeks.",
+        id: "feral-spreadsheet",
+        title: "FERAL SPREADSHEET PROPHET",
+        badge: "XL",
+        desc: "Your cells are formatted, but your soul has conditional logic. You can turn panic into a pivot table and somehow make it inspirational.",
+        item: "a highlighter with main-character privileges",
+        color: "#39FF14",
+        pair: "someone who appreciates named ranges",
+        avoid: "meetings described as 'quick syncs'",
+        prophecy: "a tiny admin task will become your villain origin story.",
     },
     {
-        title: "COSMIC HORROR (THE CUTE KIND)",
-        emoji: "👁️",
-        desc: "you radiate the energy of an ancient deity who got reincarnated by mistake and is now just vibing in a tracksuit. you've been told you have 'a lot going on behind your eyes' and yes, you do, it's a small parade.",
-        animal: "a moth that knows things",
-        color: "#7209B7",
-        pair: "anyone who has ever cried at a museum",
-        avoid: "mirrors past midnight",
-        prophecy: "the next stranger you talk to will ask you for life advice. give it.",
+        id: "neon-oracle",
+        title: "NEON ORACLE ON LOW BATTERY",
+        badge: "NO",
+        desc: "You give excellent advice while personally ignoring all of it. The future keeps DMing you and you keep leaving it on read.",
+        item: "a cracked phone showing 1%",
+        color: "#00FFF7",
+        pair: "a practical person with excellent snacks",
+        avoid: "questions that begin with 'be honest'",
+        prophecy: "your next gut feeling is correct, but dramatically inconvenient.",
     },
     {
-        title: "SOFT CHAOS GREMLIN",
-        emoji: "🌪️",
-        desc: "you're sweet. you're kind. you also have 14 unfinished projects, 3 untranslated tabs open, and you once tried to befriend a bee. people love you because they have to. (they don't have to.)",
-        animal: "a hummingbird with five jobs",
-        color: "#FF006E",
-        pair: "a calm person who owns a label maker",
-        avoid: "anything described as 'a quick errand'",
-        prophecy: "you will lose, then find, then re-lose your keys this week.",
+        id: "executive-chaos",
+        title: "EXECUTIVE CHAOS INTERN",
+        badge: "EC",
+        desc: "You have CEO energy and intern permissions. Every plan you touch becomes a thrilling three-act structure with invoice implications.",
+        item: "a laminated badge that says PROBABLY ALLOWED",
+        color: "#FF00FF",
+        pair: "someone who reads the fine print for sport",
+        avoid: "shared documents with no owner",
+        prophecy: "you will accidentally become responsible for a system.",
     },
     {
-        title: "MAIN CHARACTER (DIRECT-TO-DVD)",
-        emoji: "✨",
-        desc: "you walk into a room and the music DOES change, just nobody else hears it. you've made eye contact with a pigeon and felt understood. you treat your daily routine like a montage and frankly we admire that.",
-        animal: "a swan that thinks it's a cowboy",
+        id: "premium-static",
+        title: "PREMIUM STATIC SUBSCRIBER",
+        badge: "PS",
+        desc: "Your vibe arrives in 4K, buffers twice, then says something devastatingly accurate. You are mysterious mostly because your tabs are out of control.",
+        item: "noise-canceling headphones playing nothing",
+        color: "#B8F000",
+        pair: "a person who can find the right charger instantly",
+        avoid: "automatic updates before coffee",
+        prophecy: "a device will ask for trust. Make it earn trust.",
+    },
+    {
+        id: "soft-launch",
+        title: "SOFT-LAUNCHED SUPERSTAR",
+        badge: "SS",
+        desc: "You are not seeking attention, but the lighting keeps choosing you. Your errands have cinematography. Your receipts have lore.",
+        item: "sunglasses indoors for legal reasons",
         color: "#FFB703",
-        pair: "the person filming you secretly",
-        avoid: "casts who don't pull their weight",
-        prophecy: "a small, perfect coincidence will occur thursday at 4 PM.",
+        pair: "someone who knows your good side and your backup good side",
+        avoid: "group photos taken from below",
+        prophecy: "a minor outfit choice will change the room temperature.",
     },
     {
-        title: "CERTIFIED OLD SOUL™ (AGED 14)",
-        emoji: "🕯️",
-        desc: "you've been described as 'an 80-year-old in a young person's body' since you were 6. you own at least one ceramic thing. you make tea even when it's hot out. you say 'in my day' unironically. your day was last tuesday.",
-        animal: "a tortoise with a podcast",
-        color: "#588157",
-        pair: "someone who knows what a doily is",
-        avoid: "loud restaurants & fluorescent lighting",
-        prophecy: "you will receive an email that ruins your monday.",
+        id: "dialup-mystic",
+        title: "DIAL-UP MYSTIC WITH FIBER OPTIC DREAMS",
+        badge: "DM",
+        desc: "Spiritually ancient, technologically impatient. You want transcendence, but only if the loading spinner respects your time.",
+        item: "a notebook titled PASSWORDS? MAYBE",
+        color: "#7209B7",
+        pair: "a calm scheduler with dramatic taste",
+        avoid: "apps that request your birthday for no reason",
+        prophecy: "something old will become useful right after you stop mocking it.",
     },
     {
-        title: "GLITCH IN THE SIMULATION",
-        emoji: "👾",
-        desc: "the universe coded you and immediately said 'wait that's not what i—'. you have weird specific knowledge about 3 things and zero general knowledge. you say things that sound like passwords. someone has definitely tried to put a hex on you (it failed).",
-        animal: "a fox that owes someone money",
-        color: "#00F5D4",
-        pair: "another glitch (you'll know on sight)",
-        avoid: "anywhere with 'good vibes only' signage",
-        prophecy: "an electronic device will betray you. retaliate.",
+        id: "glitch-couture",
+        title: "GLITCH COUTURE MENACE",
+        badge: "GC",
+        desc: "You dress like the system log developed taste. Rules become suggestions near you, and suggestions become performance art.",
+        item: "a jacket that looks expensive to troubleshoot",
+        color: "#F72585",
+        pair: "someone immune to secondhand drama",
+        avoid: "minimalist interiors with maximum judgment",
+        prophecy: "you will win an argument using a sentence nobody expected.",
     },
     {
-        title: "EMOTIONALLY UNAVAILABLE STARSEED",
-        emoji: "🌌",
-        desc: "you said 'i'm fine' and meant it as a complete philosophical position. you stargaze but don't know any constellations. your love language is forwarding articles. you've ghosted approximately 7 people and 1 plant.",
-        animal: "a cat in a cardboard spaceship",
-        color: "#3A0CA3",
-        pair: "someone equally damaged but in a different way",
-        avoid: "anyone who asks 'how do you feel about that?'",
-        prophecy: "you will reread an old text and feel something. survive it.",
+        id: "productivity-haunting",
+        title: "PRODUCTIVITY HAUNTING IN PROGRESS",
+        badge: "PH",
+        desc: "Your task list has developed weather. You are not behind; you are creating suspense for future you.",
+        item: "a calendar invite with no agenda",
+        color: "#4361EE",
+        pair: "a gentle deadline and a realistic snack",
+        avoid: "optimistic estimates made after midnight",
+        prophecy: "one postponed errand will reveal a secret shortcut.",
     },
     {
-        title: "CRACKED-OUT GOLDEN RETRIEVER",
-        emoji: "🐕",
-        desc: "you have the energy of seven puppies who saw a squirrel. you say 'WAIT WHAT' approximately 40 times a day. you can be friends with literally anyone but only remember 12% of them. you are objectively delightful and a public hazard.",
-        animal: "a labrador on espresso",
-        color: "#F77F00",
-        pair: "someone with calmer brain chemistry",
-        avoid: "decisions, naps, schedules",
-        prophecy: "you will say yes to plans you cannot afford. go anyway.",
-    },
-    {
-        title: "VAGUELY HAUNTED",
-        emoji: "🕸️",
-        desc: "your aura test came back as a question mark. plants either thrive in your presence or immediately die, no in-between. you have a recurring dream about a hallway. ghosts find you slightly intimidating. you should probably look into that.",
-        animal: "a black cat with a grudge",
-        color: "#240046",
-        pair: "another haunted person (less haunted than you)",
-        avoid: "antique stores you 'just want to look at'",
-        prophecy: "an object you forgot you owned will reappear meaningfully.",
-    },
-    {
-        title: "DIET COWBOY",
-        emoji: "🤠",
-        desc: "you walk like you've got somewhere to be (you don't). you say 'partner' platonically. you've never ridden a horse but you think about it. your main personality trait is squinting. honestly, we respect the commitment.",
-        animal: "a tumbleweed with ambitions",
-        color: "#BC6C25",
-        pair: "another diet cowboy or a barista",
-        avoid: "humid weather, sincere conversations",
-        prophecy: "you will misplace your hat metaphorically. find it literally.",
-    },
-    {
-        title: "OVERCAFFEINATED ORACLE",
-        emoji: "🔮",
-        desc: "you've predicted approximately 3 things correctly and you will not let anyone forget. you give advice like prophecy. you talk too fast when excited. you've seen something in a dream that you refuse to elaborate on. that's fine. we trust you.",
-        animal: "an owl with espresso and trauma",
+        id: "doomscroll-samurai",
+        title: "DOOMSCROLL SAMURAI WITH GREAT HAIR",
+        badge: "DS",
+        desc: "You slice through bad news with impeccable posture and questionable screen time. The algorithm fears your cheekbones.",
+        item: "a blade-sharp side part",
         color: "#E63946",
-        pair: "a skeptic you can convert",
-        avoid: "decaf, doubters, your ex",
-        prophecy: "trust the next gut feeling. it's right. (the one after that is wrong.)",
+        pair: "someone who says 'put the phone down' kindly",
+        avoid: "comment sections and cold leftovers",
+        prophecy: "you will regain focus exactly seven minutes too late.",
     },
     {
-        title: "RETIRED HIMBO",
-        emoji: "💪",
-        desc: "you used to be chaotic. now you're zen. but the chaos is in there, dormant, waiting. you're emotionally intelligent in a surprising way. you cry at car commercials. people tell you their secrets unprompted. you have a favorite mug.",
-        animal: "a golden retriever doing yoga",
-        color: "#06A77D",
-        pair: "literally anyone, you're a catch",
-        avoid: "anyone who mentions 'crypto'",
-        prophecy: "you will give someone advice that genuinely changes their life.",
+        id: "lofi-tycoon",
+        title: "LO-FI TYCOON OF THE AFTERPARTY",
+        badge: "LT",
+        desc: "You want wealth, peace, and a playlist that sounds like rain on a keyboard. Somehow this is a business plan.",
+        item: "a mug that says Q4 FEELINGS",
+        color: "#06D6A0",
+        pair: "a strategist with comfortable shoes",
+        avoid: "networking events with fluorescent sincerity",
+        prophecy: "a casual idea will become suspiciously profitable.",
+    },
+    {
+        id: "chrome-tab-romantic",
+        title: "CHROME TAB ROMANTIC",
+        badge: "CR",
+        desc: "You keep every possibility open, including 37 articles you will absolutely read someday. Your curiosity is beautiful and computationally expensive.",
+        item: "a bookmark folder named FINAL_final",
+        color: "#4CC9F0",
+        pair: "someone who can close a loop without making it weird",
+        avoid: "research that has no ending",
+        prophecy: "one saved link will finally justify itself.",
+    },
+    {
+        id: "ritual-reboot",
+        title: "RITUAL REBOOT SPECIALIST",
+        badge: "RR",
+        desc: "You do not spiral; you perform structured restarts with lighting. Even your breakdowns have a changelog.",
+        item: "a sticky note reading PATCH NOTES: ME",
+        color: "#FB5607",
+        pair: "someone who respects the reset routine",
+        avoid: "people who say 'just relax' with no implementation plan",
+        prophecy: "a small reset will fix more than the thing you reset.",
     },
 ];
 
 const ACHIEVEMENTS = [
-    { id: "first", icon: "🎯", name: "FIRST SCAN", desc: "completed your first vibe check" },
-    { id: "trio", icon: "🔥", name: "TRIPLE THREAT", desc: "scanned 3 times" },
-    { id: "ten", icon: "💯", name: "VIBE VETERAN", desc: "scanned 10 times" },
-    { id: "konami", icon: "👾", name: "RETRO GAMER", desc: "↑↑↓↓←→←→BA" },
-    { id: "rave", icon: "🪩", name: "RAVE MODE", desc: "found the secret rave" },
-    { id: "duck", icon: "🦆", name: "DUCK DUCK GO", desc: "befriended the duck" },
-    { id: "raccoon", icon: "🦝", name: "TRASH PANDA", desc: "max raccoon stat" },
-    { id: "cosmic", icon: "🌌", name: "STAR CHILD", desc: "max cosmic stat" },
+    { id: "first", icon: "◎", name: "FIRST SCAN", desc: "completed your first diagnostic" },
+    { id: "trio", icon: "△", name: "TRIPLE BUFFER", desc: "scanned 3 times" },
+    { id: "ten", icon: "◇", name: "VIBE VETERAN", desc: "scanned 10 times" },
+    { id: "konami", icon: "⌁", name: "RETRO SIGNAL", desc: "entered the old code" },
+    { id: "rave", icon: "✦", name: "RAVE MODE", desc: "activated chroma overload" },
+    { id: "cube", icon: "◈", name: "CUBE WITNESS", desc: "pressed the forbidden geometry" },
+    { id: "static", icon: "▣", name: "STATIC ROYALTY", desc: "max static stat" },
+    { id: "cosmic", icon: "✺", name: "COSMIC RECEIPT", desc: "max cosmic stat" },
 ];
 
-const SPIRIT_ANIMALS = [
-    "a tired pigeon", "a cat with a job", "a swan with anxiety",
-    "a goose who knows your sins", "a hamster CEO", "a moth attorney",
-    "a ferret in a tuxedo", "a possum reading marx", "an otter with secrets",
-    "a parakeet philosopher", "a llama who remembers",
+const SIGNATURE_ITEMS = [
+    "a glowing receipt", "a cracked metro card", "a password reset email",
+    "a pen that writes only threats", "a tiny backup battery", "a badge marked TEMPORARY",
+    "a synthwave umbrella", "a receipt for one mysterious cable", "a velvet folder of screenshots",
 ];
 
 const PAIRINGS = [
-    "someone who texts back within reason", "an enthusiastic baker",
-    "a person who owns a wok", "anyone who has cried at a sunset",
-    "a calm engineer", "the third friend in the group chat",
-    "someone who unironically gardens", "your past self, but rested",
-    "another vaguely-haunted soul", "a person who knows your coffee order",
+    "someone who labels every cable", "a practical person with neon taste",
+    "a spreadsheet wizard with good boundaries", "the friend who brings backup chargers",
+    "a calm engineer", "someone who laughs before the punchline",
+    "a strategist with dramatic lighting", "a person who knows your coffee order",
+    "future you, but hydrated",
 ];
 
 const AVOIDS = [
-    "tuesdays", "mercury retrograde (it's always retrograde now)",
-    "open windows during a full moon", "small talk in elevators",
-    "any restaurant with menus longer than 3 pages",
-    "people who clap when the plane lands", "your ex's new playlist",
-    "fluorescent lighting", "decisions made before noon",
+    "fluorescent sincerity", "automatic updates before coffee",
+    "shared folders named misc", "optimistic deadlines after midnight",
+    "meetings that could be a shrug", "comment sections",
+    "apps that ask for notifications immediately", "keyboards with sticky spacebars",
 ];
 
 const PROPHECIES = [
-    "you will receive a text that changes the day's trajectory",
-    "an old hobby will resurface. pursue it",
-    "the next thing you misplace was never yours",
-    "a small mammal will judge you. accept it",
-    "you'll laugh at something that isn't a joke",
-    "a stranger will compliment something you forgot you were wearing",
-    "the universe owes you something tiny. it's coming",
-    "do not respond to the first email tomorrow until 11am",
+    "your next notification will be personal",
+    "an old note will become useful at the funniest possible moment",
+    "you will solve a problem by renaming it",
+    "a tiny inconvenience will reveal excellent gossip",
+    "the thing you keep postponing will take eight minutes",
+    "do not trust the first search result tomorrow",
+    "your next good idea arrives while doing something unrelated",
 ];
 
-// ====== STATE ======
 let state = {
     answers: [],
     qIndex: 0,
-    totals: { chaos: 0, charisma: 0, cosmic: 0, raccoon: 0 },
+    totals: { chaos: 0, charm: 0, cosmic: 0, static: 0 },
     history: JSON.parse(localStorage.getItem("vibeHistory") || "[]"),
-    scanCount: parseInt(localStorage.getItem("vibeScanCount") || "0"),
+    scanCount: Number.parseInt(localStorage.getItem("vibeScanCount") || "0", 10),
     achievements: JSON.parse(localStorage.getItem("vibeAchievements") || "[]"),
+    currentResult: null,
 };
 
-// ====== HELPERS ======
 const $ = (id) => document.getElementById(id);
 const rand = (arr) => arr[Math.floor(Math.random() * arr.length)];
-const sleep = (ms) => new Promise((r) => setTimeout(r, ms));
+const sleep = (ms) => new Promise((resolve) => setTimeout(resolve, ms));
 
 function toast(msg, color) {
     const t = $("toast");
     t.textContent = msg;
-    if (color) t.style.background = color;
+    t.style.background = color || "var(--green)";
     t.classList.add("show");
     setTimeout(() => t.classList.remove("show"), 2400);
 }
@@ -254,11 +270,10 @@ function unlock(id) {
         state.achievements.push(id);
         localStorage.setItem("vibeAchievements", JSON.stringify(state.achievements));
         const ach = ACHIEVEMENTS.find((a) => a.id === id);
-        if (ach) toast(`🏆 UNLOCKED: ${ach.name}`, "#fff700");
+        if (ach) toast(`UNLOCKED: ${ach.name}`, "#fff700");
     }
 }
 
-// ====== PARTICLES ======
 const canvas = $("particles");
 const ctx = canvas.getContext("2d");
 let particles = [];
@@ -267,109 +282,116 @@ function resizeCanvas() {
     canvas.width = window.innerWidth;
     canvas.height = window.innerHeight;
 }
-resizeCanvas();
-window.addEventListener("resize", resizeCanvas);
 
 class Particle {
     constructor() {
         this.reset();
         this.y = Math.random() * canvas.height;
     }
+
     reset() {
         this.x = Math.random() * canvas.width;
         this.y = -10;
-        this.vx = (Math.random() - 0.5) * 0.4;
-        this.vy = 0.3 + Math.random() * 1.2;
-        this.size = Math.random() * 2 + 0.5;
+        this.vx = (Math.random() - 0.5) * 0.45;
+        this.vy = 0.25 + Math.random() * 1.15;
+        this.size = Math.random() * 2.2 + 0.4;
         this.color = rand(["#ff00ff", "#00fff7", "#39ff14", "#fff700"]);
-        this.life = 1;
     }
+
     update() {
         this.x += this.vx;
         this.y += this.vy;
-        if (this.y > canvas.height) this.reset();
+        if (this.y > canvas.height + 20) this.reset();
     }
+
     draw() {
         ctx.beginPath();
         ctx.fillStyle = this.color;
-        ctx.shadowBlur = 12;
+        ctx.shadowBlur = 14;
         ctx.shadowColor = this.color;
         ctx.arc(this.x, this.y, this.size, 0, Math.PI * 2);
         ctx.fill();
     }
 }
 
-for (let i = 0; i < 60; i++) particles.push(new Particle());
-
 function animateParticles() {
     ctx.clearRect(0, 0, canvas.width, canvas.height);
-    particles.forEach((p) => { p.update(); p.draw(); });
+    particles.forEach((p) => {
+        p.update();
+        p.draw();
+    });
     requestAnimationFrame(animateParticles);
 }
-animateParticles();
 
-// ====== PING UPDATER ======
-setInterval(() => {
-    const symbols = ["∞", "404", "?", "0", "NaN", "🌚", "12", "vibes", "yes"];
+function initParticles() {
+    resizeCanvas();
+    particles = Array.from({ length: 72 }, () => new Particle());
+    animateParticles();
+}
+
+function updatePing() {
+    const symbols = ["∞", "404", "0", "NaN", "12", "vibes", "yes", "NO", "0.04"];
     $("pingValue").textContent = rand(symbols);
-}, 1500);
+}
 
-// ====== START SCAN ======
-$("startBtn").addEventListener("click", async () => {
+async function startScan() {
+    resetRun();
     $("hero").classList.add("hidden");
+    $("result").classList.add("hidden");
     $("scanner").classList.remove("hidden");
     await runScanIntro();
     $("scanner").classList.add("hidden");
     $("questions").classList.remove("hidden");
     showQuestion();
-});
+}
 
 async function runScanIntro() {
+    const messages = [
+        "> opening neon aperture...",
+        "> calibrating forehead telemetry...",
+        "> decrypting tiny bad decisions...",
+        "> sampling pocket static...",
+        "> asking spreadsheet for permission...",
+        "> converting vibes to legally distinct numbers...",
+        "> scan ready.",
+    ];
+    await runLog(messages, 390);
+}
+
+async function runLog(messages, delay) {
     const log = $("scanLog");
     const bar = $("scanBar");
     const prog = $("scanProgress");
-    const messages = [
-        "> initializing quantum chakras...",
-        "> calibrating raccoon sensors...",
-        "> aligning mercury (it's microwave)...",
-        "> consulting 3 disappointed astrologers...",
-        "> defrosting cosmic energies...",
-        "> please remain very still...",
-        "> just kidding, move around a bit...",
-        "> scan ready.",
-    ];
     log.innerHTML = "";
+    bar.style.width = "0%";
+    prog.textContent = "0%";
+
     for (let i = 0; i < messages.length; i++) {
         const line = document.createElement("div");
         line.textContent = messages[i];
         log.appendChild(line);
         const pct = Math.round(((i + 1) / messages.length) * 100);
-        bar.style.width = pct + "%";
-        prog.textContent = pct + "%";
-        await sleep(420);
+        bar.style.width = `${pct}%`;
+        prog.textContent = `${pct}%`;
+        await sleep(delay);
     }
-    await sleep(500);
 }
 
-// ====== QUESTIONS ======
 function showQuestion() {
     const q = QUESTIONS[state.qIndex];
     $("qNum").textContent = state.qIndex + 1;
     $("qTotal").textContent = QUESTIONS.length;
-    $("qBar").style.width = ((state.qIndex / QUESTIONS.length) * 100) + "%";
+    $("qBar").style.width = `${(state.qIndex / QUESTIONS.length) * 100}%`;
     $("qPrompt").textContent = q.prompt;
 
     const opts = $("qOptions");
     opts.innerHTML = "";
-
-    // shuffle for variety
-    const shuffled = [...q.opts].sort(() => Math.random() - 0.5);
-    shuffled.forEach((opt, i) => {
+    [...q.opts].sort(() => Math.random() - 0.5).forEach((opt, i) => {
         const btn = document.createElement("button");
         btn.className = "q-option";
+        btn.type = "button";
         btn.textContent = opt.text;
-        btn.style.animationDelay = (i * 80) + "ms";
-        btn.style.animation = "fadein 0.5s both";
+        btn.style.animationDelay = `${i * 70}ms`;
         btn.addEventListener("click", () => answer(opt));
         opts.appendChild(btn);
     });
@@ -378,9 +400,9 @@ function showQuestion() {
 function answer(opt) {
     state.answers.push(opt);
     state.totals.chaos += opt.chaos;
-    state.totals.charisma += opt.charisma;
+    state.totals.charm += opt.charm;
     state.totals.cosmic += opt.cosmic;
-    state.totals.raccoon += opt.raccoon;
+    state.totals.static += opt.static;
     state.qIndex++;
 
     if (state.qIndex < QUESTIONS.length) {
@@ -390,132 +412,166 @@ function answer(opt) {
     }
 }
 
-// ====== FINISH SCAN ======
 async function finishScan() {
     $("qBar").style.width = "100%";
     $("questions").classList.add("hidden");
     $("scanner").classList.remove("hidden");
 
-    const log = $("scanLog");
-    log.innerHTML = "";
-    const bar = $("scanBar");
-    const prog = $("scanProgress");
-
-    const messages = [
-        "> processing your chaos signature...",
-        "> running data through a goose...",
-        "> consulting the great spreadsheet...",
+    await runLog([
+        "> compiling your chaos signature...",
+        "> adding unnecessary confidence intervals...",
+        "> formatting result as emotional firmware...",
         "> finalizing diagnosis...",
-    ];
-    bar.style.width = "0%";
-    for (let i = 0; i < messages.length; i++) {
-        const line = document.createElement("div");
-        line.textContent = messages[i];
-        log.appendChild(line);
-        bar.style.width = (((i + 1) / messages.length) * 100) + "%";
-        prog.textContent = Math.round(((i + 1) / messages.length) * 100) + "%";
-        await sleep(500);
-    }
-    await sleep(300);
+    ], 480);
+
+    await sleep(280);
     $("scanner").classList.add("hidden");
-    showResult();
+    const result = computeResult();
+    showResult(result, { save: true });
 }
 
-// ====== RESULT ======
-function showResult() {
+function computeResult() {
+    const max = QUESTIONS.length * 100;
+    const stats = {
+        chaos: Math.round((state.totals.chaos / max) * 100),
+        charm: Math.round((state.totals.charm / max) * 100),
+        cosmic: Math.round((state.totals.cosmic / max) * 100),
+        static: Math.round((state.totals.static / max) * 100),
+    };
+    const vibe = pickVibe(stats);
+    const reportId = String(Math.floor(Math.random() * 999999)).padStart(6, "0");
+
+    return {
+        ...vibe,
+        stats,
+        reportId,
+        generatedAt: new Date().toISOString(),
+    };
+}
+
+function pickVibe(stats) {
+    const { chaos, charm, cosmic, static: staticStat } = stats;
+
+    if (staticStat >= 76 && chaos >= 72) return VIBES.find((v) => v.id === "premium-static");
+    if (cosmic >= 76 && charm < 58) return VIBES.find((v) => v.id === "neon-oracle");
+    if (chaos >= 80 && charm >= 68) return VIBES.find((v) => v.id === "executive-chaos");
+    if (charm >= 78 && chaos < 58) return VIBES.find((v) => v.id === "soft-launch");
+    if (cosmic >= 76 && staticStat < 56) return VIBES.find((v) => v.id === "dialup-mystic");
+    if (chaos >= 72 && charm >= 62) return VIBES.find((v) => v.id === "glitch-couture");
+    if (cosmic >= 68 && chaos < 60) return VIBES.find((v) => v.id === "productivity-haunting");
+    if (staticStat >= 82) return VIBES.find((v) => v.id === "doomscroll-samurai");
+    if (charm >= 74 && cosmic < 56) return VIBES.find((v) => v.id === "lofi-tycoon");
+    if (staticStat >= 64 && cosmic >= 62) return VIBES.find((v) => v.id === "chrome-tab-romantic");
+    if (chaos >= 68 && cosmic >= 72) return VIBES.find((v) => v.id === "ritual-reboot");
+    return rand(VIBES);
+}
+
+function showResult(result, options = {}) {
+    state.currentResult = result;
     $("result").classList.remove("hidden");
 
-    const total = QUESTIONS.length * 100;
-    const chaos = Math.round((state.totals.chaos / total) * 100);
-    const charisma = Math.round((state.totals.charisma / total) * 100);
-    const cosmic = Math.round((state.totals.cosmic / total) * 100);
-    const raccoon = Math.round((state.totals.raccoon / total) * 100);
-
-    // pick vibe based on dominant stats
-    const stats = [
-        { name: "chaos", val: chaos },
-        { name: "charisma", val: charisma },
-        { name: "cosmic", val: cosmic },
-        { name: "raccoon", val: raccoon },
-    ];
-    stats.sort((a, b) => b.val - a.val);
-    const dominant = stats[0].name;
-
-    // pick vibe randomly weighted by dominant stat
-    const vibe = pickVibe(dominant, chaos, charisma, cosmic, raccoon);
-
-    $("resultEmoji").textContent = vibe.emoji;
-    $("resultTitle").textContent = vibe.title;
-    $("resultDesc").textContent = vibe.desc;
-    $("spiritAnimal").textContent = vibe.animal || rand(SPIRIT_ANIMALS);
-    $("vibeColor").textContent = vibe.color;
-    $("vibeColor").style.color = vibe.color;
-    $("vibeColor").style.borderColor = vibe.color;
-    $("vibePair").textContent = vibe.pair || rand(PAIRINGS);
-    $("vibeAvoid").textContent = vibe.avoid || rand(AVOIDS);
-    $("vibeProphecy").textContent = vibe.prophecy || rand(PROPHECIES);
-
-    $("reportId").textContent = String(Math.floor(Math.random() * 999999)).padStart(6, "0");
-    $("reportDate").textContent = new Date().toLocaleString("en-US", {
-        year: "numeric", month: "2-digit", day: "2-digit",
-        hour: "2-digit", minute: "2-digit",
+    $("resultBadge").textContent = result.badge;
+    $("resultTitle").textContent = result.title;
+    $("resultDesc").textContent = result.desc;
+    $("signatureItem").textContent = result.item || rand(SIGNATURE_ITEMS);
+    $("vibeColor").textContent = result.color;
+    $("vibeColor").style.color = result.color;
+    $("vibeColor").style.borderColor = result.color;
+    $("vibePair").textContent = result.pair || rand(PAIRINGS);
+    $("vibeAvoid").textContent = result.avoid || rand(AVOIDS);
+    $("vibeProphecy").textContent = result.prophecy || rand(PROPHECIES);
+    $("reportId").textContent = result.reportId || "000000";
+    $("reportDate").textContent = new Date(result.generatedAt || Date.now()).toLocaleString("en-US", {
+        year: "numeric",
+        month: "2-digit",
+        day: "2-digit",
+        hour: "2-digit",
+        minute: "2-digit",
     });
 
-    // animate stat bars
-    setTimeout(() => {
-        $("statChaos").style.width = chaos + "%";
-        $("statCharisma").style.width = charisma + "%";
-        $("statCosmic").style.width = cosmic + "%";
-        $("statRaccoon").style.width = raccoon + "%";
-        $("statChaosVal").textContent = chaos + "%";
-        $("statCharismaVal").textContent = charisma + "%";
-        $("statCosmicVal").textContent = cosmic + "%";
-        $("statRaccoonVal").textContent = raccoon + "%";
-    }, 200);
-
-    // compatibility
-    $("compatPercent").textContent = (60 + Math.floor(Math.random() * 40)) + "%";
+    setTimeout(() => updateStatBars(result.stats), 150);
+    $("compatPercent").textContent = `${60 + Math.floor(Math.random() * 40)}%`;
     $("compatName").textContent = rand(PAIRINGS);
+    $("shareUrl").textContent = getShareUrl(result);
 
-    // history
-    state.scanCount++;
-    state.history.unshift({
-        title: vibe.title,
-        emoji: vibe.emoji,
-        date: new Date().toLocaleDateString(),
-    });
-    state.history = state.history.slice(0, 5);
-    localStorage.setItem("vibeHistory", JSON.stringify(state.history));
-    localStorage.setItem("vibeScanCount", String(state.scanCount));
+    if (options.save) {
+        state.scanCount++;
+        state.history.unshift({
+            title: result.title,
+            badge: result.badge,
+            date: new Date(result.generatedAt).toLocaleDateString(),
+        });
+        state.history = state.history.slice(0, 5);
+        localStorage.setItem("vibeHistory", JSON.stringify(state.history));
+        localStorage.setItem("vibeScanCount", String(state.scanCount));
+
+        unlock("first");
+        if (state.scanCount >= 3) unlock("trio");
+        if (state.scanCount >= 10) unlock("ten");
+        if (result.stats.static >= 70) unlock("static");
+        if (result.stats.cosmic >= 70) unlock("cosmic");
+        confettiBurst();
+    }
+
     renderHistory();
-
-    // achievements
-    unlock("first");
-    if (state.scanCount >= 3) unlock("trio");
-    if (state.scanCount >= 10) unlock("ten");
-    if (raccoon >= 70) unlock("raccoon");
-    if (cosmic >= 70) unlock("cosmic");
     renderAchievements();
-
-    // confetti burst
-    confettiBurst();
+    window.scrollTo({ top: 0, behavior: "smooth" });
 }
 
-function pickVibe(dominant, chaos, charisma, cosmic, raccoon) {
-    // simple deterministic-ish picker based on stat profile
-    if (raccoon > 70 && chaos > 50) return VIBES[0]; // FERAL BUT POLITE
-    if (cosmic > 70 && charisma < 50) return VIBES[1]; // COSMIC HORROR
-    if (chaos > 70 && charisma > 50) return VIBES[2]; // SOFT CHAOS GREMLIN
-    if (charisma > 70 && cosmic < 50) return VIBES[3]; // MAIN CHARACTER
-    if (cosmic > 60 && chaos < 40) return VIBES[4]; // OLD SOUL
-    if (chaos > 80 && raccoon > 60) return VIBES[5]; // GLITCH
-    if (cosmic > 60 && charisma < 40) return VIBES[6]; // EMOTIONALLY UNAVAILABLE STARSEED
-    if (chaos > 60 && charisma > 70) return VIBES[7]; // CRACKED-OUT GOLDEN RETRIEVER
-    if (cosmic > 50 && raccoon > 50) return VIBES[8]; // VAGUELY HAUNTED
-    if (charisma > 50 && chaos < 50) return VIBES[9]; // DIET COWBOY
-    if (cosmic > 70 && chaos > 60) return VIBES[10]; // OVERCAFFEINATED ORACLE
-    if (charisma > 60) return VIBES[11]; // RETIRED HIMBO
-    return rand(VIBES);
+function updateStatBars(stats) {
+    [
+        ["Chaos", stats.chaos],
+        ["Charm", stats.charm],
+        ["Cosmic", stats.cosmic],
+        ["Static", stats.static],
+    ].forEach(([name, value]) => {
+        $(`stat${name}`).style.width = `${value}%`;
+        $(`stat${name}Val`).textContent = `${value}%`;
+    });
+}
+
+function resetRun() {
+    state.answers = [];
+    state.qIndex = 0;
+    state.totals = { chaos: 0, charm: 0, cosmic: 0, static: 0 };
+    state.currentResult = null;
+    updateStatBars({ chaos: 0, charm: 0, cosmic: 0, static: 0 });
+    $("shareUrl").textContent = "complete scan to generate link";
+}
+
+function getShareUrl(result) {
+    const payload = {
+        id: result.id,
+        stats: result.stats,
+        reportId: result.reportId,
+        generatedAt: result.generatedAt,
+    };
+    const encoded = btoa(unescape(encodeURIComponent(JSON.stringify(payload))))
+        .replace(/\+/g, "-")
+        .replace(/\//g, "_")
+        .replace(/=+$/g, "");
+    const base = location.protocol === "file:" ? LIVE_URL : location.origin + location.pathname;
+    return `${base}#vibe=${encoded}`;
+}
+
+function readSharedResult() {
+    if (!location.hash.startsWith("#vibe=")) return null;
+    try {
+        const encoded = location.hash.replace("#vibe=", "").replace(/-/g, "+").replace(/_/g, "/");
+        const padded = encoded + "=".repeat((4 - (encoded.length % 4)) % 4);
+        const payload = JSON.parse(decodeURIComponent(escape(atob(padded))));
+        const vibe = VIBES.find((v) => v.id === payload.id);
+        if (!vibe || !payload.stats) return null;
+        return {
+            ...vibe,
+            stats: payload.stats,
+            reportId: payload.reportId || "000000",
+            generatedAt: payload.generatedAt || new Date().toISOString(),
+        };
+    } catch (error) {
+        console.warn("Could not parse shared vibe", error);
+        return null;
+    }
 }
 
 function renderHistory() {
@@ -525,209 +581,318 @@ function renderHistory() {
         return;
     }
     list.innerHTML = state.history.map((h) =>
-        `<li><span class="vibe-name">${h.emoji} ${h.title}</span><span>${h.date}</span></li>`
+        `<li><span class="vibe-name">${h.badge || "VX"} ${h.title}</span><span>${h.date}</span></li>`
     ).join("");
 }
 
 function renderAchievements() {
-    const list = $("achList");
-    list.innerHTML = ACHIEVEMENTS.map((a) => {
+    $("achList").innerHTML = ACHIEVEMENTS.map((a) => {
         const unlocked = state.achievements.includes(a.id);
         return `<div class="ach ${unlocked ? "unlocked" : ""}" title="${a.name}: ${a.desc}">${unlocked ? a.icon : "?"}</div>`;
     }).join("");
 }
 
-renderHistory();
-renderAchievements();
+async function shareCurrentResult() {
+    if (!state.currentResult) {
+        toast("RUN A SCAN FIRST");
+        return;
+    }
 
-// ====== ACTIONS ======
-$("rescanBtn").addEventListener("click", () => {
-    state.answers = [];
-    state.qIndex = 0;
-    state.totals = { chaos: 0, charisma: 0, cosmic: 0, raccoon: 0 };
-    $("result").classList.add("hidden");
-    $("hero").classList.remove("hidden");
-    window.scrollTo({ top: 0, behavior: "smooth" });
-});
+    const url = getShareUrl(state.currentResult);
+    const text = `VIBE CHECK 9000™ diagnosed me as: ${state.currentResult.title}. ${state.currentResult.desc}`;
 
-$("shareBtn").addEventListener("click", async () => {
-    const title = $("resultTitle").textContent;
-    const desc = $("resultDesc").textContent;
-    const text = `MY VIBE: ${title}\n\n${desc}\n\nVIBE CHECK 9000™`;
     if (navigator.share) {
         try {
-            await navigator.share({ title: "My Vibe", text });
-        } catch (e) {}
-    } else {
-        try {
-            await navigator.clipboard.writeText(text);
-            toast("✓ COPIED TO CLIPBOARD");
-        } catch (e) {
-            toast("could not share. try yelling it instead");
+            await navigator.share({
+                title: `My vibe: ${state.currentResult.title}`,
+                text,
+                url,
+            });
+            return;
+        } catch (error) {
+            if (error.name === "AbortError") return;
         }
     }
-});
 
-$("saveBtn").addEventListener("click", () => {
-    const card = $("resultCard");
-    // simple "save" — copies a textual report
-    const data = {
-        title: $("resultTitle").textContent,
-        desc: $("resultDesc").textContent,
-        animal: $("spiritAnimal").textContent,
-        prophecy: $("vibeProphecy").textContent,
-        date: new Date().toLocaleString(),
-    };
-    const blob = new Blob(
-        [`VIBE CHECK 9000™ — OFFICIAL REPORT\n\nVIBE: ${data.title}\n\n${data.desc}\n\nSPIRIT ANIMAL: ${data.animal}\nPROPHECY: ${data.prophecy}\n\nGENERATED: ${data.date}\n\nPATENT PENDING.`],
-        { type: "text/plain" }
-    );
-    const a = document.createElement("a");
-    a.href = URL.createObjectURL(blob);
-    a.download = `vibe-report-${Date.now()}.txt`;
-    a.click();
-    toast("✓ REPORT DOWNLOADED");
-});
+    await copyText(`${text}\n${url}`, "RESULT COPIED TO CLIPBOARD");
+}
 
-// ====== CONFETTI ======
-function confettiBurst() {
-    const colors = ["#ff00ff", "#00fff7", "#39ff14", "#fff700", "#ff2e63"];
-    for (let i = 0; i < 50; i++) {
-        const conf = document.createElement("div");
-        conf.style.cssText = `
-            position: fixed;
-            width: 8px; height: 8px;
-            background: ${rand(colors)};
-            top: 50%; left: 50%;
-            pointer-events: none;
-            z-index: 250;
-            box-shadow: 0 0 8px currentColor;
-        `;
-        document.body.appendChild(conf);
-        const angle = Math.random() * Math.PI * 2;
-        const vel = 200 + Math.random() * 400;
-        const dx = Math.cos(angle) * vel;
-        const dy = Math.sin(angle) * vel;
-        conf.animate(
-            [
-                { transform: "translate(-50%, -50%) rotate(0)", opacity: 1 },
-                { transform: `translate(calc(-50% + ${dx}px), calc(-50% + ${dy}px)) rotate(720deg)`, opacity: 0 },
-            ],
-            { duration: 1200 + Math.random() * 800, easing: "cubic-bezier(0.16, 1, 0.3, 1)" }
-        );
-        setTimeout(() => conf.remove(), 2000);
+async function copyText(text, message) {
+    try {
+        await navigator.clipboard.writeText(text);
+        toast(message || "COPIED");
+    } catch (error) {
+        toast("COPY FAILED. THE TERMINAL IS BEING DRAMATIC", "#ff2e63");
     }
 }
 
-// ====== MODALS ======
+function saveResultPng() {
+    if (!state.currentResult) {
+        toast("RUN A SCAN FIRST");
+        return;
+    }
+
+    const result = state.currentResult;
+    const card = document.createElement("canvas");
+    const width = 1200;
+    const height = 675;
+    card.width = width;
+    card.height = height;
+    const c = card.getContext("2d");
+
+    const gradient = c.createLinearGradient(0, 0, width, height);
+    gradient.addColorStop(0, "#07020d");
+    gradient.addColorStop(0.48, "#18052e");
+    gradient.addColorStop(1, "#001f2f");
+    c.fillStyle = gradient;
+    c.fillRect(0, 0, width, height);
+
+    c.strokeStyle = "rgba(0, 255, 247, 0.22)";
+    c.lineWidth = 1;
+    for (let x = 0; x < width; x += 42) {
+        c.beginPath();
+        c.moveTo(x, 0);
+        c.lineTo(x, height);
+        c.stroke();
+    }
+    for (let y = 0; y < height; y += 42) {
+        c.beginPath();
+        c.moveTo(0, y);
+        c.lineTo(width, y);
+        c.stroke();
+    }
+
+    c.strokeStyle = result.color;
+    c.lineWidth = 6;
+    c.strokeRect(50, 45, width - 100, height - 90);
+    c.strokeStyle = "#00fff7";
+    c.lineWidth = 2;
+    c.strokeRect(70, 65, width - 140, height - 130);
+
+    c.fillStyle = result.color;
+    c.font = "900 84px Orbitron, monospace";
+    c.textAlign = "center";
+    c.fillText(result.badge, width / 2, 155);
+
+    c.fillStyle = "#e0e0ff";
+    c.font = "700 30px Orbitron, monospace";
+    c.fillText("VIBE CHECK 9000™ DIAGNOSIS", width / 2, 210);
+
+    c.fillStyle = "#39ff14";
+    c.font = "900 52px Orbitron, monospace";
+    wrapCanvasText(c, result.title, width / 2, 285, 940, 58, "center");
+
+    c.fillStyle = "#e0e0ff";
+    c.font = "24px Space Mono, monospace";
+    wrapCanvasText(c, result.desc, width / 2, 390, 880, 34, "center");
+
+    const stats = [
+        ["CHAOS", result.stats.chaos],
+        ["CHARM", result.stats.charm],
+        ["COSMIC", result.stats.cosmic],
+        ["STATIC", result.stats.static],
+    ];
+    stats.forEach(([label, value], index) => {
+        const x = 170 + index * 225;
+        c.fillStyle = "#00fff7";
+        c.font = "700 20px Space Mono, monospace";
+        c.fillText(label, x, 545);
+        c.strokeStyle = "rgba(0, 255, 247, 0.55)";
+        c.strokeRect(x - 75, 565, 150, 16);
+        c.fillStyle = result.color;
+        c.fillRect(x - 75, 565, 1.5 * value, 16);
+        c.fillStyle = "#fff700";
+        c.font = "700 22px Space Mono, monospace";
+        c.fillText(`${value}%`, x, 617);
+    });
+
+    c.fillStyle = "#6e6c8b";
+    c.font = "18px Space Mono, monospace";
+    c.fillText(REPO_URL, width / 2, 648);
+
+    const a = document.createElement("a");
+    a.href = card.toDataURL("image/png");
+    a.download = `vibe-check-${result.id}-${Date.now()}.png`;
+    a.click();
+    toast("PNG REPORT DOWNLOADED");
+}
+
+function wrapCanvasText(ctx2d, text, x, y, maxWidth, lineHeight, align = "left") {
+    const words = text.split(" ");
+    let line = "";
+    ctx2d.textAlign = align;
+
+    for (let n = 0; n < words.length; n++) {
+        const testLine = `${line}${words[n]} `;
+        if (ctx2d.measureText(testLine).width > maxWidth && n > 0) {
+            ctx2d.fillText(line.trim(), x, y);
+            line = `${words[n]} `;
+            y += lineHeight;
+        } else {
+            line = testLine;
+        }
+    }
+    ctx2d.fillText(line.trim(), x, y);
+}
+
+function confettiBurst() {
+    const colors = ["#ff00ff", "#00fff7", "#39ff14", "#fff700", "#ff2e63"];
+    for (let i = 0; i < 54; i++) {
+        const conf = document.createElement("div");
+        conf.className = "confetti";
+        conf.style.background = rand(colors);
+        document.body.appendChild(conf);
+        const angle = Math.random() * Math.PI * 2;
+        const vel = 180 + Math.random() * 410;
+        const dx = Math.cos(angle) * vel;
+        const dy = Math.sin(angle) * vel;
+        conf.animate([
+            { transform: "translate(-50%, -50%) rotate(0deg)", opacity: 1 },
+            { transform: `translate(calc(-50% + ${dx}px), calc(-50% + ${dy}px)) rotate(720deg)`, opacity: 0 },
+        ], {
+            duration: 1200 + Math.random() * 900,
+            easing: "cubic-bezier(0.16, 1, 0.3, 1)",
+        });
+        setTimeout(() => conf.remove(), 2200);
+    }
+}
+
 const MODAL_CONTENT = {
     about: `
-        <p><strong>VIBE CHECK 9000™</strong> is the world's most scientifically inaccurate vibe detection system.</p>
-        <p>Our patented (it's not patented) algorithm cross-references your answers against a database of <strong>12,000 quantum chakras</strong>, three retired astrologers, and a single, very tired raccoon named Chad.</p>
-        <p>Results are <strong>87% accurate</strong> in the same way a fortune cookie is 87% accurate.</p>
-        <p style="font-size: 11px; color: var(--dim); margin-top: 20px;">// no actual chakras were harmed in development</p>
+        <p><strong>VIBE CHECK 9000™</strong> is a cyberpunk personality scanner with more confidence than evidence.</p>
+        <p>It asks six absurd questions, turns your answers into four neon stats, then prints a diagnosis with the dignity of a hacked vending machine.</p>
+        <p>Built by <a href="${REPO_URL}" target="_blank" rel="noreferrer">Sebby1770 on GitHub</a>.</p>
     `,
     science: `
         <p><strong>THE METHODOLOGY:</strong></p>
-        <p>1. We ask you 5 questions. Some of them are nonsense.</p>
-        <p>2. Each answer maps to four core stats: <strong>CHAOS, CHARISMA, COSMIC, RACCOON</strong>.</p>
-        <p>3. Your dominant stat is fed through a proprietary algorithm (a switch statement).</p>
-        <p>4. We pick a vibe that matches. Sometimes we're right. Sometimes the raccoon decides.</p>
-        <p style="font-size: 11px; color: var(--dim); margin-top: 20px;">peer-reviewed by my mom (she said it was 'cute')</p>
+        <p>1. Ask questions with suspiciously specific answers.</p>
+        <p>2. Score four stats: <strong>CHAOS, CHARM, COSMIC, STATIC</strong>.</p>
+        <p>3. Run a proprietary algorithm, also known as JavaScript with feelings.</p>
+        <p>4. Generate a share link and PNG report so the result can follow you online.</p>
     `,
     legal: `
         <p><strong>TERMS OF VIBING:</strong></p>
-        <p>Results not valid in any court of law, planetarium, or DMV.</p>
-        <p>Side effects may include: <strong>self-reflection, mild giggling, the urge to text an ex, sudden cravings for soup.</strong></p>
-        <p>Do not operate heavy machinery while vibing. Do not vibe at high altitudes without proper training.</p>
-        <p>If your vibe persists for more than 4 hours, that's just your personality, you're fine.</p>
-        <p style="font-size: 11px; color: var(--dim); margin-top: 20px;">© 2026 VIBE INDUSTRIES INTERGALACTIC. all rights reserved (some wrongs reserved too).</p>
+        <p>Results are not valid in court, therapy, hiring, dating, banking, or interdimensional arbitration.</p>
+        <p>Side effects may include: self-reflection, dramatic posture, mild giggling, and the urge to rename a project folder.</p>
+        <p>Do not base life choices on this terminal. It is wearing sunglasses indoors.</p>
     `,
 };
 
-document.querySelectorAll("[data-modal]").forEach((link) => {
-    link.addEventListener("click", (e) => {
-        e.preventDefault();
-        const id = link.dataset.modal;
-        $("modalTitle").textContent = id;
-        $("modalBody").innerHTML = MODAL_CONTENT[id];
-        $("modalBg").classList.add("active");
+function wireEvents() {
+    $("startBtn").addEventListener("click", startScan);
+    $("rescanBtn").addEventListener("click", () => {
+        resetRun();
+        history.replaceState(null, "", location.pathname);
+        $("result").classList.add("hidden");
+        $("questions").classList.add("hidden");
+        $("scanner").classList.add("hidden");
+        $("hero").classList.remove("hidden");
+        window.scrollTo({ top: 0, behavior: "smooth" });
     });
-});
+    $("shareBtn").addEventListener("click", shareCurrentResult);
+    $("saveBtn").addEventListener("click", saveResultPng);
+    $("copyLinkBtn").addEventListener("click", () => {
+        if (!state.currentResult) {
+            toast("RUN A SCAN FIRST");
+            return;
+        }
+        copyText(getShareUrl(state.currentResult), "RESULT LINK COPIED");
+    });
 
-$("modalClose").addEventListener("click", () => $("modalBg").classList.remove("active"));
-$("modalBg").addEventListener("click", (e) => {
-    if (e.target === $("modalBg")) $("modalBg").classList.remove("active");
-});
+    document.querySelectorAll("[data-modal]").forEach((link) => {
+        link.addEventListener("click", (e) => {
+            e.preventDefault();
+            $("modalTitle").textContent = link.dataset.modal;
+            $("modalBody").innerHTML = MODAL_CONTENT[link.dataset.modal];
+            $("modalBg").classList.add("active");
+        });
+    });
 
-// ====== KONAMI CODE ======
-const KONAMI = ["ArrowUp", "ArrowUp", "ArrowDown", "ArrowDown", "ArrowLeft", "ArrowRight", "ArrowLeft", "ArrowRight", "b", "a"];
-let konamiIdx = 0;
+    $("modalClose").addEventListener("click", () => $("modalBg").classList.remove("active"));
+    $("modalBg").addEventListener("click", (e) => {
+        if (e.target === $("modalBg")) $("modalBg").classList.remove("active");
+    });
 
-window.addEventListener("keydown", (e) => {
-    if (e.key === KONAMI[konamiIdx]) {
-        konamiIdx++;
-        if (konamiIdx === KONAMI.length) {
-            unlock("konami");
-            unlock("rave");
-            document.body.classList.toggle("rave");
-            toast("🪩 RAVE MODE: ENGAGED", "#ff00ff");
-            $("secretDuck").classList.add("show");
+    const KONAMI = ["ArrowUp", "ArrowUp", "ArrowDown", "ArrowDown", "ArrowLeft", "ArrowRight", "ArrowLeft", "ArrowRight", "b", "a"];
+    let konamiIdx = 0;
+    let typedBuffer = "";
+
+    window.addEventListener("keydown", (e) => {
+        if (e.key === KONAMI[konamiIdx]) {
+            konamiIdx++;
+            if (konamiIdx === KONAMI.length) {
+                unlock("konami");
+                unlock("rave");
+                document.body.classList.toggle("rave");
+                toast("RAVE MODE: ENGAGED", "#ff00ff");
+                $("secretCube").classList.add("show");
+                konamiIdx = 0;
+            }
+        } else {
             konamiIdx = 0;
         }
-    } else {
-        konamiIdx = 0;
-    }
-});
 
-// ====== SECRET DUCK ======
-$("secretDuck").addEventListener("click", () => {
-    unlock("duck");
-    toast("🦆 the duck approves", "#fff700");
-    confettiBurst();
-});
-
-// ====== KONAMI HINT ======
-$("konamiHint").addEventListener("click", (e) => {
-    e.preventDefault();
-    toast("try the konami code... ↑↑↓↓←→←→BA", "#00fff7");
-});
-
-// ====== EASTER EGG: typing 'vibe' anywhere ======
-let typedBuffer = "";
-window.addEventListener("keydown", (e) => {
-    if (e.key.length === 1) {
-        typedBuffer = (typedBuffer + e.key.toLowerCase()).slice(-10);
-        if (typedBuffer.endsWith("vibe")) {
-            toast("VIBES DETECTED", "#39ff14");
-            confettiBurst();
+        if (e.key.length === 1) {
+            typedBuffer = (typedBuffer + e.key.toLowerCase()).slice(-10);
+            if (typedBuffer.endsWith("vibe")) {
+                toast("VIBES DETECTED", "#39ff14");
+                confettiBurst();
+            }
+            if (typedBuffer.endsWith("static")) {
+                toast("STATIC APPROVES", "#00fff7");
+                document.body.classList.add("rave");
+                setTimeout(() => document.body.classList.remove("rave"), 1800);
+            }
         }
-        if (typedBuffer.endsWith("raccoon")) {
-            toast("🦝 chad says hi", "#ff00ff");
-        }
+    });
+
+    $("secretCube").addEventListener("click", () => {
+        unlock("cube");
+        toast("FORBIDDEN GEOMETRY ACKNOWLEDGED", "#fff700");
+        confettiBurst();
+    });
+
+    window.addEventListener("resize", resizeCanvas);
+}
+
+function rotateStatus() {
+    const statuses = [
+        "NEON VIBE SCANNER ONLINE",
+        "STATIC SUBSYSTEMS NOMINAL",
+        "SPREADSHEET: TOO POWERFUL",
+        "AURA CACHE: WARM",
+        "DRAMA FILTER: PARTIALLY ENABLED",
+        "SINCERITY LEVELS: SUSPICIOUS",
+    ];
+    let statusIdx = 0;
+    setInterval(() => {
+        statusIdx = (statusIdx + 1) % statuses.length;
+        $("systemStatus").textContent = statuses[statusIdx];
+    }, 4000);
+}
+
+function init() {
+    initParticles();
+    wireEvents();
+    renderHistory();
+    renderAchievements();
+    updatePing();
+    setInterval(updatePing, 1500);
+    rotateStatus();
+
+    const shared = readSharedResult();
+    if (shared) {
+        $("hero").classList.add("hidden");
+        showResult(shared, { save: false });
+        toast("SHARED VIBE LOADED");
     }
-});
 
-// ====== STATUS BAR ROTATION ======
-const STATUSES = [
-    "QUANTUM VIBE SCANNER ONLINE",
-    "RACCOON SUBSYSTEMS NOMINAL",
-    "MERCURY: STILL IN MICROWAVE",
-    "ASTROLOGERS: DISAPPOINTED BUT WORKING",
-    "CHAKRA CALIBRATION: FUNKY",
-    "CHAD THE RACCOON: ON BREAK",
-];
+    console.log(
+        "%c VIBE CHECK 9000™ ",
+        "background: linear-gradient(90deg, #ff00ff, #00fff7); color: #000; font-size: 24px; font-weight: 900; padding: 8px 16px;"
+    );
+    console.log("%cTerminal opened. Vibe confidence increasing.", "color: #39ff14; font-size: 14px;");
+    console.log("%cTry typing 'vibe' or the classic old code.", "color: #00fff7; font-style: italic;");
+}
 
-let statusIdx = 0;
-setInterval(() => {
-    statusIdx = (statusIdx + 1) % STATUSES.length;
-    $("systemStatus").textContent = STATUSES[statusIdx];
-}, 4000);
-
-// ====== INIT ======
-console.log(
-    "%c VIBE CHECK 9000™ ",
-    "background: linear-gradient(90deg, #ff00ff, #00fff7); color: #000; font-size: 24px; font-weight: 900; padding: 8px 16px;"
-);
-console.log("%cyou found the console. that's a vibe of its own.", "color: #39ff14; font-size: 14px;");
-console.log("%cpsst — try typing 'vibe' anywhere on the page", "color: #00fff7; font-style: italic;");
+init();

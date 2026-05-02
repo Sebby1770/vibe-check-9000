@@ -3,74 +3,87 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>VIBE CHECK 9000™ — Quantum Vibe Detection</title>
-    <meta name="description" content="The world's most scientifically inaccurate vibe detection system. Scan your vibe in 4D.">
+    <title>VIBE CHECK 9000™ | Cyberpunk Vibe Scanner</title>
+    <meta name="description" content="A cyberpunk scanner that diagnoses your vibe with extremely official nonsense. Scan, save, and share your terminal-grade result.">
+    <meta name="theme-color" content="#07020d">
+
+    <meta property="og:title" content="VIBE CHECK 9000™">
+    <meta property="og:description" content="Get your cyberpunk vibe diagnosis from a suspiciously dramatic terminal.">
+    <meta property="og:type" content="website">
+    <meta property="og:url" content="https://sebby1770.github.io/vibe-check-9000/">
+    <meta name="twitter:card" content="summary_large_image">
+    <meta name="twitter:title" content="VIBE CHECK 9000™">
+    <meta name="twitter:description" content="Scan your vibe. Receive nonsense. Share the evidence.">
+
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;700;900&family=VT323&family=Space+Mono:wght@400;700&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;700;900&family=Space+Mono:wght@400;700&family=VT323&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="style.css">
 </head>
 <body>
-    <div class="grid-bg"></div>
-    <div class="scanline"></div>
-    <div class="noise"></div>
-
-    <canvas id="particles"></canvas>
+    <div class="grid-bg" aria-hidden="true"></div>
+    <div class="scanline" aria-hidden="true"></div>
+    <div class="noise" aria-hidden="true"></div>
+    <canvas id="particles" aria-hidden="true"></canvas>
 
     <header class="header">
-        <div class="logo">
+        <a class="logo" href="#hero" aria-label="VIBE CHECK 9000 home">
             <span class="logo-bracket">[</span>
             <span class="logo-main">VIBE CHECK</span>
             <span class="logo-num glitch" data-text="9000">9000</span>
             <span class="logo-bracket">]</span>
             <span class="logo-tm">™</span>
-        </div>
-        <div class="status-bar">
+        </a>
+
+        <div class="status-bar" aria-live="polite">
             <span class="status-dot"></span>
-            <span id="systemStatus">QUANTUM VIBE SCANNER ONLINE</span>
+            <span id="systemStatus">NEON VIBE SCANNER ONLINE</span>
             <span class="ping">PING: <span id="pingValue">∞</span>ms</span>
         </div>
+
+        <nav class="nav-actions" aria-label="Project links">
+            <a href="https://github.com/Sebby1770" target="_blank" rel="noreferrer">Profile</a>
+            <a href="https://github.com/Sebby1770/vibe-check-9000" target="_blank" rel="noreferrer">GitHub</a>
+        </nav>
     </header>
 
     <main class="main">
-        <!-- HERO -->
         <section class="hero" id="hero">
-            <div class="hero-tag">v9.0.0.0.1 // EST. 1996 // PATENT PENDING</div>
+            <div class="hero-tag">v9.0.0 // NIGHT-CITY CERTIFIED // 0% MEDICALLY USEFUL</div>
             <h1 class="hero-title">
-                <span class="word" data-text="DETECT">DETECT</span>
+                <span class="word" data-text="SCAN">SCAN</span>
                 <span class="word" data-text="YOUR">YOUR</span>
                 <span class="word neon" data-text="VIBE">VIBE</span>
             </h1>
             <p class="hero-sub">
-                Powered by <span class="hl">12,000 quantum chakras</span>,
-                <span class="hl">3 disappointed astrologers</span>,
-                and <span class="hl">one suspicious raccoon</span>.
+                Submit to a terminal-grade personality audit powered by
+                <span class="hl">illegal LEDs</span>,
+                <span class="hl">premium static</span>, and
+                <span class="hl">one unpaid spreadsheet</span>.
             </p>
 
             <button class="cta-btn" id="startBtn">
-                <span class="cta-glow"></span>
                 <span class="cta-label">INITIATE SCAN</span>
                 <span class="cta-arrow">▸</span>
             </button>
 
-            <div class="ticker">
+            <div class="ticker" aria-hidden="true">
                 <div class="ticker-track">
                     <span>► 14,288,402 vibes scanned today</span>
-                    <span>► Last vibe: "mildly cosmic with a hint of regret"</span>
-                    <span>► WARNING: do not operate heavy machinery while vibing</span>
-                    <span>► A raccoon is reading this right now</span>
-                    <span>► Vibe market is up 0.04%</span>
-                    <span>► Mercury is, in fact, in microwave</span>
+                    <span>► latest diagnosis: "emotionally 5G, spiritually dial-up"</span>
+                    <span>► warning: dramatic results may occur</span>
+                    <span>► vibe market up 0.04%</span>
+                    <span>► firmware update refused to install itself</span>
+                    <span>► scanner currently judging your posture</span>
                     <span>► 14,288,402 vibes scanned today</span>
-                    <span>► Last vibe: "mildly cosmic with a hint of regret"</span>
-                    <span>► WARNING: do not operate heavy machinery while vibing</span>
-                    <span>► A raccoon is reading this right now</span>
+                    <span>► latest diagnosis: "emotionally 5G, spiritually dial-up"</span>
+                    <span>► warning: dramatic results may occur</span>
+                    <span>► vibe market up 0.04%</span>
                 </div>
             </div>
         </section>
 
-        <!-- SCANNER -->
-        <section class="scanner hidden" id="scanner">
+        <section class="scanner hidden" id="scanner" aria-live="polite">
             <div class="scanner-frame">
                 <div class="corner tl"></div>
                 <div class="corner tr"></div>
@@ -84,7 +97,7 @@
                     </div>
 
                     <div class="scanner-screen">
-                        <div class="orb-container">
+                        <div class="orb-container" aria-hidden="true">
                             <div class="orb">
                                 <div class="orb-ring r1"></div>
                                 <div class="orb-ring r2"></div>
@@ -95,32 +108,30 @@
                         <div class="scan-log" id="scanLog"></div>
                     </div>
 
-                    <div class="scanner-bar">
+                    <div class="scanner-bar" aria-hidden="true">
                         <div class="scanner-bar-fill" id="scanBar"></div>
                     </div>
                 </div>
             </div>
         </section>
 
-        <!-- QUESTIONS -->
         <section class="questions hidden" id="questions">
             <div class="q-progress">
-                <span>QUESTION <span id="qNum">1</span> / <span id="qTotal">5</span></span>
+                <span>QUESTION <span id="qNum">1</span> / <span id="qTotal">6</span></span>
                 <div class="q-bar"><div class="q-bar-fill" id="qBar"></div></div>
             </div>
             <h2 class="q-prompt" id="qPrompt">loading...</h2>
             <div class="q-options" id="qOptions"></div>
         </section>
 
-        <!-- RESULT -->
         <section class="result hidden" id="result">
-            <div class="result-card" id="resultCard">
+            <article class="result-card" id="resultCard">
                 <div class="result-meta">
                     <span>VIBE_REPORT_<span id="reportId">000000</span>.dat</span>
                     <span id="reportDate"></span>
                 </div>
 
-                <div class="result-emoji" id="resultEmoji">✨</div>
+                <div class="result-badge" id="resultBadge">VX</div>
 
                 <h3 class="result-label">YOUR VIBE IS</h3>
                 <h2 class="result-title" id="resultTitle">LOADING</h2>
@@ -133,9 +144,9 @@
                         <div class="stat-val" id="statChaosVal">0%</div>
                     </div>
                     <div class="stat">
-                        <div class="stat-label">CHARISMA</div>
-                        <div class="stat-bar"><div class="stat-fill" id="statCharisma"></div></div>
-                        <div class="stat-val" id="statCharismaVal">0%</div>
+                        <div class="stat-label">CHARM</div>
+                        <div class="stat-bar"><div class="stat-fill" id="statCharm"></div></div>
+                        <div class="stat-val" id="statCharmVal">0%</div>
                     </div>
                     <div class="stat">
                         <div class="stat-label">COSMIC</div>
@@ -143,16 +154,16 @@
                         <div class="stat-val" id="statCosmicVal">0%</div>
                     </div>
                     <div class="stat">
-                        <div class="stat-label">RACCOON</div>
-                        <div class="stat-bar"><div class="stat-fill" id="statRaccoon"></div></div>
-                        <div class="stat-val" id="statRaccoonVal">0%</div>
+                        <div class="stat-label">STATIC</div>
+                        <div class="stat-bar"><div class="stat-fill" id="statStatic"></div></div>
+                        <div class="stat-val" id="statStaticVal">0%</div>
                     </div>
                 </div>
 
                 <div class="result-detail">
                     <div class="result-row">
-                        <span class="row-key">SPIRIT ANIMAL</span>
-                        <span class="row-val" id="spiritAnimal">a tired pigeon</span>
+                        <span class="row-key">SIGNATURE ITEM</span>
+                        <span class="row-val" id="signatureItem">a glowing receipt</span>
                     </div>
                     <div class="result-row">
                         <span class="row-key">VIBE COLOR</span>
@@ -160,36 +171,35 @@
                     </div>
                     <div class="result-row">
                         <span class="row-key">BEST PAIRED WITH</span>
-                        <span class="row-val" id="vibePair">someone who texts back</span>
+                        <span class="row-val" id="vibePair">a fresh password reset</span>
                     </div>
                     <div class="result-row">
                         <span class="row-key">AVOID</span>
-                        <span class="row-val" id="vibeAvoid">tuesdays</span>
+                        <span class="row-val" id="vibeAvoid">fluorescent sincerity</span>
                     </div>
                     <div class="result-row">
                         <span class="row-key">PROPHECY</span>
-                        <span class="row-val" id="vibeProphecy">you will misplace something soon</span>
+                        <span class="row-val" id="vibeProphecy">your next notification will be personal</span>
                     </div>
                 </div>
 
                 <div class="result-actions">
-                    <button class="btn-secondary" id="shareBtn">
-                        <span>► SHARE</span>
-                    </button>
-                    <button class="btn-secondary" id="saveBtn">
-                        <span>► SAVE</span>
-                    </button>
-                    <button class="btn-primary" id="rescanBtn">
-                        <span>► RESCAN</span>
-                    </button>
+                    <button class="btn-secondary" id="shareBtn">► SHARE</button>
+                    <button class="btn-secondary" id="saveBtn">► SAVE PNG</button>
+                    <button class="btn-primary" id="rescanBtn">► RESCAN</button>
                 </div>
-            </div>
+            </article>
 
-            <div class="result-side">
+            <aside class="result-side">
                 <div class="side-card">
                     <h4>► COMPATIBILITY</h4>
                     <p>You are <span class="hl" id="compatPercent">87%</span> compatible with</p>
-                    <p class="compat-name" id="compatName">someone who owns a wok</p>
+                    <p class="compat-name" id="compatName">someone who labels every cable</p>
+                </div>
+                <div class="side-card">
+                    <h4>► SHARE LINK</h4>
+                    <p class="share-url" id="shareUrl">complete scan to generate link</p>
+                    <button class="mini-btn" id="copyLinkBtn">COPY RESULT LINK</button>
                 </div>
                 <div class="side-card">
                     <h4>► HISTORICAL VIBES</h4>
@@ -201,7 +211,7 @@
                     <h4>► ACHIEVEMENTS</h4>
                     <div class="ach-list" id="achList"></div>
                 </div>
-            </div>
+            </aside>
         </section>
     </main>
 
@@ -212,28 +222,24 @@
                 <a href="#" data-modal="about">[ABOUT]</a>
                 <a href="#" data-modal="science">[SCIENCE]</a>
                 <a href="#" data-modal="legal">[LEGAL]</a>
-                <a href="#" id="konamiHint">[???]</a>
+                <a href="https://github.com/Sebby1770/vibe-check-9000" target="_blank" rel="noreferrer">[GITHUB]</a>
             </span>
         </div>
         <div class="footer-tag">
-            NOT FDA APPROVED · NOT FBI APPROVED · DEFINITELY NOT MOM APPROVED
+            NOT FDA APPROVED · NOT A REAL SCANNER · DO NOT BASE LIFE CHOICES ON THIS TERMINAL
         </div>
     </footer>
 
-    <!-- MODALS -->
     <div class="modal-bg" id="modalBg">
-        <div class="modal" id="modal">
-            <button class="modal-close" id="modalClose">×</button>
+        <div class="modal" id="modal" role="dialog" aria-modal="true" aria-labelledby="modalTitle">
+            <button class="modal-close" id="modalClose" aria-label="Close modal">×</button>
             <h3 class="modal-title" id="modalTitle">about</h3>
             <div class="modal-body" id="modalBody"></div>
         </div>
     </div>
 
-    <!-- TOAST -->
     <div class="toast" id="toast"></div>
-
-    <!-- SECRET DUCK -->
-    <div class="secret-duck" id="secretDuck">🦆</div>
+    <button class="secret-cube" id="secretCube" aria-label="Secret cube">◈</button>
 
     <script src="script.js"></script>
 </body>
