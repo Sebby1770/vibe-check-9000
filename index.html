@@ -15,6 +15,7 @@
     <meta name="twitter:title" content="VIBE CHECK 9000™">
     <meta name="twitter:description" content="Scan your vibe. Receive nonsense. Share the evidence.">
 
+    <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Crect width='64' height='64' rx='10' fill='%2307020d'/%3E%3Ctext x='32' y='44' font-size='34' text-anchor='middle' fill='%2300fff7' font-family='monospace'%3E%E2%97%88%3C/text%3E%3C/svg%3E">
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;700;900&family=Space+Mono:wght@400;700&family=VT323&display=swap" rel="stylesheet">
@@ -49,25 +50,25 @@
 
     <main class="main">
         <section class="hero" id="hero">
-            <div class="hero-tag">v9.0.0 // NIGHT-CITY CERTIFIED // 0% MEDICALLY USEFUL</div>
+            <div class="hero-tag" data-animate data-animate-distance="40" data-animate-duration="700">v9.1.0 // NIGHT-CITY CERTIFIED // 0% MEDICALLY USEFUL</div>
             <h1 class="hero-title">
-                <span class="word" data-text="SCAN">SCAN</span>
-                <span class="word" data-text="YOUR">YOUR</span>
-                <span class="word neon" data-text="VIBE">VIBE</span>
+                <span class="word" data-text="SCAN" data-animate data-animate-direction="horizontal" data-animate-reverse="true" data-animate-distance="120" data-animate-duration="900">SCAN</span>
+                <span class="word" data-text="YOUR" data-animate data-animate-distance="120" data-animate-duration="900" data-animate-delay="120">YOUR</span>
+                <span class="word neon" data-text="VIBE" data-animate data-animate-direction="horizontal" data-animate-distance="120" data-animate-duration="900" data-animate-delay="240">VIBE</span>
             </h1>
-            <p class="hero-sub">
+            <p class="hero-sub" data-animate data-animate-distance="60" data-animate-duration="800" data-animate-delay="360">
                 Submit to a terminal-grade personality audit powered by
                 <span class="hl">illegal LEDs</span>,
                 <span class="hl">premium static</span>, and
                 <span class="hl">one unpaid spreadsheet</span>.
             </p>
 
-            <button class="cta-btn" id="startBtn">
+            <button class="cta-btn" id="startBtn" data-animate data-animate-distance="50" data-animate-duration="800" data-animate-delay="500" data-animate-scale="0.9">
                 <span class="cta-label">INITIATE SCAN</span>
                 <span class="cta-arrow">▸</span>
             </button>
 
-            <div class="ticker" aria-hidden="true">
+            <div class="ticker" aria-hidden="true" data-animate data-animate-distance="30" data-animate-duration="900" data-animate-delay="650">
                 <div class="ticker-track">
                     <span>► 14,288,402 vibes scanned today</span>
                     <span>► latest diagnosis: "emotionally 5G, spiritually dial-up"</span>
@@ -117,7 +118,8 @@
 
         <section class="questions hidden" id="questions">
             <div class="q-progress">
-                <span>QUESTION <span id="qNum">1</span> / <span id="qTotal">6</span></span>
+                <span>QUESTION <span id="qNum">1</span> / <span id="qTotal">9</span></span>
+                <span class="q-hint">KEYS 1–5 SELECT</span>
                 <div class="q-bar"><div class="q-bar-fill" id="qBar"></div></div>
             </div>
             <h2 class="q-prompt" id="qPrompt">loading...</h2>
@@ -125,7 +127,7 @@
         </section>
 
         <section class="result hidden" id="result">
-            <article class="result-card" id="resultCard">
+            <article class="result-card" id="resultCard" data-animate data-animate-distance="80" data-animate-duration="900" data-animate-scale="0.95">
                 <div class="result-meta">
                     <span>VIBE_REPORT_<span id="reportId">000000</span>.dat</span>
                     <span id="reportDate"></span>
@@ -160,6 +162,10 @@
                     </div>
                 </div>
 
+                <div class="radar-wrap" aria-label="Stat radar chart">
+                    <canvas id="radarChart" width="340" height="300"></canvas>
+                </div>
+
                 <div class="result-detail">
                     <div class="result-row">
                         <span class="row-key">SIGNATURE ITEM</span>
@@ -191,23 +197,23 @@
             </article>
 
             <aside class="result-side">
-                <div class="side-card">
+                <div class="side-card" data-animate data-animate-direction="horizontal" data-animate-distance="90" data-animate-duration="800" data-animate-delay="150">
                     <h4>► COMPATIBILITY</h4>
                     <p>You are <span class="hl" id="compatPercent">87%</span> compatible with</p>
                     <p class="compat-name" id="compatName">someone who labels every cable</p>
                 </div>
-                <div class="side-card">
+                <div class="side-card" data-animate data-animate-direction="horizontal" data-animate-distance="90" data-animate-duration="800" data-animate-delay="300">
                     <h4>► SHARE LINK</h4>
                     <p class="share-url" id="shareUrl">complete scan to generate link</p>
                     <button class="mini-btn" id="copyLinkBtn">COPY RESULT LINK</button>
                 </div>
-                <div class="side-card">
+                <div class="side-card" data-animate data-animate-direction="horizontal" data-animate-distance="90" data-animate-duration="800" data-animate-delay="450">
                     <h4>► HISTORICAL VIBES</h4>
                     <ul class="history-list" id="historyList">
                         <li class="empty">no prior vibes detected</li>
                     </ul>
                 </div>
-                <div class="side-card achievements">
+                <div class="side-card achievements" data-animate data-animate-direction="horizontal" data-animate-distance="90" data-animate-duration="800" data-animate-delay="600">
                     <h4>► ACHIEVEMENTS</h4>
                     <div class="ach-list" id="achList"></div>
                 </div>
@@ -241,6 +247,7 @@
     <div class="toast" id="toast"></div>
     <button class="secret-cube" id="secretCube" aria-label="Secret cube">◈</button>
 
+    <script src="animated-content.js"></script>
     <script src="script.js"></script>
 </body>
 </html>

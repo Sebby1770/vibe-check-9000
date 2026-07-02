@@ -1311,3 +1311,42 @@ body.rave .grid-bg { animation: gridmove 500ms linear infinite; }
         transition-duration: 0.001ms !important;
     }
 }
+
+/* ---- v9.1.0 additions ---- */
+
+.radar-wrap {
+    display: flex;
+    justify-content: center;
+    margin: 20px 0 8px;
+}
+
+.radar-wrap canvas {
+    max-width: 100%;
+    filter: drop-shadow(0 0 18px rgba(0, 255, 247, 0.12));
+}
+
+.q-hint {
+    color: var(--dim);
+    font-size: 0.72rem;
+    letter-spacing: 0.08em;
+}
+
+button:focus-visible,
+a:focus-visible {
+    outline: 2px solid var(--cyan);
+    outline-offset: 3px;
+}
+
+@media (prefers-reduced-motion: reduce) {
+    *,
+    *::before,
+    *::after {
+        animation-duration: 0.01ms !important;
+        animation-iteration-count: 1 !important;
+        transition-duration: 0.01ms !important;
+    }
+
+    html {
+        scroll-behavior: auto;
+    }
+}

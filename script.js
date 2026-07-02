@@ -64,6 +64,36 @@ const QUESTIONS = [
             { text: "turn it off and on again, including myself", chaos: 79, charm: 58, cosmic: 79, static: 90 },
         ],
     },
+    {
+        prompt: "A rogue AI offers you one superpower. Choose responsibly:",
+        opts: [
+            { text: "instantly finding the end of any sticky tape", chaos: 33, charm: 72, cosmic: 49, static: 41 },
+            { text: "hearing what printers say about you", chaos: 77, charm: 44, cosmic: 68, static: 93 },
+            { text: "perfect wifi in exactly one haunted location", chaos: 64, charm: 51, cosmic: 87, static: 72 },
+            { text: "making any meeting end four minutes early", chaos: 45, charm: 89, cosmic: 38, static: 47 },
+            { text: "summoning a fully charged battery, but only during arguments", chaos: 91, charm: 63, cosmic: 57, static: 79 },
+        ],
+    },
+    {
+        prompt: "Your browser history is about to be read aloud at a gala. You:",
+        opts: [
+            { text: "take the podium first and provide commentary", chaos: 74, charm: 93, cosmic: 46, static: 58 },
+            { text: "claim it belongs to a very curious raccoon", chaos: 89, charm: 66, cosmic: 61, static: 71 },
+            { text: "request it be performed as interpretive dance", chaos: 68, charm: 71, cosmic: 90, static: 52 },
+            { text: "accept your fate with excellent posture", chaos: 37, charm: 61, cosmic: 74, static: 44 },
+            { text: "trigger the fire alarm with practiced calm", chaos: 96, charm: 40, cosmic: 42, static: 88 },
+        ],
+    },
+    {
+        prompt: "Final calibration. Pick the frequency your soul hums at:",
+        opts: [
+            { text: "the gentle whir of a laptop fan doing its best", chaos: 39, charm: 57, cosmic: 53, static: 81 },
+            { text: "elevator music, but remixed by someone dangerous", chaos: 81, charm: 74, cosmic: 59, static: 63 },
+            { text: "the silence right after sending a risky message", chaos: 70, charm: 62, cosmic: 85, static: 55 },
+            { text: "keyboard sounds at 2 AM, extremely confident ones", chaos: 58, charm: 68, cosmic: 47, static: 74 },
+            { text: "a dial tone from a phone that was never plugged in", chaos: 85, charm: 43, cosmic: 92, static: 90 },
+        ],
+    },
 ];
 
 const VIBES = [
@@ -199,6 +229,39 @@ const VIBES = [
         avoid: "people who say 'just relax' with no implementation plan",
         prophecy: "a small reset will fix more than the thing you reset.",
     },
+    {
+        id: "haunted-hotspot",
+        title: "HAUNTED HOTSPOT WITH FULL BARS",
+        badge: "HH",
+        desc: "Devices connect to you emotionally. You radiate signal in places that should not have any, and nobody knows your data plan.",
+        item: "a router with a candle on top",
+        color: "#9D4EDD",
+        pair: "someone grounded, electrically and otherwise",
+        avoid: "airplane mode used as a personality",
+        prophecy: "a dead device will turn on for you exactly once. Be gracious.",
+    },
+    {
+        id: "midnight-committee",
+        title: "CHAIR OF THE MIDNIGHT COMMITTEE",
+        badge: "MC",
+        desc: "Every night at 1 AM your brain convenes a full board meeting with no agenda and unlimited motions. Attendance is mandatory. Minutes are never kept.",
+        item: "a gavel made of unread notifications",
+        color: "#FF477E",
+        pair: "someone who adjourns gently",
+        avoid: "chamomile tea marketed with too much confidence",
+        prophecy: "tonight's agenda item will resolve itself by lunch.",
+    },
+    {
+        id: "gilded-buffer",
+        title: "GILDED BUFFERING ICON",
+        badge: "GB",
+        desc: "You are always at 99%, glowing, iconic, almost there. The suspense is your brand and honestly the loading screen has never looked better.",
+        item: "a progress bar wearing jewelry",
+        color: "#FFD60A",
+        pair: "someone patient with cinematic timing",
+        avoid: "anyone who force-quits without asking",
+        prophecy: "the thing loading finally finishes when you stop watching.",
+    },
 ];
 
 const ACHIEVEMENTS = [
@@ -210,6 +273,8 @@ const ACHIEVEMENTS = [
     { id: "cube", icon: "◈", name: "CUBE WITNESS", desc: "pressed the forbidden geometry" },
     { id: "static", icon: "▣", name: "STATIC ROYALTY", desc: "max static stat" },
     { id: "cosmic", icon: "✺", name: "COSMIC RECEIPT", desc: "max cosmic stat" },
+    { id: "explorer", icon: "✪", name: "VIBE CARTOGRAPHER", desc: "discovered 5 different vibes" },
+    { id: "speedrun", icon: "⚡", name: "ANY% VIBER", desc: "answered every question in under 15 seconds" },
 ];
 
 const SIGNATURE_ITEMS = [
@@ -250,8 +315,12 @@ let state = {
     history: JSON.parse(localStorage.getItem("vibeHistory") || "[]"),
     scanCount: Number.parseInt(localStorage.getItem("vibeScanCount") || "0", 10),
     achievements: JSON.parse(localStorage.getItem("vibeAchievements") || "[]"),
+    seenVibes: JSON.parse(localStorage.getItem("vibeSeen") || "[]"),
     currentResult: null,
+    questionsStartedAt: 0,
 };
+
+const REDUCE_MOTION = window.matchMedia("(prefers-reduced-motion: reduce)");
 
 const $ = (id) => document.getElementById(id);
 const rand = (arr) => arr[Math.floor(Math.random() * arr.length)];
@@ -342,6 +411,7 @@ async function startScan() {
     await runScanIntro();
     $("scanner").classList.add("hidden");
     $("questions").classList.remove("hidden");
+    state.questionsStartedAt = Date.now();
     showQuestion();
 }
 
@@ -460,6 +530,9 @@ function pickVibe(stats) {
     if (chaos >= 72 && charm >= 62) return VIBES.find((v) => v.id === "glitch-couture");
     if (cosmic >= 68 && chaos < 60) return VIBES.find((v) => v.id === "productivity-haunting");
     if (staticStat >= 82) return VIBES.find((v) => v.id === "doomscroll-samurai");
+    if (cosmic >= 78 && staticStat >= 70) return VIBES.find((v) => v.id === "haunted-hotspot");
+    if (chaos >= 64 && staticStat >= 72 && charm < 62) return VIBES.find((v) => v.id === "midnight-committee");
+    if (charm >= 72 && staticStat >= 58 && chaos < 70) return VIBES.find((v) => v.id === "gilded-buffer");
     if (charm >= 74 && cosmic < 56) return VIBES.find((v) => v.id === "lofi-tycoon");
     if (staticStat >= 64 && cosmic >= 62) return VIBES.find((v) => v.id === "chrome-tab-romantic");
     if (chaos >= 68 && cosmic >= 72) return VIBES.find((v) => v.id === "ritual-reboot");
@@ -468,6 +541,7 @@ function pickVibe(stats) {
 
 function showResult(result, options = {}) {
     state.currentResult = result;
+    if (typeof AnimatedContent !== "undefined") AnimatedContent.reset($("result"));
     $("result").classList.remove("hidden");
 
     $("resultBadge").textContent = result.badge;
@@ -490,6 +564,7 @@ function showResult(result, options = {}) {
     });
 
     setTimeout(() => updateStatBars(result.stats), 150);
+    drawRadar(result.stats, result.color);
     $("compatPercent").textContent = `${60 + Math.floor(Math.random() * 40)}%`;
     $("compatName").textContent = rand(PAIRINGS);
     $("shareUrl").textContent = getShareUrl(result);
@@ -505,11 +580,18 @@ function showResult(result, options = {}) {
         localStorage.setItem("vibeHistory", JSON.stringify(state.history));
         localStorage.setItem("vibeScanCount", String(state.scanCount));
 
+        if (!state.seenVibes.includes(result.id)) {
+            state.seenVibes.push(result.id);
+            localStorage.setItem("vibeSeen", JSON.stringify(state.seenVibes));
+        }
+
         unlock("first");
         if (state.scanCount >= 3) unlock("trio");
         if (state.scanCount >= 10) unlock("ten");
         if (result.stats.static >= 70) unlock("static");
         if (result.stats.cosmic >= 70) unlock("cosmic");
+        if (state.seenVibes.length >= 5) unlock("explorer");
+        if (state.questionsStartedAt && Date.now() - state.questionsStartedAt < 15000) unlock("speedrun");
         confettiBurst();
     }
 
@@ -528,6 +610,114 @@ function updateStatBars(stats) {
         $(`stat${name}`).style.width = `${value}%`;
         $(`stat${name}Val`).textContent = `${value}%`;
     });
+}
+
+function drawRadar(stats, color) {
+    const canvas = $("radarChart");
+    if (!canvas) return;
+
+    const dpr = window.devicePixelRatio || 1;
+    if (!canvas.dataset.baseW) {
+        canvas.dataset.baseW = String(canvas.width);
+        canvas.dataset.baseH = String(canvas.height);
+    }
+    const width = Number(canvas.dataset.baseW);
+    const height = Number(canvas.dataset.baseH);
+    canvas.width = width * dpr;
+    canvas.height = height * dpr;
+    canvas.style.width = `${width}px`;
+    canvas.style.height = `${height}px`;
+
+    const c = canvas.getContext("2d");
+    c.scale(dpr, dpr);
+
+    const cx = width / 2;
+    const cy = height / 2 + 6;
+    const radius = Math.min(width, height) / 2 - 42;
+    const axes = [
+        { label: "CHAOS", value: stats.chaos },
+        { label: "CHARM", value: stats.charm },
+        { label: "COSMIC", value: stats.cosmic },
+        { label: "STATIC", value: stats.static },
+    ];
+    const angleFor = (i) => (Math.PI * 2 * i) / axes.length - Math.PI / 2;
+
+    const duration = REDUCE_MOTION.matches ? 0 : 750;
+    const started = performance.now();
+
+    function frame(now) {
+        const t = duration === 0 ? 1 : Math.min(1, (now - started) / duration);
+        const eased = 1 - Math.pow(1 - t, 3);
+
+        c.clearRect(0, 0, width, height);
+
+        // grid rings + axes
+        c.strokeStyle = "rgba(0, 255, 247, 0.22)";
+        c.lineWidth = 1;
+        for (let ring = 1; ring <= 4; ring++) {
+            c.beginPath();
+            for (let i = 0; i <= axes.length; i++) {
+                const angle = angleFor(i % axes.length);
+                const r = (radius * ring) / 4;
+                const x = cx + Math.cos(angle) * r;
+                const y = cy + Math.sin(angle) * r;
+                if (i === 0) c.moveTo(x, y);
+                else c.lineTo(x, y);
+            }
+            c.stroke();
+        }
+        axes.forEach((_, i) => {
+            const angle = angleFor(i);
+            c.beginPath();
+            c.moveTo(cx, cy);
+            c.lineTo(cx + Math.cos(angle) * radius, cy + Math.sin(angle) * radius);
+            c.stroke();
+        });
+
+        // stat polygon
+        c.beginPath();
+        axes.forEach((axis, i) => {
+            const angle = angleFor(i);
+            const r = radius * (axis.value / 100) * eased;
+            const x = cx + Math.cos(angle) * r;
+            const y = cy + Math.sin(angle) * r;
+            if (i === 0) c.moveTo(x, y);
+            else c.lineTo(x, y);
+        });
+        c.closePath();
+        c.globalAlpha = 0.28;
+        c.fillStyle = color;
+        c.fill();
+        c.globalAlpha = 1;
+        c.strokeStyle = color;
+        c.lineWidth = 2;
+        c.shadowBlur = 12;
+        c.shadowColor = color;
+        c.stroke();
+        c.shadowBlur = 0;
+
+        // vertex dots + labels
+        axes.forEach((axis, i) => {
+            const angle = angleFor(i);
+            const r = radius * (axis.value / 100) * eased;
+            c.beginPath();
+            c.fillStyle = "#fff";
+            c.arc(cx + Math.cos(angle) * r, cy + Math.sin(angle) * r, 3, 0, Math.PI * 2);
+            c.fill();
+
+            const lx = cx + Math.cos(angle) * (radius + 22);
+            const ly = cy + Math.sin(angle) * (radius + 22);
+            c.fillStyle = "#00fff7";
+            c.font = "700 12px 'Space Mono', monospace";
+            c.textAlign = "center";
+            c.textBaseline = "middle";
+            c.fillText(axis.label, lx, ly);
+        });
+
+        if (t < 1) requestAnimationFrame(frame);
+    }
+
+    requestAnimationFrame(frame);
 }
 
 function resetRun() {
@@ -736,6 +926,7 @@ function wrapCanvasText(ctx2d, text, x, y, maxWidth, lineHeight, align = "left")
 }
 
 function confettiBurst() {
+    if (REDUCE_MOTION.matches) return;
     const colors = ["#ff00ff", "#00fff7", "#39ff14", "#fff700", "#ff2e63"];
     for (let i = 0; i < 54; i++) {
         const conf = document.createElement("div");
@@ -760,13 +951,14 @@ function confettiBurst() {
 const MODAL_CONTENT = {
     about: `
         <p><strong>VIBE CHECK 9000™</strong> is a cyberpunk personality scanner with more confidence than evidence.</p>
-        <p>It asks six absurd questions, turns your answers into four neon stats, then prints a diagnosis with the dignity of a hacked vending machine.</p>
+        <p>It asks nine absurd questions, turns your answers into four neon stats, then prints a diagnosis with the dignity of a hacked vending machine.</p>
+        <p>Entrance animations are a vanilla port of <a href="https://reactbits.dev/animations/animated-content" target="_blank" rel="noreferrer">AnimatedContent from ReactBits</a>.</p>
         <p>Built by <a href="${REPO_URL}" target="_blank" rel="noreferrer">Sebby1770 on GitHub</a>.</p>
     `,
     science: `
         <p><strong>THE METHODOLOGY:</strong></p>
         <p>1. Ask questions with suspiciously specific answers.</p>
-        <p>2. Score four stats: <strong>CHAOS, CHARM, COSMIC, STATIC</strong>.</p>
+        <p>2. Score four stats: <strong>CHAOS, CHARM, COSMIC, STATIC</strong> and plot them on a glowing radar chart.</p>
         <p>3. Run a proprietary algorithm, also known as JavaScript with feelings.</p>
         <p>4. Generate a share link and PNG report so the result can follow you online.</p>
     `,
@@ -786,6 +978,7 @@ function wireEvents() {
         $("result").classList.add("hidden");
         $("questions").classList.add("hidden");
         $("scanner").classList.add("hidden");
+        if (typeof AnimatedContent !== "undefined") AnimatedContent.reset($("hero"));
         $("hero").classList.remove("hidden");
         window.scrollTo({ top: 0, behavior: "smooth" });
     });
@@ -818,6 +1011,19 @@ function wireEvents() {
     let typedBuffer = "";
 
     window.addEventListener("keydown", (e) => {
+        // number keys 1-5 answer the visible question
+        if (!$("questions").classList.contains("hidden") && /^[1-5]$/.test(e.key)) {
+            const option = $("qOptions").children[Number(e.key) - 1];
+            if (option) {
+                option.click();
+                return;
+            }
+        }
+
+        if (e.key === "Escape") {
+            $("modalBg").classList.remove("active");
+        }
+
         if (e.key === KONAMI[konamiIdx]) {
             konamiIdx++;
             if (konamiIdx === KONAMI.length) {
@@ -872,6 +1078,7 @@ function rotateStatus() {
 }
 
 function init() {
+    if (typeof AnimatedContent !== "undefined") AnimatedContent.register();
     initParticles();
     wireEvents();
     renderHistory();

@@ -15,14 +15,20 @@ Once GitHub Pages is enabled for this repo:
 ## Features
 
 - Animated cyberpunk UI with neon grid, scanlines, glitch text, scanner rings, and canvas particles
+- Entrance animations powered by a vanilla JS port of [ReactBits AnimatedContent](https://reactbits.dev/animations/animated-content) — same prop API (direction, distance, duration, ease, delay, threshold, scale, reverse), zero dependencies
 - Multi-stage fake terminal scan with absurd loading messages
-- Six interactive questions scored across Chaos, Charm, Cosmic, and Static
-- Twelve ridiculous result archetypes
+- Nine interactive questions scored across Chaos, Charm, Cosmic, and Static
+- Animated four-axis radar chart of your stat profile on the result card
+- Fifteen ridiculous result archetypes
 - Encoded result URLs that can be copied or shared
 - PNG result-card export
-- Local scan history and achievements
+- Local scan history and ten achievements, including cross-session vibe discovery tracking
+- Keyboard play: answer questions with keys 1–5, close modals with Escape
+- Full `prefers-reduced-motion` support
 - Hidden keyboard easter eggs
 - GitHub profile/repo links wired into the interface
+
+See [CHANGELOG.md](CHANGELOG.md) for release history.
 
 ## Run Locally
 
