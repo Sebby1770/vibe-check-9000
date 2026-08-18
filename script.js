@@ -520,6 +520,10 @@ function computeResult() {
 }
 
 function pickVibe(stats) {
+    if (typeof VibeEngine !== "undefined") {
+        const selected = VibeEngine.pickVibe(stats, VIBES);
+        if (selected) return selected;
+    }
     const { chaos, charm, cosmic, static: staticStat } = stats;
 
     if (staticStat >= 76 && chaos >= 72) return VIBES.find((v) => v.id === "premium-static");
@@ -572,8 +576,10 @@ function showResult(result, options = {}) {
     if (options.save) {
         state.scanCount++;
         state.history.unshift({
+            id: result.id,
             title: result.title,
             badge: result.badge,
+            stats: result.stats,
             date: new Date(result.generatedAt).toLocaleDateString(),
         });
         state.history = state.history.slice(0, 5);
@@ -770,7 +776,12 @@ function renderHistory() {
         list.innerHTML = '<li class="empty">no prior vibes detected</li>';
         return;
     }
-    list.innerHTML = state.history.map((h) =>
+    let compareLine = "";
+    if (typeof VibeEngine !== "undefined" && state.history.length >= 2 && state.history[0].stats && state.history[1].stats) {
+        const cmp = VibeEngine.compareResults(state.history[1], state.history[0]);
+        compareLine = `<li class="history-compare">${cmp.summary}</li>`;
+    }
+    list.innerHTML = compareLine + state.history.map((h) =>
         `<li><span class="vibe-name">${h.badge || "VX"} ${h.title}</span><span>${h.date}</span></li>`
     ).join("");
 }
@@ -1086,6 +1097,11 @@ function init() {
     updatePing();
     setInterval(updatePing, 1500);
     rotateStatus();
+
+    if (typeof VibeEngine !== "undefined") {
+        const daily = VibeEngine.dailySeed();
+        toast(`DAILY FREQUENCY: ${daily.flavor.toUpperCase()}`);
+    }
 
     const shared = readSharedResult();
     if (shared) {

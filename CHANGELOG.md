@@ -4,6 +4,18 @@ All notable changes to VIBE CHECK 9000™ are documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
+## [9.2.0] - 2026-08-18
+
+### Added
+- Extracted `engine.js`: deterministic scoring, vibe picker, share encode/decode,
+  result compare, and a daily frequency seed. Works in the browser and Node.
+- History now stores stat profiles and shows a compare line between the last two scans.
+- Daily flavor toast on load.
+- `npm test` (`node:test`) and GitHub Actions CI.
+
+### Changed
+- Version badge bumped to v9.2.0. `pickVibe` delegates to the shared engine.
+
 ## [9.1.0] - 2026-07-02
 
 ### Added
