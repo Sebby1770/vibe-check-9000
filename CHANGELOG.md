@@ -4,6 +4,13 @@ All notable changes to VIBE CHECK 9000™ are documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
+## [9.3.0] - 2026-08-18
+
+### Added
+- Daily remix: question order is shuffled from the UTC date seed.
+- Deterministic compatibility score between two stat profiles.
+- Engine tests for shuffle and compatibility.
+
 ## [9.2.0] - 2026-08-18
 
 ### Added

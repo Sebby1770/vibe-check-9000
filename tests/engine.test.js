@@ -57,6 +57,21 @@ test("compareResults reports archetype drift", () => {
     assert.equal(cmp.delta.chaos, 10);
 });
 
+test("shuffleQuestions is deterministic for a seed", () => {
+    const qs = [{ id: 1 }, { id: 2 }, { id: 3 }, { id: 4 }];
+    const a = engine.shuffleQuestions(qs, 9000);
+    const b = engine.shuffleQuestions(qs, 9000);
+    assert.deepEqual(a.map((q) => q.id), b.map((q) => q.id));
+    const c = engine.shuffleQuestions(qs, 9001);
+    assert.notDeepEqual(a.map((q) => q.id), c.map((q) => q.id));
+});
+
+test("compatibility is 100 for identical stats", () => {
+    const stats = { chaos: 40, charm: 50, cosmic: 60, static: 70 };
+    assert.equal(engine.compatibility(stats, stats), 100);
+    assert.ok(engine.compatibility(stats, { chaos: 0, charm: 0, cosmic: 0, static: 0 }) < 80);
+});
+
 test("dailySeed is stable for a given UTC date", () => {
     const a = engine.dailySeed(new Date("2026-08-18T12:00:00.000Z"));
     const b = engine.dailySeed(new Date("2026-08-18T23:00:00.000Z"));

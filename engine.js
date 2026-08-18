@@ -104,6 +104,28 @@
         };
     }
 
+    function shuffleQuestions(questions, seed) {
+        const copy = questions.map((q) => q);
+        let state = (Number(seed) >>> 0) || 1;
+        for (let i = copy.length - 1; i > 0; i -= 1) {
+            state = (Math.imul(state, 1664525) + 1013904223) >>> 0;
+            const j = state % (i + 1);
+            const tmp = copy[i];
+            copy[i] = copy[j];
+            copy[j] = tmp;
+        }
+        return copy;
+    }
+
+    function compatibility(left, right) {
+        const keys = ["chaos", "charm", "cosmic", "static"];
+        let distance = 0;
+        keys.forEach((key) => {
+            distance += Math.abs((left[key] || 0) - (right[key] || 0));
+        });
+        return Math.max(0, Math.min(100, 100 - Math.round(distance / 4)));
+    }
+
     function dailySeed(date = new Date()) {
         const stamp = date.toISOString().slice(0, 10);
         let hash = 2166136261;
@@ -125,6 +147,8 @@
         encodeResult,
         decodeResult,
         compareResults,
+        compatibility,
+        shuffleQuestions,
         dailySeed,
     };
 }));

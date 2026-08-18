@@ -318,6 +318,7 @@ let state = {
     seenVibes: JSON.parse(localStorage.getItem("vibeSeen") || "[]"),
     currentResult: null,
     questionsStartedAt: 0,
+    deck: QUESTIONS,
 };
 
 const REDUCE_MOTION = window.matchMedia("(prefers-reduced-motion: reduce)");
@@ -448,7 +449,7 @@ async function runLog(messages, delay) {
 }
 
 function showQuestion() {
-    const q = QUESTIONS[state.qIndex];
+    const q = (state.deck || QUESTIONS)[state.qIndex];
     $("qNum").textContent = state.qIndex + 1;
     $("qTotal").textContent = QUESTIONS.length;
     $("qBar").style.width = `${(state.qIndex / QUESTIONS.length) * 100}%`;
@@ -569,7 +570,11 @@ function showResult(result, options = {}) {
 
     setTimeout(() => updateStatBars(result.stats), 150);
     drawRadar(result.stats, result.color);
-    $("compatPercent").textContent = `${60 + Math.floor(Math.random() * 40)}%`;
+    if (typeof VibeEngine !== "undefined" && state.history[0] && state.history[0].stats) {
+        $("compatPercent").textContent = `${VibeEngine.compatibility(result.stats, state.history[0].stats)}%`;
+    } else {
+        $("compatPercent").textContent = `${60 + Math.floor(Math.random() * 40)}%`;
+    }
     $("compatName").textContent = rand(PAIRINGS);
     $("shareUrl").textContent = getShareUrl(result);
 
@@ -731,6 +736,10 @@ function resetRun() {
     state.qIndex = 0;
     state.totals = { chaos: 0, charm: 0, cosmic: 0, static: 0 };
     state.currentResult = null;
+    state.deck = QUESTIONS;
+    if (typeof VibeEngine !== "undefined") {
+        state.deck = VibeEngine.shuffleQuestions(QUESTIONS, VibeEngine.dailySeed().seed);
+    }
     updateStatBars({ chaos: 0, charm: 0, cosmic: 0, static: 0 });
     $("shareUrl").textContent = "complete scan to generate link";
 }
