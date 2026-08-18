@@ -20,6 +20,7 @@ Once GitHub Pages is enabled for this repo:
 - Nine interactive questions scored across Chaos, Charm, Cosmic, and Static
 - Animated four-axis radar chart of your stat profile on the result card
 - Fifteen ridiculous result archetypes
+- Testable scoring engine (`engine.js`) with share encode/decode and compare
 - Encoded result URLs that can be copied or shared
 - PNG result-card export
 - Local scan history and ten achievements, including cross-session vibe discovery tracking
@@ -34,9 +35,10 @@ See [CHANGELOG.md](CHANGELOG.md) for release history.
 
 ```bash
 open index.html
+npm test
 ```
 
-No build step, no dependencies, no framework. Just static files.
+No build step, no framework. `engine.js` is the scoring core; `npm test` runs it under Node.
 
 ## Deploy
 

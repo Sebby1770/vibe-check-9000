@@ -318,6 +318,7 @@ let state = {
     seenVibes: JSON.parse(localStorage.getItem("vibeSeen") || "[]"),
     currentResult: null,
     questionsStartedAt: 0,
+    deck: QUESTIONS,
 };
 
 const REDUCE_MOTION = window.matchMedia("(prefers-reduced-motion: reduce)");
@@ -448,7 +449,7 @@ async function runLog(messages, delay) {
 }
 
 function showQuestion() {
-    const q = QUESTIONS[state.qIndex];
+    const q = (state.deck || QUESTIONS)[state.qIndex];
     $("qNum").textContent = state.qIndex + 1;
     $("qTotal").textContent = QUESTIONS.length;
     $("qBar").style.width = `${(state.qIndex / QUESTIONS.length) * 100}%`;
@@ -520,6 +521,10 @@ function computeResult() {
 }
 
 function pickVibe(stats) {
+    if (typeof VibeEngine !== "undefined") {
+        const selected = VibeEngine.pickVibe(stats, VIBES);
+        if (selected) return selected;
+    }
     const { chaos, charm, cosmic, static: staticStat } = stats;
 
     if (staticStat >= 76 && chaos >= 72) return VIBES.find((v) => v.id === "premium-static");
@@ -565,15 +570,21 @@ function showResult(result, options = {}) {
 
     setTimeout(() => updateStatBars(result.stats), 150);
     drawRadar(result.stats, result.color);
-    $("compatPercent").textContent = `${60 + Math.floor(Math.random() * 40)}%`;
+    if (typeof VibeEngine !== "undefined" && state.history[0] && state.history[0].stats) {
+        $("compatPercent").textContent = `${VibeEngine.compatibility(result.stats, state.history[0].stats)}%`;
+    } else {
+        $("compatPercent").textContent = `${60 + Math.floor(Math.random() * 40)}%`;
+    }
     $("compatName").textContent = rand(PAIRINGS);
     $("shareUrl").textContent = getShareUrl(result);
 
     if (options.save) {
         state.scanCount++;
         state.history.unshift({
+            id: result.id,
             title: result.title,
             badge: result.badge,
+            stats: result.stats,
             date: new Date(result.generatedAt).toLocaleDateString(),
         });
         state.history = state.history.slice(0, 5);
@@ -725,6 +736,10 @@ function resetRun() {
     state.qIndex = 0;
     state.totals = { chaos: 0, charm: 0, cosmic: 0, static: 0 };
     state.currentResult = null;
+    state.deck = QUESTIONS;
+    if (typeof VibeEngine !== "undefined") {
+        state.deck = VibeEngine.shuffleQuestions(QUESTIONS, VibeEngine.dailySeed().seed);
+    }
     updateStatBars({ chaos: 0, charm: 0, cosmic: 0, static: 0 });
     $("shareUrl").textContent = "complete scan to generate link";
 }
@@ -770,7 +785,12 @@ function renderHistory() {
         list.innerHTML = '<li class="empty">no prior vibes detected</li>';
         return;
     }
-    list.innerHTML = state.history.map((h) =>
+    let compareLine = "";
+    if (typeof VibeEngine !== "undefined" && state.history.length >= 2 && state.history[0].stats && state.history[1].stats) {
+        const cmp = VibeEngine.compareResults(state.history[1], state.history[0]);
+        compareLine = `<li class="history-compare">${cmp.summary}</li>`;
+    }
+    list.innerHTML = compareLine + state.history.map((h) =>
         `<li><span class="vibe-name">${h.badge || "VX"} ${h.title}</span><span>${h.date}</span></li>`
     ).join("");
 }
@@ -1086,6 +1106,11 @@ function init() {
     updatePing();
     setInterval(updatePing, 1500);
     rotateStatus();
+
+    if (typeof VibeEngine !== "undefined") {
+        const daily = VibeEngine.dailySeed();
+        toast(`DAILY FREQUENCY: ${daily.flavor.toUpperCase()}`);
+    }
 
     const shared = readSharedResult();
     if (shared) {
