@@ -4,6 +4,17 @@ All notable changes to VIBE CHECK 9000™ are documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
+## [11.0.0] - 2026-08-24
+
+### Added
+- Daily streak (UTC) and a vibe atlas of discovered archetypes
+- CITY MAP / THREE-DAY STATIC achievements
+- Optional scan ping (respects reduced motion)
+- Engine: `atlasProgress`, `streakOnScan`
+
+### Changed
+- Version badge **v11.0.0**
+
 ## [10.0.0] - 2026-08-24
 
 ### Added

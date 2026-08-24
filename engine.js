@@ -144,6 +144,28 @@
         return "volt";
     }
 
+    function atlasProgress(seen, allIds) {
+        const have = new Set(seen || []);
+        const ids = allIds || [];
+        return {
+            found: ids.filter((id) => have.has(id)).length,
+            total: ids.length,
+            missing: ids.filter((id) => !have.has(id)),
+        };
+    }
+
+    function streakOnScan(prev, todayStamp) {
+        const last = prev && prev.last;
+        const count = (prev && prev.count) || 0;
+        if (last === todayStamp) return { count: Math.max(1, count), last: todayStamp, already: true };
+        if (!last) return { count: 1, last: todayStamp, already: false };
+        const prevDate = new Date(last + "T00:00:00Z");
+        const today = new Date(todayStamp + "T00:00:00Z");
+        const diff = Math.round((today - prevDate) / 86400000);
+        if (diff === 1) return { count: count + 1, last: todayStamp, already: false };
+        return { count: 1, last: todayStamp, already: false };
+    }
+
     function dossier(result) {
         const stats = result.stats || {};
         return [
@@ -182,5 +204,7 @@
         compatibilityLabel,
         skinFromStats,
         dossier,
+        atlasProgress,
+        streakOnScan,
     };
 }));

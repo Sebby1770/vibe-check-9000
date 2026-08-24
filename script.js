@@ -328,6 +328,8 @@ const ACHIEVEMENTS = [
     { id: "cosmic", icon: "✺", name: "COSMIC RECEIPT", desc: "max cosmic stat" },
     { id: "explorer", icon: "✪", name: "VIBE CARTOGRAPHER", desc: "discovered 5 different vibes" },
     { id: "speedrun", icon: "⚡", name: "ANY% VIBER", desc: "answered every question in under 15 seconds" },
+    { id: "atlas", icon: "▣", name: "CITY MAP", desc: "discovered 8 archetypes" },
+    { id: "streak3", icon: "⟳", name: "THREE-DAY STATIC", desc: "scanned on three consecutive UTC days" },
 ];
 
 const SIGNATURE_ITEMS = [
@@ -458,6 +460,7 @@ function updatePing() {
 }
 
 async function startScan() {
+    ping();
     resetRun();
     $("hero").classList.add("hidden");
     $("result").classList.add("hidden");
@@ -597,6 +600,43 @@ function pickVibe(stats) {
     return rand(VIBES);
 }
 
+function renderAtlas() {
+    const atlas = $("atlas");
+    if (!atlas) return;
+    const ids = VIBES.map((v) => v.id);
+    const prog = typeof VibeEngine !== "undefined" ? VibeEngine.atlasProgress(state.seenVibes, ids) : { found: state.seenVibes.length, total: ids.length };
+    if ($("atlasCount")) $("atlasCount").textContent = `${prog.found}/${prog.total} discovered`;
+    atlas.innerHTML = VIBES.map((v) => {
+        const on = state.seenVibes.includes(v.id);
+        return `<span class="atlas-chip ${on ? "on" : ""}" title="${v.title}">${v.badge}</span>`;
+    }).join("");
+    const streak = JSON.parse(localStorage.getItem("vibeStreak") || '{"count":0}');
+    if ($("streakLine")) {
+        $("streakLine").textContent = `STREAK ${streak.count || 0} · ATLAS ${prog.found}/${prog.total}`;
+    }
+    if (prog.found >= 8) unlock("atlas");
+    if ((streak.count || 0) >= 3) unlock("streak3");
+}
+
+function ping() {
+    if (REDUCE_MOTION.matches) return;
+    try {
+        const Ctor = window.AudioContext || window.webkitAudioContext;
+        if (!Ctor) return;
+        const ctx = new Ctor();
+        const osc = ctx.createOscillator();
+        const gain = ctx.createGain();
+        osc.frequency.value = 740;
+        gain.gain.value = 0.025;
+        osc.connect(gain);
+        gain.connect(ctx.destination);
+        osc.start();
+        osc.stop(ctx.currentTime + 0.07);
+    } catch {
+        /* ignore */
+    }
+}
+
 function showResult(result, options = {}) {
     state.currentResult = result;
     if (typeof AnimatedContent !== "undefined") AnimatedContent.reset($("result"));
@@ -604,6 +644,17 @@ function showResult(result, options = {}) {
     if (typeof VibeEngine !== "undefined" && result.stats) {
         document.body.dataset.skin = VibeEngine.skinFromStats(result.stats);
     }
+    if (result.id && !state.seenVibes.includes(result.id)) {
+        state.seenVibes.push(result.id);
+        localStorage.setItem("vibeSeen", JSON.stringify(state.seenVibes));
+    }
+    if (options.save && typeof VibeEngine !== "undefined") {
+        const today = VibeEngine.dailySeed().date;
+        const prev = JSON.parse(localStorage.getItem("vibeStreak") || "{}");
+        const next = VibeEngine.streakOnScan(prev, today);
+        localStorage.setItem("vibeStreak", JSON.stringify(next));
+    }
+    renderAtlas();
 
     $("resultBadge").textContent = result.badge;
     $("resultTitle").textContent = result.title;
@@ -1202,6 +1253,7 @@ function init() {
     wireEvents();
     renderHistory();
     renderAchievements();
+    renderAtlas();
     updatePing();
     setInterval(updatePing, 1500);
     rotateStatus();

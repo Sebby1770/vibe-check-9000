@@ -80,6 +80,18 @@ test("new archetypes resolve from the engine", () => {
     assert.equal(fax.id, "fax-from-the-future");
 });
 
+test("atlasProgress and streakOnScan", () => {
+    const prog = engine.atlasProgress(["a"], ["a", "b", "c"]);
+    assert.equal(prog.found, 1);
+    assert.equal(prog.total, 3);
+    const first = engine.streakOnScan({}, "2026-08-24");
+    assert.equal(first.count, 1);
+    const next = engine.streakOnScan(first, "2026-08-25");
+    assert.equal(next.count, 2);
+    const same = engine.streakOnScan(next, "2026-08-25");
+    assert.equal(same.already, true);
+});
+
 test("compatibilityLabel and skinFromStats", () => {
     assert.equal(engine.compatibilityLabel(100), "same firmware, different case");
     assert.equal(engine.skinFromStats({ chaos: 90, charm: 10, cosmic: 10, static: 10 }), "magenta");

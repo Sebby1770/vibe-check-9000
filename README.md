@@ -29,6 +29,7 @@ Live:
 - Hidden keyboard easter eggs
 - Printable dossier and compatibility against another result token
 - PWA (installable), result-driven color skins
+- Daily streak and a vibe atlas of discovered diagnoses
 - Eleven questions, eighteen archetypes
 - GitHub profile/repo links wired into the interface
 

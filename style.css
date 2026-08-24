@@ -1312,6 +1312,29 @@ body.rave .grid-bg { animation: gridmove 500ms linear infinite; }
     }
 }
 
+.hero-meta {
+  margin-top: 18px;
+  font-family: "Space Mono", monospace;
+  letter-spacing: 0.16em;
+  font-size: 11px;
+  color: #00fff7;
+}
+.atlas {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+}
+.atlas-chip {
+  border: 1px solid rgba(0, 255, 247, 0.25);
+  padding: 4px 6px;
+  font-size: 10px;
+  letter-spacing: 0.08em;
+  color: #556;
+}
+.atlas-chip.on {
+  color: #39ff14;
+  border-color: #39ff14;
+}
 .compare-label {
   display: grid;
   gap: 8px;
