@@ -4,6 +4,18 @@ All notable changes to VIBE CHECK 9000™ are documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
+## [10.0.0] - 2026-08-24
+
+### Added
+- Two more questions (fax from 2091, union card for background processes)
+- Three archetypes: FAX FROM THE FUTURE, UNPAID INTERN OF DESTINY, BLUETOOTH GHOST
+- Printable dossier, compatibility against a pasted result token
+- Result-driven color skin, PWA manifest and service worker
+- Engine helpers: `compatibilityLabel`, `skinFromStats`, `dossier`
+
+### Changed
+- Version badge **v10.0.0**
+
 ## [9.3.0] - 2026-08-18
 
 ### Added

@@ -72,6 +72,21 @@ test("compatibility is 100 for identical stats", () => {
     assert.ok(engine.compatibility(stats, { chaos: 0, charm: 0, cosmic: 0, static: 0 }) < 80);
 });
 
+test("new archetypes resolve from the engine", () => {
+    const fax = engine.pickVibe({ chaos: 80, charm: 85, cosmic: 80, static: 40 }, [
+        { id: "fax-from-the-future" },
+        { id: "executive-chaos" },
+    ]);
+    assert.equal(fax.id, "fax-from-the-future");
+});
+
+test("compatibilityLabel and skinFromStats", () => {
+    assert.equal(engine.compatibilityLabel(100), "same firmware, different case");
+    assert.equal(engine.skinFromStats({ chaos: 90, charm: 10, cosmic: 10, static: 10 }), "magenta");
+    const lines = engine.dossier({ title: "X", reportId: "42", stats: { chaos: 1, charm: 2, cosmic: 3, static: 4 } });
+    assert.ok(lines[0].includes("42"));
+});
+
 test("dailySeed is stable for a given UTC date", () => {
     const a = engine.dailySeed(new Date("2026-08-18T12:00:00.000Z"));
     const b = engine.dailySeed(new Date("2026-08-18T23:00:00.000Z"));

@@ -1312,6 +1312,33 @@ body.rave .grid-bg { animation: gridmove 500ms linear infinite; }
     }
 }
 
+.compare-label {
+  display: grid;
+  gap: 8px;
+  margin-top: 12px;
+  font-size: 12px;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: #9aa;
+}
+.compare-label input {
+  width: 100%;
+  background: #07020d;
+  color: #e0e0ff;
+  border: 1px solid rgba(0, 255, 247, 0.35);
+  padding: 8px;
+  font-family: inherit;
+}
+body[data-skin="magenta"] .hero-title .neon { color: #ff00ff; }
+body[data-skin="cyan"] .hero-title .neon { color: #00fff7; }
+body[data-skin="volt"] .hero-title .neon { color: #39ff14; }
+@media print {
+  .header, .hero, .nav-actions, .secret-cube, .toast, #questions, #scanner, footer .footer-links { display: none !important; }
+  .grid-bg, .scanline, .noise, #particles { display: none !important; }
+  body { background: #fff; color: #000; }
+  #result { display: block !important; }
+}
+
 /* ---- v9.1.0 additions ---- */
 
 .radar-wrap {

@@ -20,6 +20,7 @@
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;700;900&family=Space+Mono:wght@400;700&family=VT323&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="style.css">
+    <link rel="manifest" href="manifest.json">
 </head>
 <body>
     <div class="grid-bg" aria-hidden="true"></div>
@@ -50,7 +51,7 @@
 
     <main class="main">
         <section class="hero" id="hero">
-            <div class="hero-tag" data-animate data-animate-distance="40" data-animate-duration="700">v9.3.0 // NIGHT-CITY CERTIFIED // 0% MEDICALLY USEFUL</div>
+            <div class="hero-tag" data-animate data-animate-distance="40" data-animate-duration="700">v10.0.0 // NIGHT-CITY CERTIFIED // 0% MEDICALLY USEFUL</div>
             <h1 class="hero-title">
                 <span class="word" data-text="SCAN" data-animate data-animate-direction="horizontal" data-animate-reverse="true" data-animate-distance="120" data-animate-duration="900">SCAN</span>
                 <span class="word" data-text="YOUR" data-animate data-animate-distance="120" data-animate-duration="900" data-animate-delay="120">YOUR</span>
@@ -206,6 +207,12 @@
                     <h4>► SHARE LINK</h4>
                     <p class="share-url" id="shareUrl">complete scan to generate link</p>
                     <button class="mini-btn" id="copyLinkBtn">COPY RESULT LINK</button>
+                    <button class="mini-btn" id="printDossierBtn" type="button">PRINT DOSSIER</button>
+                    <label class="compare-label">pair with another scan
+                        <input id="compareToken" placeholder="paste a result link or token" />
+                    </label>
+                    <button class="mini-btn" id="compareBtn" type="button">COMPUTE COMPATIBILITY</button>
+                    <p class="share-url" id="compareOut">two vibes enter. one charger survives.</p>
                 </div>
                 <div class="side-card" data-animate data-animate-direction="horizontal" data-animate-distance="90" data-animate-duration="800" data-animate-delay="450">
                     <h4>► HISTORICAL VIBES</h4>

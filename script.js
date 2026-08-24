@@ -94,6 +94,26 @@ const QUESTIONS = [
             { text: "a dial tone from a phone that was never plugged in", chaos: 85, charm: 43, cosmic: 92, static: 90 },
         ],
     },
+    {
+        prompt: "A lost fax arrives from the year 2091. The subject line is:",
+        opts: [
+            { text: "RE: your posture in meetings", chaos: 44, charm: 71, cosmic: 80, static: 52 },
+            { text: "URGENT: the playlist was evidence", chaos: 82, charm: 63, cosmic: 74, static: 61 },
+            { text: "fw: fw: you already solved this", chaos: 58, charm: 49, cosmic: 91, static: 77 },
+            { text: "please find attached one (1) destiny", chaos: 76, charm: 88, cosmic: 69, static: 40 },
+            { text: "this machine misses you specifically", chaos: 91, charm: 55, cosmic: 86, static: 83 },
+        ],
+    },
+    {
+        prompt: "You are offered a union card for background processes. You:",
+        opts: [
+            { text: "sign in glitter gel pen", chaos: 61, charm: 90, cosmic: 48, static: 44 },
+            { text: "ask whether feelings count as overtime", chaos: 72, charm: 68, cosmic: 77, static: 59 },
+            { text: "organize a strike of one (you)", chaos: 94, charm: 57, cosmic: 62, static: 71 },
+            { text: "negotiate for better loading screens", chaos: 49, charm: 74, cosmic: 53, static: 66 },
+            { text: "file it under MAYBE LATER, eternally", chaos: 33, charm: 51, cosmic: 70, static: 88 },
+        ],
+    },
 ];
 
 const VIBES = [
@@ -261,6 +281,39 @@ const VIBES = [
         pair: "someone patient with cinematic timing",
         avoid: "anyone who force-quits without asking",
         prophecy: "the thing loading finally finishes when you stop watching.",
+    },
+    {
+        id: "fax-from-the-future",
+        title: "FAX FROM THE FUTURE",
+        badge: "FF",
+        desc: "You arrive already cc'd on events that have not happened. The paper is warm. The advice is late on purpose.",
+        item: "a curling thermal printout labeled DO NOT LOSE",
+        color: "#FF6B6B",
+        pair: "someone who timestamps their feelings",
+        avoid: "people who say 'we'll circle back' to fate",
+        prophecy: "a message you forgot to send will still land.",
+    },
+    {
+        id: "unpaid-intern-of-destiny",
+        title: "UNPAID INTERN OF DESTINY",
+        badge: "UI",
+        desc: "The universe gave you a badge and no salary. You still shipped the apocalypse on time and asked if anyone needed coffee.",
+        item: "a lanyard that says ASK ME ABOUT PROPHECY",
+        color: "#C77DFF",
+        pair: "a manager who understands mythic labor",
+        avoid: "unpaid 'exposure' in any century",
+        prophecy: "your smallest errand becomes canon.",
+    },
+    {
+        id: "bluetooth-ghost",
+        title: "BLUETOOTH GHOST IN THE MACHINE",
+        badge: "BG",
+        desc: "Devices pair with you unprompted. You are discoverable even when you are not. The earbuds of strangers know your name.",
+        item: "a connection popup that will not dismiss",
+        color: "#80FFDB",
+        pair: "someone who can put a phone face-down",
+        avoid: "open networks named after feelings",
+        prophecy: "a forgotten device will reconnect at the worst possible song.",
     },
 ];
 
@@ -548,6 +601,9 @@ function showResult(result, options = {}) {
     state.currentResult = result;
     if (typeof AnimatedContent !== "undefined") AnimatedContent.reset($("result"));
     $("result").classList.remove("hidden");
+    if (typeof VibeEngine !== "undefined" && result.stats) {
+        document.body.dataset.skin = VibeEngine.skinFromStats(result.stats);
+    }
 
     $("resultBadge").textContent = result.badge;
     $("resultTitle").textContent = result.title;
@@ -757,6 +813,20 @@ function getShareUrl(result) {
         .replace(/=+$/g, "");
     const base = location.protocol === "file:" ? LIVE_URL : location.origin + location.pathname;
     return `${base}#vibe=${encoded}`;
+}
+
+function readSharedResultFrom(token) {
+    if (!token) return null;
+    try {
+        const encoded = String(token).replace(/-/g, "+").replace(/_/g, "/");
+        const padded = encoded + "=".repeat((4 - (encoded.length % 4)) % 4);
+        const payload = JSON.parse(decodeURIComponent(escape(atob(padded))));
+        const vibe = VIBES.find((v) => v.id === payload.id) || payload;
+        if (!payload.stats) return null;
+        return { ...vibe, stats: payload.stats, reportId: payload.reportId, generatedAt: payload.generatedAt };
+    } catch {
+        return null;
+    }
 }
 
 function readSharedResult() {
@@ -1011,6 +1081,35 @@ function wireEvents() {
         }
         copyText(getShareUrl(state.currentResult), "RESULT LINK COPIED");
     });
+    const printBtn = $("printDossierBtn");
+    if (printBtn) {
+        printBtn.addEventListener("click", () => {
+            if (!state.currentResult) {
+                toast("RUN A SCAN FIRST");
+                return;
+            }
+            window.print();
+        });
+    }
+    const compareBtn = $("compareBtn");
+    if (compareBtn) {
+        compareBtn.addEventListener("click", () => {
+            if (!state.currentResult || typeof VibeEngine === "undefined") {
+                toast("RUN A SCAN FIRST");
+                return;
+            }
+            const raw = ($("compareToken").value || "").trim();
+            const token = raw.includes("#vibe=") ? raw.split("#vibe=")[1] : raw;
+            const other = VibeEngine.decodeResult(token) || readSharedResultFrom(token);
+            if (!other || !other.stats) {
+                toast("THAT TOKEN IS HAUNTED");
+                return;
+            }
+            const score = VibeEngine.compatibility(state.currentResult.stats, other.stats);
+            const label = VibeEngine.compatibilityLabel(score);
+            $("compareOut").textContent = `${score}% — ${label}`;
+        });
+    }
 
     document.querySelectorAll("[data-modal]").forEach((link) => {
         link.addEventListener("click", (e) => {
@@ -1117,6 +1216,9 @@ function init() {
         $("hero").classList.add("hidden");
         showResult(shared, { save: false });
         toast("SHARED VIBE LOADED");
+    }
+    if ("serviceWorker" in navigator) {
+        navigator.serviceWorker.register("./sw.js").catch(() => {});
     }
 
     console.log(

@@ -8,7 +8,7 @@
 
 ## Live Site
 
-Once GitHub Pages is enabled for this repo:
+Live:
 
 <https://sebby1770.github.io/vibe-check-9000/>
 
@@ -27,6 +27,9 @@ Once GitHub Pages is enabled for this repo:
 - Keyboard play: answer questions with keys 1–5, close modals with Escape
 - Full `prefers-reduced-motion` support
 - Hidden keyboard easter eggs
+- Printable dossier and compatibility against another result token
+- PWA (installable), result-driven color skins
+- Eleven questions, eighteen archetypes
 - GitHub profile/repo links wired into the interface
 
 See [CHANGELOG.md](CHANGELOG.md) for release history.

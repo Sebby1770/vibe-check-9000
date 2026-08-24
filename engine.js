@@ -43,6 +43,9 @@
 
         if (staticStat >= 76 && chaos >= 72) return byId("premium-static");
         if (cosmic >= 76 && charm < 58) return byId("neon-oracle");
+        if (charm >= 80 && cosmic >= 70 && chaos >= 70) return byId("fax-from-the-future") || byId("executive-chaos");
+        if (staticStat >= 74 && charm >= 70 && chaos < 55) return byId("bluetooth-ghost") || byId("soft-launch");
+        if (chaos >= 75 && cosmic >= 65 && charm >= 60 && staticStat < 70) return byId("unpaid-intern-of-destiny") || byId("glitch-couture");
         if (chaos >= 80 && charm >= 68) return byId("executive-chaos");
         if (charm >= 78 && chaos < 58) return byId("soft-launch");
         if (cosmic >= 76 && staticStat < 56) return byId("dialup-mystic");
@@ -126,6 +129,32 @@
         return Math.max(0, Math.min(100, 100 - Math.round(distance / 4)));
     }
 
+    function compatibilityLabel(score) {
+        if (score >= 90) return "same firmware, different case";
+        if (score >= 75) return "could share a charger";
+        if (score >= 50) return "dramatic but operational";
+        if (score >= 25) return "requires a translator";
+        return "do not pair these bluetooths";
+    }
+
+    function skinFromStats(stats) {
+        const { chaos, charm, cosmic, static: st } = stats || {};
+        if ((chaos || 0) >= (charm || 0) && (chaos || 0) >= (cosmic || 0)) return "magenta";
+        if ((cosmic || 0) >= (st || 0)) return "cyan";
+        return "volt";
+    }
+
+    function dossier(result) {
+        const stats = result.stats || {};
+        return [
+            `FILE ${result.reportId || "000000"}`,
+            `ARCHETYPE ${result.title || result.id}`,
+            `CHAOS ${stats.chaos}  CHARM ${stats.charm}`,
+            `COSMIC ${stats.cosmic}  STATIC ${stats.static}`,
+            `PROPHECY ${result.prophecy || "classified"}`,
+        ];
+    }
+
     function dailySeed(date = new Date()) {
         const stamp = date.toISOString().slice(0, 10);
         let hash = 2166136261;
@@ -150,5 +179,8 @@
         compatibility,
         shuffleQuestions,
         dailySeed,
+        compatibilityLabel,
+        skinFromStats,
+        dossier,
     };
 }));
