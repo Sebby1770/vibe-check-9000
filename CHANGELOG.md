@@ -4,47 +4,49 @@ All notable changes to VIBE CHECK 9000™ are documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
-## [11.0.0] - 2026-08-24
+## [12.0.0] - 2026-09-07
+
+GitHub already shipped a separate 11.0 atlas/streak release. This is the
+first-person nightclub visor line.
+
+## [11.0.0] - 2026-09-07
 
 ### Added
-- Daily streak (UTC) and a vibe atlas of discovered archetypes
-- CITY MAP / THREE-DAY STATIC achievements
-- Optional scan ping (respects reduced motion)
-- Engine: `atlasProgress`, `streakOnScan`
+
+- Unreal Bloom post-process, kick FOV pulse, first-person visor hands.
+- Crowd is now torso + head + glowstick instances instead of single capsules.
+- Wall EQ screen, VIP couches, claps on beats 2 and 4, result radar chart.
+
+## [10.0.0] - 2026-09-07
+
+### Added
+- **First-person VR nightclub.** Warehouse rave in Three.js r160: LED dance floor,
+  truss, moving-head lasers, mirror ball, DJ booth + LED wall, fog, 400 particles,
+  instanced crowd, bar, neon signs, scanner kiosk, hidden cube.
+- **Pointer-lock visor.** WASD + mouse look, head bob on beat, AABB collision,
+  on-screen stick + drag-to-look on mobile.
+- **Procedural techno** (Web Audio, no files): 128 BPM four-on-the-floor kick,
+  hats, A-minor bass, 4-bar stabs, compressor, delay, analyser, HRTF panner at
+  the booth. After a result: BPM / filter / stereo width follow chaos / charm /
+  cosmic.
+- **Optional WebXR** via `VRButton` only when `immersive-vr` is actually supported.
+- **Visor HUD** overlays: boot calibration, walk-to-scanner prompt, holographic
+  questions, 3-second drop, result card, pause, settings.
+- Headset telemetry strip (BPM, heading, position, bass, clock) and visor reticle.
+- `js/engine.js` extracted as a Node-testable scoring module (no DOM).
+- `tests/engine.test.js` + `npm test`.
 
 ### Changed
-- Version badge **v11.0.0**
+- The 2D cyberpunk terminal is no longer the main experience. Same 9 questions,
+  15 vibes, pickVibe rules, share encoding, achievements, and localStorage keys.
+- RAVE MODE achievement now unlocks when you enter the club (Konami still works).
+- Version badge bumped to v10.0.0.
 
-## [10.0.0] - 2026-08-24
-
-### Added
-- Two more questions (fax from 2091, union card for background processes)
-- Three archetypes: FAX FROM THE FUTURE, UNPAID INTERN OF DESTINY, BLUETOOTH GHOST
-- Printable dossier, compatibility against a pasted result token
-- Result-driven color skin, PWA manifest and service worker
-- Engine helpers: `compatibilityLabel`, `skinFromStats`, `dossier`
-
-### Changed
-- Version badge **v10.0.0**
-
-## [9.3.0] - 2026-08-18
-
-### Added
-- Daily remix: question order is shuffled from the UTC date seed.
-- Deterministic compatibility score between two stat profiles.
-- Engine tests for shuffle and compatibility.
-
-## [9.2.0] - 2026-08-18
-
-### Added
-- Extracted `engine.js`: deterministic scoring, vibe picker, share encode/decode,
-  result compare, and a daily frequency seed. Works in the browser and Node.
-- History now stores stat profiles and shows a compare line between the last two scans.
-- Daily flavor toast on load.
-- `npm test` (`node:test`) and GitHub Actions CI.
-
-### Changed
-- Version badge bumped to v9.2.0. `pickVibe` delegates to the shared engine.
+### Accessibility
+- SKIP TO QUIZ bypasses pointer lock.
+- Escape exits lock and shows a menu.
+- `prefers-reduced-motion`: no bob, no strobe, slower lasers, audio optional.
+- WebGL failure falls back to the visor quiz without the 3D club.
 
 ## [9.1.0] - 2026-07-02
 

@@ -1,60 +1,84 @@
 # VIBE CHECK 9000™
 
-> A cyberpunk-themed website that scans your vibe and returns a deeply official, deeply unserious diagnosis.
+> Put on the headset. Walk into a warehouse rave. Let illegal LEDs diagnose your vibe.
 
-[![status](https://img.shields.io/badge/status-neon%20online-ff00ff?style=for-the-badge)](#)
-[![stack](https://img.shields.io/badge/stack-HTML%20CSS%20JS-00fff7?style=for-the-badge)](#)
+[![status](https://img.shields.io/badge/status-visor%20online-ff00ff?style=for-the-badge)](#)
+[![stack](https://img.shields.io/badge/stack-Three.js%20Web%20Audio-00fff7?style=for-the-badge)](#)
 [![accuracy](https://img.shields.io/badge/accuracy-emotionally%20suspicious-39ff14?style=for-the-badge)](#)
 
 ## Live Site
 
-Live:
+Once GitHub Pages is enabled for this repo:
 
 <https://sebby1770.github.io/vibe-check-9000/>
 
-## Features
+## ENTER THE CLUB
 
-- Animated cyberpunk UI with neon grid, scanlines, glitch text, scanner rings, and canvas particles
-- Entrance animations powered by a vanilla JS port of [ReactBits AnimatedContent](https://reactbits.dev/animations/animated-content) — same prop API (direction, distance, duration, ease, delay, threshold, scale, reverse), zero dependencies
-- Multi-stage fake terminal scan with absurd loading messages
-- Nine interactive questions scored across Chaos, Charm, Cosmic, and Static
-- Animated four-axis radar chart of your stat profile on the result card
-- Fifteen ridiculous result archetypes
-- Testable scoring engine (`engine.js`) with share encode/decode and compare
-- Encoded result URLs that can be copied or shared
-- PNG result-card export
-- Local scan history and ten achievements, including cross-session vibe discovery tracking
-- Keyboard play: answer questions with keys 1–5, close modals with Escape
-- Full `prefers-reduced-motion` support
-- Hidden keyboard easter eggs
-- Printable dossier and compatibility against another result token
-- PWA (installable), result-driven color skins
-- Daily streak and a vibe atlas of discovered diagnoses
-- Eleven questions, eighteen archetypes
-- GitHub profile/repo links wired into the interface
+This is a first-person visor experience, not a 2D terminal. The club uses bloom, glowsticks, visor hands, and a kick-synced FOV pulse.
 
-See [CHANGELOG.md](CHANGELOG.md) for release history.
+1. Serve the folder over HTTP (ES modules will not load from `file://`).
+2. Click **ENTER THE CLUB** — pointer lock + mouse look, procedural techno, warehouse rave.
+3. Walk to the cyan **scanner arch** (chevron on your visor). Press **E** or walk through.
+4. Answer 9 questions with **1–5** or clicks. The floor flashes. The crowd cheers.
+5. After question 9 the lights drop, then the club recolors to your vibe.
+6. Share, copy the link, or save a PNG report.
 
-## Run Locally
+**SKIP TO QUIZ** starts the scan immediately (keyboard / screen-reader friendly).
+
+## Controls
+
+| Input | Action |
+| --- | --- |
+| Mouse / drag | Look |
+| WASD / arrows | Move |
+| Shift | Sprint |
+| 1–5 | Answer the visible question |
+| E | Start scan (near kiosk) or touch the hidden cube |
+| Escape | Release pointer lock and open the pause menu |
+| Gear | Sensitivity, FOV, mute, reduced FX, crowd toggle |
+
+Mobile: on-screen stick on the left, drag-to-look on the right. Pointer lock is optional.
+
+## WebXR
+
+If `navigator.xr` reports immersive-vr, an **ENTER VR** button appears on the boot visor (Three.js `VRButton`). Desktop pointer-lock is the main path. HTTPS is required for WebXR.
+
+## Run locally
+
+ES modules + an import map, so you need a static server:
 
 ```bash
-open index.html
+python3 -m http.server
+```
+
+Then open <http://localhost:8000/>.
+
+No build step. No runtime npm dependencies. Three.js r160 loads from jsDelivr.
+
+## Tests
+
+```bash
 npm test
 ```
 
-No build step, no framework. `engine.js` is the scoring core; `npm test` runs it under Node.
+Runs `node tests/engine.test.js` (scoring, `pickVibe` branches, share encode/decode).
 
-## Deploy
+## Accessibility
 
-Set GitHub Pages to deploy from the `main` branch and the repository root. The site is plain static HTML/CSS/JS, so no build step is needed.
+- Focusable **ENTER THE CLUB** / **SKIP TO QUIZ** before pointer lock
+- Escape closes overlays and exits lock
+- `prefers-reduced-motion`: no head bob, no strobe, slower lasers, audio muted until you unmute
+- 2D fallback quiz if WebGL is missing
 
 ## Stack
 
-- HTML5
-- CSS3
-- Vanilla JavaScript
-- Canvas API
+- HTML / CSS visor HUD
+- Three.js r160 (ES modules, PointerLockControls, optional VRButton)
+- Web Audio API (procedural 128 BPM four-on-the-floor, spatialized at the DJ booth)
+- `js/engine.js` — questions, vibes, scoring, share tokens, achievements (no DOM)
 
 ## Disclaimer
 
-Results are not valid in court, therapy, hiring, dating, banking, or interdimensional arbitration.
+Results are not valid in court, therapy, hiring, dating, banking, or interdimensional arbitration. Do not base life choices on this visor. It is wearing sunglasses indoors.
+
+Source: [github.com/Sebby1770/vibe-check-9000](https://github.com/Sebby1770/vibe-check-9000)

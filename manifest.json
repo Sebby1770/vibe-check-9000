@@ -1,9 +1,0 @@
-{
-  "name": "VIBE CHECK 9000",
-  "short_name": "VIBE 9000",
-  "start_url": "./",
-  "display": "standalone",
-  "background_color": "#07020d",
-  "theme_color": "#07020d",
-  "description": "A cyberpunk scanner that diagnoses your vibe with extremely official nonsense."
-}

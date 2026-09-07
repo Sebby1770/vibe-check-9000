@@ -94,26 +94,6 @@ const QUESTIONS = [
             { text: "a dial tone from a phone that was never plugged in", chaos: 85, charm: 43, cosmic: 92, static: 90 },
         ],
     },
-    {
-        prompt: "A lost fax arrives from the year 2091. The subject line is:",
-        opts: [
-            { text: "RE: your posture in meetings", chaos: 44, charm: 71, cosmic: 80, static: 52 },
-            { text: "URGENT: the playlist was evidence", chaos: 82, charm: 63, cosmic: 74, static: 61 },
-            { text: "fw: fw: you already solved this", chaos: 58, charm: 49, cosmic: 91, static: 77 },
-            { text: "please find attached one (1) destiny", chaos: 76, charm: 88, cosmic: 69, static: 40 },
-            { text: "this machine misses you specifically", chaos: 91, charm: 55, cosmic: 86, static: 83 },
-        ],
-    },
-    {
-        prompt: "You are offered a union card for background processes. You:",
-        opts: [
-            { text: "sign in glitter gel pen", chaos: 61, charm: 90, cosmic: 48, static: 44 },
-            { text: "ask whether feelings count as overtime", chaos: 72, charm: 68, cosmic: 77, static: 59 },
-            { text: "organize a strike of one (you)", chaos: 94, charm: 57, cosmic: 62, static: 71 },
-            { text: "negotiate for better loading screens", chaos: 49, charm: 74, cosmic: 53, static: 66 },
-            { text: "file it under MAYBE LATER, eternally", chaos: 33, charm: 51, cosmic: 70, static: 88 },
-        ],
-    },
 ];
 
 const VIBES = [
@@ -282,39 +262,6 @@ const VIBES = [
         avoid: "anyone who force-quits without asking",
         prophecy: "the thing loading finally finishes when you stop watching.",
     },
-    {
-        id: "fax-from-the-future",
-        title: "FAX FROM THE FUTURE",
-        badge: "FF",
-        desc: "You arrive already cc'd on events that have not happened. The paper is warm. The advice is late on purpose.",
-        item: "a curling thermal printout labeled DO NOT LOSE",
-        color: "#FF6B6B",
-        pair: "someone who timestamps their feelings",
-        avoid: "people who say 'we'll circle back' to fate",
-        prophecy: "a message you forgot to send will still land.",
-    },
-    {
-        id: "unpaid-intern-of-destiny",
-        title: "UNPAID INTERN OF DESTINY",
-        badge: "UI",
-        desc: "The universe gave you a badge and no salary. You still shipped the apocalypse on time and asked if anyone needed coffee.",
-        item: "a lanyard that says ASK ME ABOUT PROPHECY",
-        color: "#C77DFF",
-        pair: "a manager who understands mythic labor",
-        avoid: "unpaid 'exposure' in any century",
-        prophecy: "your smallest errand becomes canon.",
-    },
-    {
-        id: "bluetooth-ghost",
-        title: "BLUETOOTH GHOST IN THE MACHINE",
-        badge: "BG",
-        desc: "Devices pair with you unprompted. You are discoverable even when you are not. The earbuds of strangers know your name.",
-        item: "a connection popup that will not dismiss",
-        color: "#80FFDB",
-        pair: "someone who can put a phone face-down",
-        avoid: "open networks named after feelings",
-        prophecy: "a forgotten device will reconnect at the worst possible song.",
-    },
 ];
 
 const ACHIEVEMENTS = [
@@ -328,8 +275,6 @@ const ACHIEVEMENTS = [
     { id: "cosmic", icon: "✺", name: "COSMIC RECEIPT", desc: "max cosmic stat" },
     { id: "explorer", icon: "✪", name: "VIBE CARTOGRAPHER", desc: "discovered 5 different vibes" },
     { id: "speedrun", icon: "⚡", name: "ANY% VIBER", desc: "answered every question in under 15 seconds" },
-    { id: "atlas", icon: "▣", name: "CITY MAP", desc: "discovered 8 archetypes" },
-    { id: "streak3", icon: "⟳", name: "THREE-DAY STATIC", desc: "scanned on three consecutive UTC days" },
 ];
 
 const SIGNATURE_ITEMS = [
@@ -373,7 +318,6 @@ let state = {
     seenVibes: JSON.parse(localStorage.getItem("vibeSeen") || "[]"),
     currentResult: null,
     questionsStartedAt: 0,
-    deck: QUESTIONS,
 };
 
 const REDUCE_MOTION = window.matchMedia("(prefers-reduced-motion: reduce)");
@@ -460,7 +404,6 @@ function updatePing() {
 }
 
 async function startScan() {
-    ping();
     resetRun();
     $("hero").classList.add("hidden");
     $("result").classList.add("hidden");
@@ -505,7 +448,7 @@ async function runLog(messages, delay) {
 }
 
 function showQuestion() {
-    const q = (state.deck || QUESTIONS)[state.qIndex];
+    const q = QUESTIONS[state.qIndex];
     $("qNum").textContent = state.qIndex + 1;
     $("qTotal").textContent = QUESTIONS.length;
     $("qBar").style.width = `${(state.qIndex / QUESTIONS.length) * 100}%`;
@@ -577,10 +520,6 @@ function computeResult() {
 }
 
 function pickVibe(stats) {
-    if (typeof VibeEngine !== "undefined") {
-        const selected = VibeEngine.pickVibe(stats, VIBES);
-        if (selected) return selected;
-    }
     const { chaos, charm, cosmic, static: staticStat } = stats;
 
     if (staticStat >= 76 && chaos >= 72) return VIBES.find((v) => v.id === "premium-static");
@@ -600,61 +539,10 @@ function pickVibe(stats) {
     return rand(VIBES);
 }
 
-function renderAtlas() {
-    const atlas = $("atlas");
-    if (!atlas) return;
-    const ids = VIBES.map((v) => v.id);
-    const prog = typeof VibeEngine !== "undefined" ? VibeEngine.atlasProgress(state.seenVibes, ids) : { found: state.seenVibes.length, total: ids.length };
-    if ($("atlasCount")) $("atlasCount").textContent = `${prog.found}/${prog.total} discovered`;
-    atlas.innerHTML = VIBES.map((v) => {
-        const on = state.seenVibes.includes(v.id);
-        return `<span class="atlas-chip ${on ? "on" : ""}" title="${v.title}">${v.badge}</span>`;
-    }).join("");
-    const streak = JSON.parse(localStorage.getItem("vibeStreak") || '{"count":0}');
-    if ($("streakLine")) {
-        $("streakLine").textContent = `STREAK ${streak.count || 0} · ATLAS ${prog.found}/${prog.total}`;
-    }
-    if (prog.found >= 8) unlock("atlas");
-    if ((streak.count || 0) >= 3) unlock("streak3");
-}
-
-function ping() {
-    if (REDUCE_MOTION.matches) return;
-    try {
-        const Ctor = window.AudioContext || window.webkitAudioContext;
-        if (!Ctor) return;
-        const ctx = new Ctor();
-        const osc = ctx.createOscillator();
-        const gain = ctx.createGain();
-        osc.frequency.value = 740;
-        gain.gain.value = 0.025;
-        osc.connect(gain);
-        gain.connect(ctx.destination);
-        osc.start();
-        osc.stop(ctx.currentTime + 0.07);
-    } catch {
-        /* ignore */
-    }
-}
-
 function showResult(result, options = {}) {
     state.currentResult = result;
     if (typeof AnimatedContent !== "undefined") AnimatedContent.reset($("result"));
     $("result").classList.remove("hidden");
-    if (typeof VibeEngine !== "undefined" && result.stats) {
-        document.body.dataset.skin = VibeEngine.skinFromStats(result.stats);
-    }
-    if (result.id && !state.seenVibes.includes(result.id)) {
-        state.seenVibes.push(result.id);
-        localStorage.setItem("vibeSeen", JSON.stringify(state.seenVibes));
-    }
-    if (options.save && typeof VibeEngine !== "undefined") {
-        const today = VibeEngine.dailySeed().date;
-        const prev = JSON.parse(localStorage.getItem("vibeStreak") || "{}");
-        const next = VibeEngine.streakOnScan(prev, today);
-        localStorage.setItem("vibeStreak", JSON.stringify(next));
-    }
-    renderAtlas();
 
     $("resultBadge").textContent = result.badge;
     $("resultTitle").textContent = result.title;
@@ -677,21 +565,15 @@ function showResult(result, options = {}) {
 
     setTimeout(() => updateStatBars(result.stats), 150);
     drawRadar(result.stats, result.color);
-    if (typeof VibeEngine !== "undefined" && state.history[0] && state.history[0].stats) {
-        $("compatPercent").textContent = `${VibeEngine.compatibility(result.stats, state.history[0].stats)}%`;
-    } else {
-        $("compatPercent").textContent = `${60 + Math.floor(Math.random() * 40)}%`;
-    }
+    $("compatPercent").textContent = `${60 + Math.floor(Math.random() * 40)}%`;
     $("compatName").textContent = rand(PAIRINGS);
     $("shareUrl").textContent = getShareUrl(result);
 
     if (options.save) {
         state.scanCount++;
         state.history.unshift({
-            id: result.id,
             title: result.title,
             badge: result.badge,
-            stats: result.stats,
             date: new Date(result.generatedAt).toLocaleDateString(),
         });
         state.history = state.history.slice(0, 5);
@@ -843,10 +725,6 @@ function resetRun() {
     state.qIndex = 0;
     state.totals = { chaos: 0, charm: 0, cosmic: 0, static: 0 };
     state.currentResult = null;
-    state.deck = QUESTIONS;
-    if (typeof VibeEngine !== "undefined") {
-        state.deck = VibeEngine.shuffleQuestions(QUESTIONS, VibeEngine.dailySeed().seed);
-    }
     updateStatBars({ chaos: 0, charm: 0, cosmic: 0, static: 0 });
     $("shareUrl").textContent = "complete scan to generate link";
 }
@@ -864,20 +742,6 @@ function getShareUrl(result) {
         .replace(/=+$/g, "");
     const base = location.protocol === "file:" ? LIVE_URL : location.origin + location.pathname;
     return `${base}#vibe=${encoded}`;
-}
-
-function readSharedResultFrom(token) {
-    if (!token) return null;
-    try {
-        const encoded = String(token).replace(/-/g, "+").replace(/_/g, "/");
-        const padded = encoded + "=".repeat((4 - (encoded.length % 4)) % 4);
-        const payload = JSON.parse(decodeURIComponent(escape(atob(padded))));
-        const vibe = VIBES.find((v) => v.id === payload.id) || payload;
-        if (!payload.stats) return null;
-        return { ...vibe, stats: payload.stats, reportId: payload.reportId, generatedAt: payload.generatedAt };
-    } catch {
-        return null;
-    }
 }
 
 function readSharedResult() {
@@ -906,12 +770,7 @@ function renderHistory() {
         list.innerHTML = '<li class="empty">no prior vibes detected</li>';
         return;
     }
-    let compareLine = "";
-    if (typeof VibeEngine !== "undefined" && state.history.length >= 2 && state.history[0].stats && state.history[1].stats) {
-        const cmp = VibeEngine.compareResults(state.history[1], state.history[0]);
-        compareLine = `<li class="history-compare">${cmp.summary}</li>`;
-    }
-    list.innerHTML = compareLine + state.history.map((h) =>
+    list.innerHTML = state.history.map((h) =>
         `<li><span class="vibe-name">${h.badge || "VX"} ${h.title}</span><span>${h.date}</span></li>`
     ).join("");
 }
@@ -1132,35 +991,6 @@ function wireEvents() {
         }
         copyText(getShareUrl(state.currentResult), "RESULT LINK COPIED");
     });
-    const printBtn = $("printDossierBtn");
-    if (printBtn) {
-        printBtn.addEventListener("click", () => {
-            if (!state.currentResult) {
-                toast("RUN A SCAN FIRST");
-                return;
-            }
-            window.print();
-        });
-    }
-    const compareBtn = $("compareBtn");
-    if (compareBtn) {
-        compareBtn.addEventListener("click", () => {
-            if (!state.currentResult || typeof VibeEngine === "undefined") {
-                toast("RUN A SCAN FIRST");
-                return;
-            }
-            const raw = ($("compareToken").value || "").trim();
-            const token = raw.includes("#vibe=") ? raw.split("#vibe=")[1] : raw;
-            const other = VibeEngine.decodeResult(token) || readSharedResultFrom(token);
-            if (!other || !other.stats) {
-                toast("THAT TOKEN IS HAUNTED");
-                return;
-            }
-            const score = VibeEngine.compatibility(state.currentResult.stats, other.stats);
-            const label = VibeEngine.compatibilityLabel(score);
-            $("compareOut").textContent = `${score}% — ${label}`;
-        });
-    }
 
     document.querySelectorAll("[data-modal]").forEach((link) => {
         link.addEventListener("click", (e) => {
@@ -1253,24 +1083,15 @@ function init() {
     wireEvents();
     renderHistory();
     renderAchievements();
-    renderAtlas();
     updatePing();
     setInterval(updatePing, 1500);
     rotateStatus();
-
-    if (typeof VibeEngine !== "undefined") {
-        const daily = VibeEngine.dailySeed();
-        toast(`DAILY FREQUENCY: ${daily.flavor.toUpperCase()}`);
-    }
 
     const shared = readSharedResult();
     if (shared) {
         $("hero").classList.add("hidden");
         showResult(shared, { save: false });
         toast("SHARED VIBE LOADED");
-    }
-    if ("serviceWorker" in navigator) {
-        navigator.serviceWorker.register("./sw.js").catch(() => {});
     }
 
     console.log(
