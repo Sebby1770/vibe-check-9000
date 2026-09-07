@@ -471,6 +471,37 @@ body:not([data-phase="explore"]) .visor-reticle { display: none; }
     margin: 8px 0 12px;
 }
 .result-desc { text-align: center; line-height: 1.55; margin-bottom: 18px; }
+.talk-role {
+    color: var(--cyan);
+    letter-spacing: 4px;
+    font-size: 11px;
+    font-family: "Orbitron", sans-serif;
+}
+.talk-line { margin: 12px 0 18px; line-height: 1.5; font-size: 16px; }
+.drop-audio {
+    display: grid;
+    place-items: center;
+    gap: 6px;
+    border: 2px dashed rgba(0, 255, 247, 0.45);
+    padding: 22px;
+    margin: 12px 0;
+    cursor: pointer;
+    text-align: center;
+    pointer-events: auto;
+}
+.drop-audio input { display: none; }
+.drop-audio.hot, .drop-audio:hover { border-color: var(--magenta); background: rgba(255, 0, 255, 0.08); }
+.track-list { list-style: none; max-height: 220px; overflow: auto; margin: 8px 0 16px; }
+.track-list li {
+    display: flex;
+    justify-content: space-between;
+    gap: 8px;
+    padding: 8px 4px;
+    border-bottom: 1px dashed rgba(255,255,255,0.08);
+    cursor: pointer;
+}
+.track-list li.on { color: var(--green); }
+.track-list .empty { color: var(--dim); cursor: default; }
 .radar-wrap { display: flex; justify-content: center; margin: 8px 0 16px; }
 .radar-wrap canvas { max-width: 100%; height: auto; }
 .result-stats { display: grid; gap: 10px; margin-bottom: 18px; }

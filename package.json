@@ -1,10 +1,10 @@
 {
   "name": "vibe-check-9000",
-  "version": "12.0.0",
+  "version": "13.0.0",
   "private": true,
   "type": "module",
-  "description": "First-person VR nightclub vibe scanner. Entirely unserious.",
+  "description": "First-person nightclub you can actually hang out in.",
   "scripts": {
-    "test": "node tests/engine.test.js"
+    "test": "node tests/people.test.js && node tests/engine.test.js"
   }
 }

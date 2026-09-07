@@ -21,6 +21,7 @@ export function createControls(camera, domElement, colliders) {
     let fov = 88;
     let sprint = false;
     let enabled = true;
+    let dance = false;
 
     camera.position.set(0, EYE, 14);
     camera.lookAt(0, 1.6, -12);
@@ -32,6 +33,10 @@ export function createControls(camera, domElement, colliders) {
         if (k === "a" || k === "arrowleft") keys.a = down;
         if (k === "d" || k === "arrowright") keys.d = down;
         if (k === "shift") sprint = down;
+        if (k === " " || e.code === "Space") {
+            dance = down;
+            e.preventDefault();
+        }
         if (down && (k === "w" || k === "a" || k === "s" || k === "d" || k.startsWith("arrow"))) {
             if (["INPUT", "TEXTAREA"].includes(e.target && e.target.tagName)) return;
             e.preventDefault();
@@ -156,16 +161,16 @@ export function createControls(camera, domElement, colliders) {
             resolve(camera.position);
 
             const moving = mag > 0.04 || keys.w || keys.a || keys.s || keys.d;
-            if (moving && !reduced) {
-                bobPhase += dt * (bpm / 60) * Math.PI * 2;
-                camera.position.y = EYE + Math.sin(bobPhase) * 0.035;
+            if ((moving || dance) && !reduced) {
+                bobPhase += dt * (bpm / 60) * Math.PI * 2 * (dance ? 1.35 : 1);
+                camera.position.y = EYE + Math.sin(bobPhase) * (dance ? 0.07 : 0.035);
             } else {
                 camera.position.y = EYE;
-                if (!moving) bobPhase = 0;
+                if (!moving && !dance) bobPhase = 0;
             }
 
             camera.getWorldDirection(_fwd);
-            return { moving, forward: _fwd };
+            return { moving, dancing: dance, forward: _fwd };
         },
     };
 }

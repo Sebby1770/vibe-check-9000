@@ -4,6 +4,7 @@ import { createClub } from "./club.js";
 import { createAudio } from "./audio.js";
 import { createControls } from "./controls.js";
 import { createHud } from "./hud.js";
+import { nearestNpc, onDanceFloor, applyChoice } from "./people.js";
 
 const _dir = new Vector3();
 
@@ -18,10 +19,6 @@ function hasWebGL() {
 
 function isTouch() {
     return window.matchMedia("(pointer: coarse)").matches || "ontouchstart" in window;
-}
-
-function sleep(ms) {
-    return new Promise((r) => setTimeout(r, ms));
 }
 
 function bindMobile(controls, hud) {
@@ -87,17 +84,16 @@ async function boot() {
     let club = null;
     let controls = null;
     const cubeFound = { done: false };
-    let walkedIn = false;
+    let energy = 0;
 
     const hud = createHud({
-        onEnter: async ({ skipLock } = {}) => {
+        onEnter: async () => {
             await audio.unlock();
             if (!hud.reducedFx) audio.start();
             else audio.setMuted(true);
             if (!audio.muted) audio.start();
-            if (!skipLock && !isTouch() && controls) controls.lock();
+            if (!isTouch() && controls) controls.lock();
             document.getElementById("mobile-controls").classList.toggle("hidden", !isTouch());
-            club?.setChevronVisible(true);
         },
         onOverlay: (open) => {
             if (open) controls?.unlock();
@@ -107,49 +103,14 @@ async function boot() {
             if (!isTouch()) controls?.lock();
         },
         onUnlockLook: () => controls?.unlock(),
-        onQuizStart: () => {
-            controls?.unlock();
-            club?.setChevronVisible(false);
-            walkedIn = true;
-        },
-        onAnswer: () => {
-            club?.flashFloor();
-            club?.shiftLasers();
-            audio.cheer();
-        },
-        onDrop: async (result) => {
-            club?.setDrop("blackout");
-            audio.dropBlackout();
-            await sleep(400);
-            club?.setDrop("explode");
-            club?.setVibeColor(result.color);
-            club?.setLedMessage(result.title, `${result.badge} DIAGNOSIS`, result.stats);
-            audio.applyVibe(result.stats);
-            audio.dropExplode();
-            await sleep(2600);
-            club?.setDrop("idle");
-        },
-        onResult: (result) => {
-            club?.setVibeColor(result.color);
-            club?.setLedMessage(result.title, "VIBE LOCKED", result.stats);
-            audio.applyVibe(result.stats);
-        },
-        onRescan: () => {
-            walkedIn = false;
-            club?.setVibeColor("#ff00ff");
-            club?.setLedMessage("VIBE CHECK 9000", "RESCAN ARMED", null);
-            club?.setChevronVisible(true);
-            controls?.resetSpawn();
-            if (!isTouch()) controls?.lock();
-        },
         onMute: (forced) => {
             if (typeof forced === "boolean") {
                 audio.setMuted(forced);
-                if (!forced) audio.start();
+                if (!forced && !audio.usingDeck) audio.start();
                 return audio.muted;
             }
             const m = audio.toggleMute();
-            if (!m) audio.start();
+            if (!m && !audio.usingDeck) audio.start();
             return m;
         },
         onSettings: (s) => {
@@ -164,6 +125,36 @@ async function boot() {
             document.documentElement.classList.toggle("reduced-fx", s.reduced);
         },
         onInteract: () => tryInteract(),
+        onTalkChoice: (i) => handleChoice(i),
+        onFiles: (files) => {
+            const n = audio.addFiles(files);
+            if (n) {
+                hud.toast(`${n} TRACK${n > 1 ? "S" : ""} ON THE DECK`, "#00fff7");
+                hud.renderTracks(audio.playlist, audio.trackIndex, audio.usingDeck);
+                hud.openDeck();
+            }
+        },
+        onDeckPlay: (i) => {
+            audio.playTrack(i == null ? Math.max(0, audio.trackIndex) : i);
+            hud.renderTracks(audio.playlist, audio.trackIndex, true);
+            club?.setLedMessage(audio.trackName, "GUEST AUX", null);
+        },
+        onDeckPrev: () => {
+            audio.prev();
+            hud.renderTracks(audio.playlist, audio.trackIndex, audio.usingDeck);
+            club?.setLedMessage(audio.trackName, "GUEST AUX", null);
+        },
+        onDeckNext: () => {
+            audio.next();
+            hud.renderTracks(audio.playlist, audio.trackIndex, audio.usingDeck);
+            club?.setLedMessage(audio.trackName, "GUEST AUX", null);
+        },
+        onHouse: () => {
+            audio.houseSystem();
+            hud.renderTracks(audio.playlist, audio.trackIndex, false);
+            club?.setLedMessage("VIBE CHECK 9000", "HOUSE SYSTEM", null);
+            hud.toast("HOUSE SYSTEM BACK ONLINE", "#39ff14");
+        },
     });
 
     hud.wire();
@@ -172,7 +163,6 @@ async function boot() {
 
     if (!hasWebGL()) {
         hud.showFallback();
-        hud.loadShared();
         return;
     }
 
@@ -180,6 +170,7 @@ async function boot() {
     controls = createControls(club.camera, canvas, club.colliders);
     controls.setReduced(hud.reducedFx);
     controls.setEnabled(hud.phase === "explore");
+    club.setLedMessage("VIBE CHECK 9000", "DOORS OPEN", null);
 
     if (navigator.xr && navigator.xr.isSessionSupported) {
         navigator.xr.isSessionSupported("immersive-vr").then((ok) => {
@@ -192,24 +183,55 @@ async function boot() {
     }
 
     bindMobile(controls, hud);
-    hud.loadShared();
 
-    function distTo(x, z) {
-        const p = club.camera.position;
-        return Math.hypot(p.x - x, p.z - z);
+    function handleAction(action) {
+        if (!action) return;
+        if (action === "drop") {
+            club.flashFloor();
+            club.shiftLasers();
+            audio.cheer();
+            energy = Math.min(100, energy + 18);
+        } else if (action === "drink-cyan") {
+            club.setVibeColor("#00fff7");
+            hud.toast("NEON SOUR — visor goes cyan", "#00fff7");
+        } else if (action === "drink-mag") {
+            club.setVibeColor("#ff00ff");
+            hud.toast("MAGENTA STATIC", "#ff00ff");
+        } else if (action === "drink-lime") {
+            club.setVibeColor("#39ff14");
+            hud.toast("MYSTERIOUS WATER", "#39ff14");
+        } else if (action === "dance") {
+            hud.toast("HOLD SPACE ON THE TILES", "#39ff14");
+        } else if (action === "open-deck") {
+            hud.openDeck();
+        }
+    }
+
+    function handleChoice(i) {
+        const npc = hud.talkNpc;
+        const result = applyChoice(npc, hud.talkNode, i);
+        if (result.action === "open-deck") {
+            handleAction(result.action);
+            return;
+        }
+        handleAction(result.action);
+        if (result.closed) hud.closeTalk();
+        else hud.setTalkNode(result.nodeId);
     }
 
     function tryInteract() {
         if (hud.phase !== "explore") return;
-        if (distTo(club.kiosk.x, club.kiosk.z) < 3) {
-            hud.beginQuiz();
+        const p = club.camera.position;
+        const hit = nearestNpc(p.x, p.z, 2.2);
+        if (hit) {
+            hud.openTalk(hit.npc);
             return;
         }
-        if (!cubeFound.done && distTo(club.cube.position.x, club.cube.position.z) < 1.8) {
+        if (!cubeFound.done && Math.hypot(p.x - club.cube.position.x, p.z - club.cube.position.z) < 1.8) {
             cubeFound.done = true;
-            hud.unlockFlags({ cube: true });
-            hud.toast("FORBIDDEN GEOMETRY ACKNOWLEDGED", "#fff700");
+            hud.toast("FORBIDDEN GEOMETRY — the floor likes you more now", "#fff700");
             club.flashFloor();
+            energy = Math.min(100, energy + 25);
         }
     }
 
@@ -230,41 +252,36 @@ async function boot() {
             hud.flashStrobe();
             club.pulseKick();
         }
-        controls.update(dt, audio.bpm, xr);
+        const move = controls.update(dt, audio.bpm, xr);
+        const p = club.camera.position;
+        const onFloor = onDanceFloor(p.x, p.z);
+        if (move.dancing && onFloor) energy = Math.min(100, energy + dt * 22);
+        else energy = Math.max(0, energy - dt * 7);
+
         club.camera.getWorldDirection(_dir);
-        audio.setListener(
-            club.camera.position.x,
-            club.camera.position.y,
-            club.camera.position.z,
-            _dir.x, _dir.y, _dir.z,
-        );
-        club.update(dt, t, { bass, mid, bpm: audio.bpm, reduced: hud.reducedFx });
+        audio.setListener(p.x, p.y, p.z, _dir.x, _dir.y, _dir.z);
+        club.update(dt, t, { bass, mid, bpm: audio.bpm, reduced: hud.reducedFx, energy });
         hud.setTelemetry({
             bpm: audio.bpm,
-            heading: Math.round(((Math.atan2(_dir.x, -_dir.z) * 180) / Math.PI + 360) % 360),
-            x: club.camera.position.x,
-            z: club.camera.position.z,
+            track: audio.trackName,
+            energy,
             bass,
+            x: p.x,
+            z: p.z,
         });
 
         if (hud.phase === "explore") {
-            const dK = distTo(club.kiosk.x, club.kiosk.z);
-            const dC = distTo(club.cube.position.x, club.cube.position.z);
-            if (dK < 3) hud.setInteract("[E] START SCAN", true);
-            else if (dC < 1.8 && !cubeFound.done) hud.setInteract("[E] TOUCH THE CUBE", true);
+            const hit = nearestNpc(p.x, p.z, 2.2);
+            const nearCube = !cubeFound.done && Math.hypot(p.x - club.cube.position.x, p.z - club.cube.position.z) < 1.8;
+            if (hit) hud.setInteract(`[E] TALK TO ${hit.npc.name}`, true);
+            else if (nearCube) hud.setInteract("[E] TOUCH THE CUBE", true);
+            else if (onFloor) hud.setInteract("SPACE TO DANCE", true);
             else hud.setInteract("", false);
-            if (dK < 1.15 && !walkedIn) {
-                walkedIn = true;
-                hud.beginQuiz();
-            }
         }
 
         if (xr) club.renderer.render(club.scene, club.camera);
         else club.composer.render();
     });
-
-    console.log("%c VIBE CHECK 9000™ ", "background: linear-gradient(90deg, #ff00ff, #00fff7); color: #000; font-size: 22px; font-weight: 900; padding: 8px 16px;");
-    console.log("%cHeadset visor online. Walk to the scanner.", "color: #39ff14;");
 }
 
 boot();

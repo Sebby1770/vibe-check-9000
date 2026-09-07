@@ -1,4 +1,5 @@
 import * as THREE from "three";
+import { NPCS } from "./people.js";
 import { EffectComposer } from "three/addons/postprocessing/EffectComposer.js";
 import { RenderPass } from "three/addons/postprocessing/RenderPass.js";
 import { UnrealBloomPass } from "three/addons/postprocessing/UnrealBloomPass.js";
@@ -436,6 +437,7 @@ export function createClub(canvas) {
         if (Math.abs(x) < 1.6 && Math.abs(z - 10) < 1.4) continue;
         if (z > 13.2 && Math.abs(x) < 1.5) continue;
         if (z > 10.5 && Math.abs(x) < 3.2) continue;
+        if (NPCS.some((n) => Math.hypot(x - n.x, z - n.z) < 1.5)) continue;
         crowdX[placed] = x;
         crowdZ[placed] = z;
         crowdPhase[placed] = Math.random() * Math.PI * 2;
@@ -466,6 +468,70 @@ export function createClub(canvas) {
     dj.position.set(0, 1.05, -12.45);
     dj.scale.set(1.12, 1.12, 1.12);
     scene.add(dj);
+
+    function makePerson(hex, scale = 1) {
+        const g = new THREE.Group();
+        const col = new THREE.Color(hex);
+        const body = new THREE.Mesh(
+            torsoGeo,
+            new THREE.MeshStandardMaterial({
+                color: col.clone().multiplyScalar(0.35),
+                emissive: col,
+                emissiveIntensity: 0.35,
+                roughness: 0.55,
+            }),
+        );
+        body.position.y = 0.5;
+        const head = new THREE.Mesh(
+            headGeo,
+            new THREE.MeshStandardMaterial({ color: 0x1a1220, roughness: 0.5 }),
+        );
+        head.position.y = 0.98;
+        const stick = new THREE.Mesh(
+            stickGeo,
+            new THREE.MeshBasicMaterial({ color: col }),
+        );
+        stick.position.set(0.2, 1.15, 0);
+        stick.rotation.z = 0.35;
+        g.add(body, head, stick);
+        g.scale.setScalar(scale);
+        g.userData.stick = stick;
+        return g;
+    }
+
+    function nameSprite(label, hex) {
+        const c = document.createElement("canvas");
+        c.width = 512;
+        c.height = 128;
+        const g = c.getContext("2d");
+        g.fillStyle = "rgba(0,0,0,0.55)";
+        g.fillRect(20, 24, 472, 80);
+        g.font = "700 48px Orbitron, sans-serif";
+        g.fillStyle = hex;
+        g.textAlign = "center";
+        g.textBaseline = "middle";
+        g.shadowColor = hex;
+        g.shadowBlur = 16;
+        g.fillText(label, 256, 64);
+        const tex = new THREE.CanvasTexture(c);
+        tex.colorSpace = THREE.SRGBColorSpace;
+        const spr = new THREE.Sprite(new THREE.MeshBasicMaterial({ map: tex, transparent: true }));
+        // SpriteMaterial
+        spr.material = new THREE.SpriteMaterial({ map: tex, transparent: true, depthWrite: false });
+        spr.scale.set(1.6, 0.4, 1);
+        spr.position.y = 1.55;
+        return spr;
+    }
+
+    const namedPeople = NPCS.map((npc) => {
+        const person = makePerson(npc.color, npc.id === "rexa" ? 1.08 : 1);
+        person.position.set(npc.x, 0, npc.z);
+        person.add(nameSprite(npc.name, npc.color));
+        person.userData.npcId = npc.id;
+        scene.add(person);
+        return { id: npc.id, obj: person, x: npc.x, z: npc.z };
+    });
+    dj.visible = false;
 
     function makeHand(side) {
         const g = new THREE.Group();
@@ -579,11 +645,12 @@ export function createClub(canvas) {
     );
     chevron.position.set(0, 3.7, 10);
     chevron.rotation.x = Math.PI;
+    chevron.visible = false;
     scene.add(chevron);
 
     const kioskLabel = new THREE.Mesh(
         new THREE.PlaneGeometry(2.2, 0.35),
-        new THREE.MeshBasicMaterial({ map: neonCanvas("VIBE SCAN", "#00FFF7", 512, 128), transparent: true }),
+        new THREE.MeshBasicMaterial({ map: neonCanvas("THE FLOOR", "#00FFF7", 512, 128), transparent: true }),
     );
     kioskLabel.position.set(0, 3.45, 10.2);
     scene.add(kioskLabel);
@@ -662,6 +729,7 @@ export function createClub(canvas) {
         kiosk: { x: 0, y: 0, z: 10 },
         cube: secretCube,
         chevron,
+        npcs: namedPeople,
 
         setChevronVisible(v) { chevron.visible = !!v; },
         setCrowdVisible(v) {
@@ -724,6 +792,14 @@ export function createClub(canvas) {
             chevron.rotation.z = Math.sin(t * 2) * 0.15;
 
             dj.position.y = 1.05 + Math.sin(t * (bpm / 60) * Math.PI * 2) * 0.09 * (0.4 + bass);
+            const energy = ctx.energy || 0;
+            for (const person of namedPeople) {
+                const bob = Math.sin(t * (bpm / 60) * Math.PI * 2 + person.x) * (0.04 + bass * 0.05 + energy * 0.001);
+                person.obj.position.y = bob;
+                person.obj.rotation.y = Math.sin(t * 0.4 + person.z) * 0.15;
+                const st = person.obj.userData.stick;
+                if (st) st.rotation.z = 0.3 + Math.sin(t * 8 + person.x) * 0.5;
+            }
             const handBob = Math.sin(t * 7) * 0.025;
             leftHand.position.y = -0.22 + handBob;
             rightHand.position.y = -0.22 - handBob;

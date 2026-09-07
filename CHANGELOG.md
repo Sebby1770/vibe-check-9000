@@ -4,6 +4,11 @@ All notable changes to VIBE CHECK 9000™ are documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
+## [13.0.0] - 2026-09-07
+
+The quiz is gone. The club is the product: named people to talk to, SPACE to
+dance on the floor, and a DECK that plays your own audio files.
+
 ## [12.0.0] - 2026-09-07
 
 GitHub already shipped a separate 11.0 atlas/streak release. This is the

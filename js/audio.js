@@ -32,6 +32,12 @@ export function createAudio() {
     let started = false;
     let muted = false;
     let reduced = false;
+    let deckGain = null;
+    let deckEl = null;
+    let deckNode = null;
+    const playlist = [];
+    let trackIndex = -1;
+    let usingDeck = false;
 
     const state = {
         bpm: 128,
@@ -42,6 +48,7 @@ export function createAudio() {
     };
 
     const freqData = new Uint8Array(128);
+    let lastBass = 0;
 
     function graph() {
         if (ctx) return;
@@ -122,6 +129,47 @@ export function createAudio() {
         widthDelay.connect(panner);
         panner.connect(analyser);
         analyser.connect(ctx.destination);
+
+        deckGain = ctx.createGain();
+        deckGain.gain.value = 0;
+        deckGain.connect(muteGain);
+    }
+
+    function ensureDeckEl() {
+        if (deckEl) return;
+        deckEl = new Audio();
+        deckEl.crossOrigin = "anonymous";
+        deckEl.preload = "auto";
+        deckEl.addEventListener("ended", () => {
+            if (playlist.length) playTrack((trackIndex + 1) % playlist.length);
+        });
+        graph();
+        try {
+            deckNode = ctx.createMediaElementSource(deckEl);
+            deckNode.connect(deckGain);
+        } catch {
+            /* already connected after resume */
+        }
+    }
+
+    function stopProcedural() {
+        started = false;
+        window.clearTimeout(timer);
+        if (bassGain && ctx) bassGain.gain.setTargetAtTime(0, ctx.currentTime, 0.08);
+    }
+
+    function playTrack(i) {
+        if (!playlist.length) return false;
+        ensureDeckEl();
+        trackIndex = ((i % playlist.length) + playlist.length) % playlist.length;
+        const item = playlist[trackIndex];
+        usingDeck = true;
+        stopProcedural();
+        deckEl.src = item.url;
+        deckEl.currentTime = 0;
+        if (deckGain && ctx) deckGain.gain.setTargetAtTime(0.85, ctx.currentTime, 0.05);
+        deckEl.play().catch(() => {});
+        return true;
     }
 
     function envGain(t, peak, dur) {
@@ -264,6 +312,7 @@ export function createAudio() {
         },
 
         start() {
+            if (usingDeck) return;
             if (reduced && muted) return;
             graph();
             if (started) {
@@ -307,7 +356,10 @@ export function createAudio() {
             analyser.getByteFrequencyData(freqData);
             let sum = 0;
             for (let i = 0; i < 5; i++) sum += freqData[i];
-            return Math.min(1, (sum / 5) / 220);
+            const b = Math.min(1, (sum / 5) / 220);
+            if (usingDeck && b > 0.38 && b - lastBass > 0.14) state.kickFlag = true;
+            lastBass = b;
+            return b;
         },
 
         getMid() {
@@ -336,6 +388,42 @@ export function createAudio() {
                 l.setPosition(x, y, z);
                 l.setOrientation(fx, fy, fz, 0, 1, 0);
             }
+        },
+
+        get usingDeck() { return usingDeck; },
+        get trackName() {
+            return trackIndex >= 0 && playlist[trackIndex] ? playlist[trackIndex].name : "HOUSE SYSTEM";
+        },
+        get playlist() { return playlist.slice(); },
+        get trackIndex() { return trackIndex; },
+
+        addFiles(fileList) {
+            const files = Array.from(fileList || []).filter((f) => f && f.type && f.type.startsWith("audio/"));
+            for (const file of files) {
+                playlist.push({
+                    name: file.name.replace(/\.[^.]+$/, ""),
+                    url: URL.createObjectURL(file),
+                });
+            }
+            return files.length;
+        },
+
+        playTrack,
+        next() { return playTrack(trackIndex + 1); },
+        prev() { return playTrack(trackIndex <= 0 ? playlist.length - 1 : trackIndex - 1); },
+
+        stopDeck() {
+            usingDeck = false;
+            if (deckEl) {
+                deckEl.pause();
+            }
+            if (deckGain && ctx) deckGain.gain.setTargetAtTime(0, ctx.currentTime, 0.08);
+        },
+
+        houseSystem() {
+            this.stopDeck();
+            trackIndex = -1;
+            this.start();
         },
 
         applyVibe(stats) {

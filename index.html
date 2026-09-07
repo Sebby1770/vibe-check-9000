@@ -3,20 +3,17 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
-    <title>VIBE CHECK 9000™ | Put on the headset</title>
-    <meta name="description" content="First-person VR nightclub vibe scanner. Walk in, get diagnosed, share the evidence.">
+    <title>VIBE CHECK 9000™ | The club</title>
+    <meta name="description" content="A first-person nightclub. Talk to people, dance, drop your own music.">
     <meta name="theme-color" content="#07020d">
     <meta property="og:title" content="VIBE CHECK 9000™">
-    <meta property="og:description" content="A first-person rave that scans your vibe with illegal LEDs.">
+    <meta property="og:description" content="Put on the headset. Walk in. Party.">
     <meta property="og:type" content="website">
     <meta property="og:url" content="https://sebby1770.github.io/vibe-check-9000/">
-    <meta name="twitter:card" content="summary_large_image">
-    <meta name="twitter:title" content="VIBE CHECK 9000™">
-    <meta name="twitter:description" content="Put on the headset. Enter the club. Get diagnosed.">
     <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Crect width='64' height='64' rx='10' fill='%2307020d'/%3E%3Ctext x='32' y='44' font-size='34' text-anchor='middle' fill='%2300fff7' font-family='monospace'%3E%E2%97%88%3C/text%3E%3C/svg%3E">
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;700;900&family=Space+Mono:wght@400;700&family=VT323&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;700;900&family=Space+Mono:wght@400;700&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="style.css">
     <script type="importmap">
     {
@@ -41,19 +38,13 @@
         <div id="strobe" class="strobe" aria-hidden="true"></div>
         <div id="crosshair" class="crosshair hidden" aria-hidden="true">+</div>
         <div id="interact" class="interact hidden"></div>
-        <div id="prompt" class="hud-prompt hidden">
-            <p>WALK TO THE SCANNER</p>
-            <p class="hint">CYAN ARCH AHEAD · CHEVRON LOCKED</p>
-            <button type="button" class="btn-secondary" id="startScanBtn">START SCAN</button>
-        </div>
-        <div id="dropMsg" class="drop-msg hidden">COMPILING CHAOS SIGNATURE</div>
 
         <header class="visor-top">
             <span class="logo">[ VIBE CHECK <em>9000</em> ]</span>
-            <span class="status"><span class="status-dot"></span> VISOR ONLINE</span>
+            <span class="status"><span class="status-dot"></span> DOORS OPEN</span>
             <nav class="top-links">
-                <a href="https://github.com/Sebby1770" target="_blank" rel="noreferrer">Profile</a>
                 <a href="https://github.com/Sebby1770/vibe-check-9000" target="_blank" rel="noreferrer">GitHub</a>
+                <button type="button" id="deckBtn" class="icon-btn">DECK</button>
                 <button type="button" id="muteBtn" class="icon-btn">MUTE</button>
                 <button type="button" id="settingsBtn" class="icon-btn" aria-label="Settings">⚙</button>
             </nav>
@@ -61,118 +52,75 @@
 
         <div class="visor-telemetry" id="telemetry" aria-hidden="true">
             <span>BPM <em id="hudBpm">128</em></span>
-            <span>HDG <em id="hudHdg">000</em></span>
-            <span>POS <em id="hudPos">0.0 14.0</em></span>
+            <span>TRACK <em id="hudTrack">HOUSE SYSTEM</em></span>
+            <span>ENERGY <em id="hudEnergy">0</em></span>
             <span>BASS <em id="hudBass">--</em></span>
-            <span>CLK <em id="hudClk">00:00:00</em></span>
+            <span>POS <em id="hudPos">0.0 14.0</em></span>
         </div>
         <div class="visor-reticle" aria-hidden="true"></div>
 
-        <section id="boot" class="overlay boot" aria-label="Boot visor">
-            <div class="stereo" aria-hidden="true">
-                <span></span><span></span>
-            </div>
-            <p class="boot-tag">v12.0.0 // NIGHT-CITY CERTIFIED // 0% MEDICALLY USEFUL</p>
+        <section id="boot" class="overlay boot" aria-label="Doors">
+            <p class="boot-tag">v13.0.0 // NO QUIZ // JUST THE ROOM</p>
             <h1>VIBE CHECK <span>9000</span></h1>
-            <p id="boot-sub" class="boot-sub">PUT ON THE HEADSET</p>
+            <p class="boot-sub">PUT ON THE HEADSET</p>
             <div class="boot-actions">
                 <button type="button" class="cta" id="enterBtn">ENTER THE CLUB</button>
-                <button type="button" class="btn-secondary" id="skipBtn">SKIP TO QUIZ</button>
             </div>
             <div id="vr-slot" class="vr-slot"></div>
             <ul class="hints">
-                <li>WASD move · mouse look · ESC menu</li>
-                <li>1–5 answer · E interact</li>
+                <li>WASD move · mouse look · SPACE dance</li>
+                <li>E talk to people · ESC deck / pause</li>
+                <li>Drop MP3 / WAV / FLAC on the DECK</li>
                 <li class="mobile-only">Mobile: tap look + on-screen stick</li>
             </ul>
-            <p class="legal-line">NOT FDA APPROVED · DO NOT BASE LIFE CHOICES ON THIS VISOR</p>
         </section>
 
-        <section id="pause" class="overlay panel-wrap hidden" aria-label="Pause menu">
+        <section id="talk" class="overlay panel-wrap hidden" aria-live="polite">
+            <div class="panel talk-panel">
+                <p class="talk-role" id="talkRole">DJ</p>
+                <h2 id="talkName">REXA</h2>
+                <p class="talk-line" id="talkLine">...</p>
+                <div class="q-options" id="talkChoices"></div>
+                <button type="button" class="btn-secondary" id="talkClose">WALK AWAY</button>
+            </div>
+        </section>
+
+        <section id="pause" class="overlay panel-wrap hidden" aria-label="Pause">
             <div class="panel">
-                <h2>PAUSED</h2>
-                <p class="dim">Pointer lock released. The club is still pumping.</p>
+                <h2>NIGHT AIR</h2>
+                <p class="dim">Pointer lock off. The room is still going.</p>
                 <div class="result-actions">
-                    <button type="button" class="btn-primary" id="resumeBtn">RESUME</button>
-                    <button type="button" class="btn-secondary" id="pauseSettingsBtn">SETTINGS</button>
+                    <button type="button" class="btn-primary" id="resumeBtn">BACK IN</button>
+                    <button type="button" class="btn-secondary" id="pauseDeckBtn">DECK</button>
                     <button type="button" class="btn-secondary" id="pauseMuteBtn">MUTE</button>
-                </div>
-                <div class="side-grid">
-                    <div>
-                        <h4>► HISTORICAL VIBES</h4>
-                        <ul class="history-list" id="historyListPause"></ul>
-                    </div>
-                    <div>
-                        <h4>► ACHIEVEMENTS</h4>
-                        <div class="ach-list" id="achListPause"></div>
-                    </div>
                 </div>
                 <p class="footer-links">
                     <a href="#" data-modal="about">[ABOUT]</a>
-                    <a href="#" data-modal="science">[SCIENCE]</a>
-                    <a href="#" data-modal="legal">[LEGAL]</a>
                     <a href="https://github.com/Sebby1770/vibe-check-9000" target="_blank" rel="noreferrer">[GITHUB]</a>
                 </p>
             </div>
         </section>
 
-        <section id="quiz" class="overlay panel-wrap hidden" aria-live="polite">
-            <div class="panel quiz-panel">
-                <div class="q-progress">
-                    <span>QUESTION <span id="qNum">1</span> / <span id="qTotal">9</span></span>
-                    <span class="q-hint">KEYS 1–5 SELECT</span>
-                    <div class="q-bar"><div class="q-bar-fill" id="qBar"></div></div>
-                </div>
-                <h2 class="q-prompt" id="qPrompt">loading...</h2>
-                <div class="q-options" id="qOptions"></div>
-            </div>
-        </section>
-
-        <section id="result" class="overlay panel-wrap hidden">
-            <article class="panel result-card" id="resultCard">
-                <div class="result-meta">
-                    <span>VIBE_REPORT_<span id="reportId">000000</span>.dat</span>
-                    <span>VISOR DIAGNOSIS</span>
-                </div>
-                <div class="result-badge" id="resultBadge">VX</div>
-                <h3 class="result-label">YOUR VIBE IS</h3>
-                <h2 class="result-title" id="resultTitle">LOADING</h2>
-                <p class="result-desc" id="resultDesc">...</p>
-                <div class="radar-wrap" aria-label="Stat radar">
-                    <canvas id="radarChart" width="280" height="240"></canvas>
-                </div>
-                <div class="result-stats">
-                    <div class="stat"><div class="stat-label">CHAOS</div><div class="stat-bar"><div class="stat-fill" id="statChaos"></div></div><div class="stat-val" id="statChaosVal">0%</div></div>
-                    <div class="stat"><div class="stat-label">CHARM</div><div class="stat-bar"><div class="stat-fill" id="statCharm"></div></div><div class="stat-val" id="statCharmVal">0%</div></div>
-                    <div class="stat"><div class="stat-label">COSMIC</div><div class="stat-bar"><div class="stat-fill" id="statCosmic"></div></div><div class="stat-val" id="statCosmicVal">0%</div></div>
-                    <div class="stat"><div class="stat-label">STATIC</div><div class="stat-bar"><div class="stat-fill" id="statStatic"></div></div><div class="stat-val" id="statStaticVal">0%</div></div>
-                </div>
-                <div class="result-detail">
-                    <div class="result-row"><span class="row-key">SIGNATURE ITEM</span><span class="row-val" id="signatureItem">a glowing receipt</span></div>
-                    <div class="result-row"><span class="row-key">VIBE COLOR</span><span class="row-val color-pill" id="vibeColor">#FF00FF</span></div>
-                    <div class="result-row"><span class="row-key">BEST PAIRED WITH</span><span class="row-val" id="vibePair">a fresh password reset</span></div>
-                    <div class="result-row"><span class="row-key">AVOID</span><span class="row-val" id="vibeAvoid">fluorescent sincerity</span></div>
-                    <div class="result-row"><span class="row-key">PROPHECY</span><span class="row-val" id="vibeProphecy">your next notification will be personal</span></div>
-                </div>
-                <p class="share-url" id="shareUrl">complete scan to generate link</p>
+        <section id="deck" class="overlay panel-wrap hidden" aria-label="Deck">
+            <div class="panel">
+                <h2>THE DECK</h2>
+                <p class="dim">Drop your tracks. The house system keeps playing until you do.</p>
+                <label class="drop-audio" id="dropAudio">
+                    <input id="audioFiles" type="file" accept="audio/*" multiple>
+                    <strong>DROP AUDIO FILES</strong>
+                    <span>mp3 · wav · flac · ogg · m4a</span>
+                </label>
+                <ul class="track-list" id="trackList">
+                    <li class="empty">no guest tracks yet — house system is live</li>
+                </ul>
                 <div class="result-actions">
-                    <button type="button" class="btn-secondary" id="shareBtn">► SHARE</button>
-                    <button type="button" class="btn-secondary" id="copyLinkBtn">► COPY LINK</button>
-                    <button type="button" class="btn-secondary" id="saveBtn">► SAVE PNG</button>
-                    <button type="button" class="btn-primary" id="rescanBtn">► RESCAN</button>
-                    <button type="button" class="btn-secondary" id="exitLockBtn">► EXIT POINTER LOCK</button>
+                    <button type="button" class="btn-secondary" id="prevBtn">◄ PREV</button>
+                    <button type="button" class="btn-primary" id="playBtn">PLAY</button>
+                    <button type="button" class="btn-secondary" id="nextBtn">NEXT ►</button>
+                    <button type="button" class="btn-secondary" id="houseBtn">HOUSE SYSTEM</button>
                 </div>
-                <div class="side-grid">
-                    <div>
-                        <h4>► HISTORICAL VIBES</h4>
-                        <ul class="history-list" id="historyList"></ul>
-                    </div>
-                    <div>
-                        <h4>► ACHIEVEMENTS</h4>
-                        <div class="ach-list" id="achList"></div>
-                    </div>
-                </div>
-            </article>
+                <button type="button" class="btn-primary" id="deckClose">CLOSE DECK</button>
+            </div>
         </section>
 
         <section id="settings" class="overlay panel-wrap hidden" aria-label="Settings">
