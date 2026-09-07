@@ -12,6 +12,7 @@ export function createHud(hooks) {
         sensitivity: 1,
         fov: 88,
         muted: false,
+        tipsy: false,
         talkNpc: null,
         talkNode: "start",
         energy: 0,
@@ -88,7 +89,9 @@ export function createHud(hooks) {
             sensitivity: run.sensitivity,
             fov: run.fov,
             muted: run.muted,
+            tipsy: run.tipsy,
         });
+        document.body.classList.toggle("tipsy", run.tipsy && !run.reducedFx);
     }
 
     function enterClub() {
@@ -171,6 +174,11 @@ export function createHud(hooks) {
             run.crowd = e.target.checked;
             applyReduced();
         });
+        $("tipsyToggle").addEventListener("change", (e) => {
+            run.tipsy = e.target.checked;
+            applyReduced();
+            if (run.tipsy) toast("TIPSY — free, not gone", "#ffb703");
+        });
         $("fxToggle").checked = run.reducedFx;
         if (run.reducedFx) {
             run.muted = true;
@@ -246,6 +254,12 @@ export function createHud(hooks) {
         setPhase,
         get phase() { return run.phase; },
         get reducedFx() { return run.reducedFx; },
+        setTipsy(v) {
+            run.tipsy = !!v;
+            const box = $("tipsyToggle");
+            if (box) box.checked = run.tipsy;
+            applyReduced();
+        },
         get energy() { return run.energy; },
         set energy(v) { run.energy = v; },
         openTalk(npc) {

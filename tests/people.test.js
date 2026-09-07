@@ -25,5 +25,9 @@ assert.equal(next.closed, false);
 const done = applyChoice(hit.npc, "heavy", 0);
 assert.equal(done.closed, true);
 
+const ion = NPCS.find((n) => n.id === "ion");
+const sip = applyChoice(ion, "start", 1);
+assert.equal(sip.action, "tipsy");
+
 console.log("ok  named people, nearest, dance floor, dialogue graph");
 console.log("6 people tests passed");

@@ -122,6 +122,8 @@ async function boot() {
             club?.setFov(s.fov);
             club?.setBloomReduced(s.reduced);
             club?.setCrowdVisible(s.crowd);
+            controls?.setTipsy(s.tipsy);
+            club?.setTipsy?.(s.tipsy);
             document.documentElement.classList.toggle("reduced-fx", s.reduced);
         },
         onInteract: () => tryInteract(),
@@ -197,6 +199,9 @@ async function boot() {
         } else if (action === "drink-mag") {
             club.setVibeColor("#ff00ff");
             hud.toast("MAGENTA STATIC", "#ff00ff");
+        } else if (action === "tipsy") {
+            hud.setTipsy(true);
+            hud.toast("TIPSY — free, not gone", "#ffb703");
         } else if (action === "drink-lime") {
             club.setVibeColor("#39ff14");
             hud.toast("MYSTERIOUS WATER", "#39ff14");

@@ -22,6 +22,9 @@ export function createControls(camera, domElement, colliders) {
     let sprint = false;
     let enabled = true;
     let dance = false;
+    let tipsy = false;
+    let swayT = 0;
+    let baseLook = 1;
 
     camera.position.set(0, EYE, 14);
     camera.lookAt(0, 1.6, -12);
@@ -110,7 +113,20 @@ export function createControls(camera, domElement, colliders) {
 
         setEnabled(v) { enabled = !!v; },
         setReduced(v) { reduced = !!v; },
-        setSensitivity(v) { plc.pointerSpeed = v; },
+        setSensitivity(v) {
+            baseLook = v;
+            plc.pointerSpeed = tipsy ? v * 0.84 : v;
+        },
+        setTipsy(v) {
+            tipsy = !!v;
+            plc.pointerSpeed = tipsy ? baseLook * 0.84 : baseLook;
+            if (!tipsy) {
+                _euler.setFromQuaternion(camera.quaternion);
+                _euler.z = 0;
+                camera.quaternion.setFromEuler(_euler);
+            }
+        },
+        get tipsy() { return tipsy; },
         setFov(v) {
             fov = v;
             camera.fov = v;
@@ -139,7 +155,8 @@ export function createControls(camera, domElement, colliders) {
                 return { moving: false };
             }
 
-            const speed = (sprint ? 5.6 : 3.5);
+            swayT += dt;
+            const speed = (sprint ? 5.6 : 3.5) * (tipsy ? 0.9 : 1);
             let f = 0;
             let r = 0;
             if (keys.w) f += 1;
@@ -157,6 +174,9 @@ export function createControls(camera, domElement, colliders) {
 
             if (f !== 0) plc.moveForward(f * speed * dt);
             if (r !== 0) plc.moveRight(r * speed * dt);
+            if (tipsy && !reduced && mag > 0.04) {
+                plc.moveRight(Math.sin(swayT * 0.85) * 0.18 * dt);
+            }
 
             resolve(camera.position);
 
@@ -164,13 +184,21 @@ export function createControls(camera, domElement, colliders) {
             if ((moving || dance) && !reduced) {
                 bobPhase += dt * (bpm / 60) * Math.PI * 2 * (dance ? 1.35 : 1);
                 camera.position.y = EYE + Math.sin(bobPhase) * (dance ? 0.07 : 0.035);
+            } else if (tipsy && !reduced) {
+                camera.position.y = EYE + Math.sin(swayT * 1.05) * 0.02;
             } else {
                 camera.position.y = EYE;
                 if (!moving && !dance) bobPhase = 0;
             }
 
+            if (tipsy && !reduced) {
+                _euler.setFromQuaternion(camera.quaternion);
+                _euler.z = Math.sin(swayT * 0.62) * 0.048 + Math.sin(swayT * 1.28) * 0.016;
+                camera.quaternion.setFromEuler(_euler);
+            }
+
             camera.getWorldDirection(_fwd);
-            return { moving, dancing: dance, forward: _fwd };
+            return { moving, dancing: dance, tipsy, forward: _fwd };
         },
     };
 }

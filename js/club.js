@@ -176,6 +176,18 @@ export function createClub(canvas) {
         strip.name = "ceil-led";
     }
 
+    // A few hanging LED bars over the floor — individual so they can chase the beat
+    const hangLeds = [];
+    const hangColors = [0xff00aa, 0x00fff7, 0x39ff14, 0xffb703, 0xff2ea6, 0x66ffff, 0xccff00, 0xff66cc];
+    for (let i = 0; i < 8; i++) {
+        const x = (i - 3.5) * 1.85;
+        const z = i % 2 === 0 ? -3.1 : 2.6;
+        addBox(world, unitBox, metalDark, x, 7.62, z, 0.05, 0.28, 0.05);
+        const mat = new THREE.MeshBasicMaterial({ color: hangColors[i] });
+        const bar = addBox(world, unitBox, mat, x, 7.42, z, 1.35, 0.07, 0.16);
+        hangLeds.push(mat);
+    }
+
     // LED dance floor
     const tileGeo = new THREE.BoxGeometry(0.92, 0.05, 0.92);
     const tileMat = new THREE.MeshBasicMaterial({ color: 0xffffff });
@@ -425,7 +437,31 @@ export function createClub(canvas) {
     const crowdPhase = new Float32Array(CROWD_N);
     const crowdScale = new Float32Array(CROWD_N);
     const crowdYaw = new Float32Array(CROWD_N);
+    const crowdFloor = new Uint8Array(CROWD_N);
     let placed = 0;
+    const FLOOR_DANCERS = 14;
+    for (let i = 0; i < FLOOR_DANCERS && placed < CROWD_N; i++) {
+        const ang = (i / FLOOR_DANCERS) * Math.PI * 2 + 0.18;
+        const rad = 2.35 + (i % 3) * 1.05;
+        const x = Math.cos(ang) * rad;
+        const z = Math.sin(ang) * rad * 0.92;
+        if (Math.hypot(x, z) < 1.6) continue;
+        if (NPCS.some((n) => Math.hypot(x - n.x, z - n.z) < 1.5)) continue;
+        crowdX[placed] = x;
+        crowdZ[placed] = z;
+        crowdPhase[placed] = Math.random() * Math.PI * 2;
+        crowdScale[placed] = 0.9 + Math.random() * 0.22;
+        crowdYaw[placed] = ang + Math.PI;
+        crowdFloor[placed] = 1;
+        const neon = pPalette[placed % pPalette.length];
+        const dark = Math.random() * 0.12;
+        _color.setRGB(dark + neon[0] * 0.55, dark + neon[1] * 0.35, dark + neon[2] * 0.55);
+        crowd.setColorAt(placed, _color);
+        _color.setRGB(0.12 + neon[0] * 0.2, 0.08 + neon[1] * 0.12, 0.1 + neon[2] * 0.18);
+        heads.setColorAt(placed, _color);
+        sticks.setColorAt(placed, _color.setRGB(neon[0], neon[1], neon[2]));
+        placed += 1;
+    }
     let guard = 0;
     while (placed < CROWD_N && guard < 4000) {
         guard += 1;
@@ -742,6 +778,10 @@ export function createClub(canvas) {
             camera.updateProjectionMatrix();
         },
         setBloomReduced(v) { bloom.strength = v ? 0.12 : 0.92; },
+        setTipsy(v) {
+            scene.fog.density = v ? 0.026 : 0.032;
+            renderer.toneMappingExposure = v ? 1.05 : 0.92;
+        },
         flashFloor() { floorFlash = 0.22; bloomKick = 0.18; },
         pulseKick() { bloomKick = 0.12; },
         shiftLasers() {
@@ -817,6 +857,10 @@ export function createClub(canvas) {
                 washes[i].opacity = blackout ? 0.05 : 0.28 + bass * 0.45 + Math.sin(t * 6 + i) * 0.12;
                 washes[i].color.copy(i % 2 ? _vibe : _color.set(0x00fff7));
             }
+            for (let i = 0; i < hangLeds.length; i++) {
+                const pulse = blackout ? 0.08 : 0.45 + bass * 0.55 + Math.sin(t * 5 + i * 0.9) * 0.25;
+                hangLeds[i].color.setHSL(((i / hangLeds.length) + t * 0.05) % 1, 0.9, 0.45 + pulse * 0.2);
+            }
 
             if (floorFlash > 0) floorFlash -= dt;
             const snakeHead = Math.floor(t * (reduced ? 6 : 14)) % FLOOR_COUNT;
@@ -843,7 +887,7 @@ export function createClub(canvas) {
                 const bob = reduced ? 0.04 : 0.16;
                 const beat = t * (bpm / 60) * Math.PI * 2;
                 for (let i = 0; i < CROWD_N; i++) {
-                    const bounce = Math.sin(beat + crowdPhase[i]) * bob * (0.45 + bass);
+                    const bounce = Math.sin(beat + crowdPhase[i]) * bob * (0.45 + bass) * (crowdFloor[i] ? 1.55 : 1);
                     const sway = Math.sin(t * 1.3 + crowdPhase[i]) * 0.07;
                     const sc = crowdScale[i];
                     const yaw = crowdYaw[i] + sway * 0.4;

@@ -47,10 +47,10 @@ export const NPCS = [
         greeting: "What are we pretending to hydrate with?",
         nodes: {
             start: {
-                say: "Menu's three drinks and a feeling. Pick.",
+                say: "Menu's a few drinks and a feeling. Pick.",
                 choices: [
                     { text: "Neon sour.", next: "sour", action: "drink-cyan" },
-                    { text: "Magenta static.", next: "static", action: "drink-mag" },
+                    { text: "Something light. Just tipsy.", next: "tipsy", action: "tipsy" },
                     { text: "Just water. I'm mysterious.", next: "water", action: "drink-lime" },
                 ],
             },
@@ -58,9 +58,9 @@ export const NPCS = [
                 say: "Cyan in the visor. Don't drive a forklift.",
                 choices: [{ text: "Cheers.", next: null }],
             },
-            static: {
-                say: "That's the one that makes the lasers gossip.",
-                choices: [{ text: "I needed that.", next: null }],
+            tipsy: {
+                say: "Not drunk. Just loose. The floor's a little friendlier now.",
+                choices: [{ text: "That's the one.", next: null }],
             },
             water: {
                 say: "Respect. The lime light still finds you.",
