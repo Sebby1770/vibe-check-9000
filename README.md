@@ -1,8 +1,8 @@
 # VIBE CHECK 9000™
 
-A first-person night in Midtown. November 12, 1954. The visor is from later.
+A first-person dusk in Midtown. November 12, 1954. The visor is from later. The sun is still in the street.
 
-Walk the club, take the stairs to the lounge, step out the front door onto 47th Street, or slip out the back into the alley.
+Walk a packed floor, take the stairs to a candlelit supper-club lounge, step out into dusk on 47th Street under a wall of towers, or slip out the back into the alley.
 
 Live: <https://sebby1770.github.io/vibe-check-9000/>
 

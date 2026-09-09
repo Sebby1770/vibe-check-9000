@@ -98,6 +98,43 @@ export function woodTex() {
     }, 128, 2, 4);
 }
 
+export function carpetTex() {
+    return canvasTex((g, s) => {
+        g.fillStyle = "#4a1420";
+        g.fillRect(0, 0, s, s);
+        g.strokeStyle = "rgba(200,160,70,0.35)";
+        g.lineWidth = 3;
+        for (let i = 0; i < 4; i++) {
+            for (let j = 0; j < 4; j++) {
+                const x = i * (s / 4) + s / 8;
+                const y = j * (s / 4) + s / 8;
+                g.beginPath();
+                g.moveTo(x, y - 18);
+                g.lineTo(x + 14, y);
+                g.lineTo(x, y + 18);
+                g.lineTo(x - 14, y);
+                g.closePath();
+                g.stroke();
+            }
+        }
+    }, 256, 6, 6);
+}
+
+export function damaskTex() {
+    return canvasTex((g, s) => {
+        g.fillStyle = "#5a2030";
+        g.fillRect(0, 0, s, s);
+        g.fillStyle = "rgba(180,120,60,0.18)";
+        for (let i = 0; i < 6; i++) {
+            for (let j = 0; j < 6; j++) {
+                g.beginPath();
+                g.arc(i * 44 + 20, j * 44 + 20, 10, 0, Math.PI * 2);
+                g.fill();
+            }
+        }
+    }, 256, 3, 3);
+}
+
 export function checkerTex() {
     return canvasTex((g, s) => {
         const n = 8;

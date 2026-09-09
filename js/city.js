@@ -72,15 +72,17 @@ export function buildCity(scene) {
     const glass = new THREE.MeshStandardMaterial({ color: 0x88aacc, roughness: 0.08, metalness: 0.35, transparent: true, opacity: 0.28 });
     const puddleM = new THREE.MeshStandardMaterial({ color: 0x1a2430, roughness: 0.08, metalness: 0.9 });
 
-    // Street + sidewalks
-    addBox(root, unitBox, walk, 0, -0.04, 15.6, 80, 0.08, 6.4);
-    addBox(root, unitBox, asphalt, 0, -0.06, 22.8, 80, 0.08, 8.2);
-    addBox(root, unitBox, walk, 0, -0.04, 29.4, 80, 0.08, 5.2);
-    addBox(root, unitBox, walk, 0, -0.04, -23.2, 78, 0.08, 13.6);
+    // Street + sidewalks — long Midtown block
+    addBox(root, unitBox, walk, 0, -0.04, 15.6, 180, 0.08, 6.4);
+    addBox(root, unitBox, asphalt, 0, -0.06, 22.8, 180, 0.08, 8.2);
+    addBox(root, unitBox, walk, 0, -0.04, 29.4, 180, 0.08, 5.2);
+    addBox(root, unitBox, walk, 0, -0.04, -23.2, 120, 0.08, 13.6);
+    addBox(root, unitBox, brickDark, 48, 10, -2, 18, 20, 29);
+    addBox(root, unitBox, brick, -48, 9, -2, 18, 18, 29);
 
     // Curb paint
-    addBox(root, unitBox, neonAmber, 0, 0.01, 18.75, 80, 0.02, 0.12);
-    addBox(root, unitBox, neonAmber, 0, 0.01, 26.85, 80, 0.02, 0.12);
+    addBox(root, unitBox, neonAmber, 0, 0.01, 18.75, 180, 0.02, 0.12);
+    addBox(root, unitBox, neonAmber, 0, 0.01, 26.85, 180, 0.02, 0.12);
 
     // Puddles
     const puddleG = new THREE.CircleGeometry(1.4, 16);
@@ -172,49 +174,129 @@ export function buildCity(scene) {
     const canopy = addBox(root, unitBox, black, 0, 3.35, 13.7, 8.4, 0.12, 2.2);
     addBox(root, unitBox, neonRed, 0, 3.3, 14.7, 8.5, 0.05, 0.08);
 
-    // Far buildings / skyline
-    const skyline = [
-        [-32, 36, 14, 18, 10, brickDark],
-        [-16, 38, 18, 22, 12, brick],
-        [0, 35, 16, 16, 11, brickBrown],
-        [18, 40, 22, 14, 13, brickDark],
-        [34, 37, 16, 16, 10, brick],
-        [-8, 42, 12, 10, 8, brickBrown],
-        [8, 44, 10, 8, 7, brick],
-    ];
-    const windowMats = [];
-    const winGeo = new THREE.PlaneGeometry(0.7, 1.0);
-    const winOn = new THREE.MeshBasicMaterial({ color: 0xffe7a8 });
+    const winGeo = new THREE.PlaneGeometry(0.85, 1.25);
+    const winOn = new THREE.MeshBasicMaterial({ color: 0xffe2a8 });
+    const winWarm = new THREE.MeshBasicMaterial({ color: 0xffc078 });
     const winOff = new THREE.MeshBasicMaterial({ color: 0x1a2030 });
-    let winCount = 0;
     const winDummy = [];
-    for (const [x, z, w, d, floors, mat] of skyline) {
-        addBox(root, unitBox, mat, x, (floors * 3.2) / 2, z, w, floors * 3.2, d);
-        addBox(root, unitBox, black, x, floors * 3.2 + 0.2, z, w + 0.4, 0.4, d + 0.4);
-        for (let f = 1; f < floors; f++) {
-            for (let i = 0; i < Math.floor(w / 1.6); i++) {
-                winCount += 1;
+
+    function addWindows(cx, y0, zFace, w, h, rotY, seed) {
+        const cols = Math.max(3, Math.floor(w / 1.75));
+        const rows = Math.max(2, Math.floor(h / 3.35));
+        for (let r = 0; r < rows; r++) {
+            for (let c = 0; c < cols; c++) {
+                const n = ((r * 17 + c * 11 + seed * 13) % 10) / 10;
+                if (n < 0.12) continue;
+                const along = -w / 2 + 1.15 + c * ((w - 2.3) / Math.max(1, cols - 1));
                 winDummy.push({
-                    x: x - w / 2 + 1.2 + i * 1.6,
-                    y: f * 3.2 + 1.2,
-                    z: z - d / 2 - 0.03,
-                    on: Math.random() > 0.38,
+                    x: cx + along,
+                    y: y0 + 1.5 + r * 3.35,
+                    z: zFace,
+                    ry: rotY,
+                    kind: n > 0.72 ? "warm" : n > 0.28 ? "on" : "off",
                 });
             }
         }
     }
-    const windowsOn = new THREE.InstancedMesh(winGeo, winOn, winDummy.filter((w) => w.on).length);
-    const windowsOff = new THREE.InstancedMesh(winGeo, winOff, winDummy.filter((w) => !w.on).length);
-    let oi = 0; let fi = 0;
-    for (const w of winDummy) {
-        _dummy.position.set(w.x, w.y, w.z);
-        _dummy.rotation.set(0, 0, 0);
-        _dummy.scale.set(1, 1, 1);
-        _dummy.updateMatrix();
-        if (w.on) windowsOn.setMatrixAt(oi++, _dummy.matrix);
-        else windowsOff.setMatrixAt(fi++, _dummy.matrix);
+
+    function waterTower(x, y, z) {
+        const tank = new THREE.Mesh(new THREE.CylinderGeometry(1.1, 1.1, 2.2, 10), brickDark);
+        tank.position.set(x, y + 1.1, z);
+        root.add(tank);
+        addBox(root, unitBox, black, x, y + 2.3, z, 2.4, 0.12, 2.4);
+        for (const [dx, dz] of [[0.7, 0.7], [-0.7, 0.7], [0.7, -0.7], [-0.7, -0.7]]) {
+            addBox(root, unitBox, black, x + dx, y - 1.1, z + dz, 0.12, 2.2, 0.12);
+        }
     }
-    root.add(windowsOn, windowsOff);
+
+    function addTower({ x, z, w, d, floors, mat, spire = false, seed = 1 }) {
+        const story = 3.35;
+        let remaining = floors;
+        let cw = w;
+        let cd = d;
+        let cy = 0;
+        const shrinks = [0, 0.14, 0.22];
+        const caps = [8, 14, 99];
+        for (let t = 0; t < 3 && remaining > 0; t++) {
+            const n = Math.min(caps[t], remaining);
+            cw *= 1 - shrinks[t];
+            cd *= 1 - shrinks[t];
+            const h = n * story;
+            addBox(root, unitBox, mat, x, cy + h / 2, z, cw, h, cd);
+            addBox(root, unitBox, black, x, cy + h + 0.18, z, cw + 0.55, 0.36, cd + 0.55);
+            addWindows(x, cy, z - cd / 2 - 0.05, cw, h, Math.PI, seed + t * 9);
+            addWindows(x, cy, z + cd / 2 + 0.05, cw * 0.9, h, 0, seed + t * 5);
+            const sideCols = Math.max(2, Math.floor(cd / 1.9));
+            const sideRows = Math.max(2, Math.floor(h / 3.35));
+            for (const side of [1, -1]) {
+                for (let r = 0; r < sideRows; r++) {
+                    for (let c = 0; c < sideCols; c++) {
+                        const n = ((r * 19 + c * 7 + seed * 3 + side) % 10) / 10;
+                        if (n < 0.18) continue;
+                        winDummy.push({
+                            x: x + side * (cw / 2 + 0.05),
+                            y: cy + 1.5 + r * 3.35,
+                            z: z - cd / 2 + 1.2 + c * ((cd - 2.4) / Math.max(1, sideCols - 1)),
+                            ry: side > 0 ? Math.PI / 2 : -Math.PI / 2,
+                            kind: n > 0.7 ? "warm" : n > 0.3 ? "on" : "off",
+                        });
+                    }
+                }
+            }
+            remaining -= n;
+            cy += h;
+        }
+        if (floors >= 16) waterTower(x + cw * 0.18, cy + 2.2, z);
+        if (spire) {
+            addBox(root, unitBox, black, x, cy + 8, z, 1.2, 16, 1.2);
+            addBox(root, unitBox, chrome, x, cy + 16.4, z, 0.18, 4.8, 0.18);
+            addBox(root, unitBox, neonAmber, x, cy + 18.8, z, 0.5, 0.5, 0.5);
+        }
+        return cy;
+    }
+
+    const stone = new THREE.MeshStandardMaterial({ map: plasterTex(), roughness: 0.75, color: 0xc4b496 });
+    const towers = [
+        { x: -78, z: 46, w: 20, d: 24, floors: 18, mat: brickDark, seed: 2 },
+        { x: -56, z: 48, w: 18, d: 26, floors: 26, mat: brick, seed: 3 },
+        { x: -36, z: 44, w: 22, d: 22, floors: 20, mat: brickBrown, seed: 4 },
+        { x: -16, z: 50, w: 16, d: 28, floors: 32, mat: brickDark, seed: 5 },
+        { x: 2, z: 47, w: 20, d: 24, floors: 24, mat: stone, seed: 6 },
+        { x: 22, z: 52, w: 18, d: 26, floors: 38, mat: brick, spire: true, seed: 7 },
+        { x: 42, z: 46, w: 22, d: 22, floors: 22, mat: brickBrown, seed: 8 },
+        { x: 64, z: 49, w: 20, d: 24, floors: 28, mat: brickDark, seed: 9 },
+        { x: 84, z: 45, w: 18, d: 20, floors: 16, mat: brick, seed: 10 },
+        { x: -68, z: 72, w: 24, d: 20, floors: 22, mat: brickBrown, seed: 11 },
+        { x: -28, z: 76, w: 20, d: 18, floors: 30, mat: brickDark, seed: 12 },
+        { x: 10, z: 78, w: 26, d: 20, floors: 26, mat: brick, seed: 13 },
+        { x: 48, z: 74, w: 22, d: 18, floors: 34, mat: stone, spire: true, seed: 14 },
+        { x: 80, z: 70, w: 20, d: 16, floors: 20, mat: brickDark, seed: 15 },
+    ];
+    for (const spec of towers) addTower(spec);
+
+    const onList = winDummy.filter((w) => w.kind === "on");
+    const warmList = winDummy.filter((w) => w.kind === "warm");
+    const offList = winDummy.filter((w) => w.kind === "off");
+    function fillWins(list, material) {
+        const mesh = new THREE.InstancedMesh(winGeo, material, Math.max(1, list.length));
+        list.forEach((w, i) => {
+            _dummy.position.set(w.x, w.y, w.z);
+            _dummy.rotation.set(0, w.ry, 0);
+            _dummy.scale.set(1, 1, 1);
+            _dummy.updateMatrix();
+            mesh.setMatrixAt(i, _dummy.matrix);
+        });
+        root.add(mesh);
+        return mesh;
+    }
+    fillWins(onList, winOn);
+    fillWins(warmList, winWarm);
+    fillWins(offList, winOff);
+
+    const billboard = new THREE.Mesh(new THREE.PlaneGeometry(14, 6), new THREE.MeshBasicMaterial({ map: marqueeCanvas("MIDTOWN GIN", "THE SMOOTH CENTURY") }));
+    billboard.position.set(-16, 38, 35.7);
+    root.add(billboard);
+    addBox(root, unitBox, black, -16, 38, 36.1, 14.4, 6.4, 0.4);
 
     // Alley back wall
     addBox(root, unitBox, brickDark, 0, 8, -32.2, 80, 16, 4);
@@ -250,12 +332,20 @@ export function buildCity(scene) {
 
     // Street lamps
     const lampLights = [];
-    for (const x of [-30, -14, 0, 16, 32]) {
+    for (const x of [-48, -32, -16, 0, 16, 32, 48]) {
         addBox(root, unitBox, black, x, 2.2, 17.85, 0.12, 4.4, 0.12);
         addBox(root, unitBox, black, x, 4.45, 17.4, 0.08, 0.08, 0.9);
         addBox(root, unitBox, neonAmber, x, 4.35, 16.95, 0.35, 0.22, 0.35);
-        const pl = new THREE.PointLight(0xffc078, 22, 12, 2);
+        const pl = new THREE.PointLight(0xffc078, 18, 11, 2);
         pl.position.set(x, 4.2, 16.9);
+        scene.add(pl);
+        lampLights.push(pl);
+    }
+    for (const x of [-24, 8, 40]) {
+        addBox(root, unitBox, black, x, 2.2, 27.9, 0.12, 4.4, 0.12);
+        addBox(root, unitBox, neonAmber, x, 4.35, 28.4, 0.35, 0.22, 0.35);
+        const pl = new THREE.PointLight(0xffb070, 16, 10, 2);
+        pl.position.set(x, 4.2, 28.2);
         scene.add(pl);
         lampLights.push(pl);
     }
@@ -288,8 +378,8 @@ export function buildCity(scene) {
         return new THREE.MeshStandardMaterial({ color: 0x1a4a32, roughness: 0.6, metalness: 0.2 });
     }
 
-    // Theater across the street
-    addBox(root, unitBox, brickDark, 8, 9, 36.5, 22, 18, 8);
+    // Theater podium under the towers
+    addBox(root, unitBox, brickDark, 8, 5.5, 33.6, 22, 11, 3.2);
     const rivoli = new THREE.Mesh(new THREE.PlaneGeometry(12, 2.2), new THREE.MeshBasicMaterial({ map: marqueeCanvas("RIVOLI", "NOW SHOWING") }));
     rivoli.position.set(8, 8.4, 32.35);
     root.add(rivoli);
@@ -298,8 +388,7 @@ export function buildCity(scene) {
     titlePlane.position.set(8, 6.6, 32.35);
     root.add(titlePlane);
 
-    // Pharmacy / cigar
-    addBox(root, unitBox, brick, -18, 7, 36, 16, 14, 8);
+    addBox(root, unitBox, brick, -18, 4.6, 33.4, 16, 9.2, 2.8);
     const pharm = new THREE.Mesh(new THREE.PlaneGeometry(7, 1.3), new THREE.MeshBasicMaterial({ map: neonCanvas("PHARMACY", "#66FFE0", 1024, 256, "#081210") }));
     pharm.position.set(-18, 6.8, 32.05);
     root.add(pharm);
@@ -336,17 +425,9 @@ export function buildCity(scene) {
     const rainGeo = new THREE.BufferGeometry();
     rainGeo.setAttribute("position", new THREE.BufferAttribute(rainPos, 3));
     const rain = new THREE.Points(rainGeo, new THREE.PointsMaterial({
-        color: 0x9ab0c4, size: 0.045, transparent: true, opacity: 0.55, depthWrite: false, sizeAttenuation: true,
+        color: 0xc8d0d8, size: 0.04, transparent: true, opacity: 0.28, depthWrite: false, sizeAttenuation: true,
     }));
     scene.add(rain);
-
-    // Moon
-    const moon = new THREE.Mesh(new THREE.SphereGeometry(2.2, 16, 12), new THREE.MeshBasicMaterial({ color: 0xe8e0c8 }));
-    moon.position.set(-28, 28, -8);
-    scene.add(moon);
-    const moonLight = new THREE.DirectionalLight(0x8899cc, 0.35);
-    moonLight.position.set(-20, 30, -10);
-    scene.add(moonLight);
 
     // Cars
     const parked = [
@@ -359,19 +440,21 @@ export function buildCity(scene) {
         sedan(scene, { x: -40, z: 21.4, yaw: Math.PI / 2, taxi: true }),
         sedan(scene, { x: 20, z: 24.6, yaw: -Math.PI / 2, color: 0x2a2030 }),
         sedan(scene, { x: -10, z: 21.4, yaw: Math.PI / 2, color: 0x3a2a18 }),
+        sedan(scene, { x: 36, z: 21.4, yaw: Math.PI / 2, taxi: true }),
+        sedan(scene, { x: -28, z: 24.6, yaw: -Math.PI / 2, color: 0x4a1a1a }),
     ];
 
-    // Pedestrians on sidewalk loops
     const peds = [];
     const paths = [
-        { z: 15.5, x0: -34, x1: 34, speed: 1.15 },
-        { z: 15.9, x0: 32, x1: -32, speed: 0.95 },
-        { z: 29.2, x0: -30, x1: 30, speed: 1.05 },
+        { z: 15.5, x0: -48, x1: 48, speed: 1.15 },
+        { z: 15.95, x0: 46, x1: -46, speed: 0.95 },
+        { z: 29.15, x0: -42, x1: 42, speed: 1.05 },
+        { z: 29.55, x0: 40, x1: -40, speed: 0.88 },
     ];
-    for (let i = 0; i < 10; i++) {
+    for (let i = 0; i < 18; i++) {
         const path = paths[i % paths.length];
         const h = randomPedestrian(0.13 * i + 0.07);
-        const t0 = i / 10;
+        const t0 = i / 18;
         h.userData.path = path;
         h.userData.t = t0;
         const x = path.x0 + (path.x1 - path.x0) * t0;
@@ -410,7 +493,7 @@ export function buildCity(scene) {
 
 export function updateCity(city, dt, t, { outside, reduced }) {
     const rainArr = city.rainGeo.attributes.position.array;
-    city.rain.visible = !reduced;
+    city.rain.visible = !!outside && !reduced;
     if (!reduced) {
         for (let i = 0; i < RAIN_N; i++) {
             rainArr[i * 3 + 1] -= dt * 14;

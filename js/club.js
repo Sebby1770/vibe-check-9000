@@ -2,8 +2,8 @@ import * as THREE from "three";
 import { NPCS } from "./people.js";
 import { SECOND_Y, ATRIUM, STAIRS, FIRE_ESC } from "./zones.js";
 import { addBox, unitBox, neonCanvas } from "./kit.js";
-import { woodTex, plasterTex } from "./textures.js";
-import { createHuman, createCat } from "./human.js";
+import { woodTex, plasterTex, carpetTex, damaskTex } from "./textures.js";
+import { createHuman, createCat, randomRaver, randomLounge } from "./human.js";
 
 const FLOOR_N = 16;
 const FLOOR_COUNT = FLOOR_N * FLOOR_N;
@@ -27,7 +27,8 @@ export function buildClub(scene, env) {
     const metalDark = new THREE.MeshStandardMaterial({ color: 0x15151c, roughness: 0.4, metalness: 0.7 });
     const wood = new THREE.MeshStandardMaterial({ map: woodMap, roughness: 0.8, metalness: 0.05, color: 0x6a4a38 });
     const plaster = new THREE.MeshStandardMaterial({ map: plasterMap, roughness: 0.85, color: 0xb8a078 });
-    const loungeCarpet = new THREE.MeshStandardMaterial({ color: 0x4a1c28, roughness: 0.9 });
+    const loungeCarpet = new THREE.MeshStandardMaterial({ map: carpetTex(), roughness: 0.88, color: 0x8a3a48 });
+    const damask = new THREE.MeshStandardMaterial({ map: damaskTex(), roughness: 0.8, color: 0x7a3040 });
     const brass = new THREE.MeshStandardMaterial({ color: 0xc9a227, roughness: 0.35, metalness: 0.85 });
     const emissiveCyan = new THREE.MeshBasicMaterial({ color: 0x00fff7 });
     const emissiveMag = new THREE.MeshBasicMaterial({ color: 0xff00aa });
@@ -239,21 +240,41 @@ export function buildClub(scene, env) {
     addBox(world, unitBox, emissiveCyan, -15.55, 1.15, 0, 0.06, 0.05, 15.4);
     const bottleGeo = new THREE.CylinderGeometry(0.05, 0.06, 0.32, 6);
     const bottleMat = new THREE.MeshStandardMaterial({ color: 0x1a3322, roughness: 0.3, metalness: 0.4, transparent: true, opacity: 0.85 });
-    const bottles = new THREE.InstancedMesh(bottleGeo, bottleMat, 28);
-    for (let i = 0; i < 28; i++) {
-        _dummy.position.set(-15.55, 1.35, -7 + i * 0.52);
-        _dummy.scale.set(1, 0.8 + (i % 3) * 0.25, 1);
+    const bottles = new THREE.InstancedMesh(bottleGeo, bottleMat, 40);
+    for (let i = 0; i < 40; i++) {
+        _dummy.position.set(-15.55 - (i % 2) * 0.12, 1.35 + (i % 5) * 0.22, -7.4 + i * 0.38);
+        _dummy.scale.set(1, 0.75 + (i % 4) * 0.22, 1);
         _dummy.rotation.set(0, 0, 0);
         _dummy.updateMatrix();
         bottles.setMatrixAt(i, _dummy.matrix);
     }
     scene.add(bottles);
+    addBox(world, unitBox, metal, -15.55, 1.85, 0, 0.08, 0.04, 15.2);
+    addBox(world, unitBox, metal, -15.55, 2.25, 0, 0.08, 0.04, 15.2);
+    const glassGeo = new THREE.CylinderGeometry(0.04, 0.035, 0.12, 8);
+    const glassMat = new THREE.MeshStandardMaterial({ color: 0x88ccee, roughness: 0.1, metalness: 0.2, transparent: true, opacity: 0.45 });
+    const glasses = new THREE.InstancedMesh(glassGeo, glassMat, 10);
+    for (let i = 0; i < 10; i++) {
+        _dummy.position.set(-14.55, 1.16, -6.5 + i * 1.4);
+        _dummy.scale.set(1, 1, 1);
+        _dummy.rotation.set(0, 0, 0);
+        _dummy.updateMatrix();
+        glasses.setMatrixAt(i, _dummy.matrix);
+    }
+    scene.add(glasses);
     const stoolGeo = new THREE.CylinderGeometry(0.18, 0.16, 0.08, 8);
     for (let i = 0; i < 6; i++) {
         const s = new THREE.Mesh(stoolGeo, metal);
         s.position.set(-14.15, 0.55, -6 + i * 2.2);
         scene.add(s);
         addBox(world, unitBox, metalDark, -14.15, 0.25, -6 + i * 2.2, 0.08, 0.5, 0.08);
+    }
+
+    // Ground-floor VIP couches
+    for (const [x, z, rot] of [[13.6, -4.2, -0.4], [13.6, 1.8, 0.25], [13.2, 6.6, 0.15]]) {
+        addBox(world, unitBox, wood, x, 0.32, z, 2.0, 0.28, 0.78);
+        addBox(world, unitBox, metalDark, x, 0.58, z - 0.28, 2.0, 0.48, 0.18);
+        addBox(world, unitBox, emissiveAmber, x, 0.78, z + 0.1, 0.12, 0.04, 0.12);
     }
 
     // Signs
@@ -284,28 +305,75 @@ export function buildClub(scene, env) {
         rail(i * 1.1, fy + 0.28, ATRIUM.minZ - 0.08, 0.04, 0.55, 0.04);
     }
 
-    // Lounge stage + chairs + jukebox
-    addBox(world, unitBox, wood, 0, fy + 0.2, -13.2, 6.4, 0.4, 2.4);
-    addBox(world, unitBox, brass, 0, fy + 1.1, -14.4, 5.2, 0.06, 0.08);
-    const curtain = addBox(world, unitBox, new THREE.MeshStandardMaterial({ color: 0x5a1020, roughness: 0.8 }), 0, fy + 1.6, -14.55, 6.6, 2.2, 0.08);
-    curtain.material.emissive = new THREE.Color(0x200008);
-    curtain.material.emissiveIntensity = 0.2;
+    // Lounge — supper-club walls, stage, tables, chandelier
+    addBox(world, unitBox, wood, -16.38, fy + 0.7, -2, 0.08, 1.4, 28.4);
+    addBox(world, unitBox, damask, -16.38, fy + 2.4, -2, 0.08, 2.0, 28.4);
+    addBox(world, unitBox, wood, 16.38, fy + 0.7, -2, 0.08, 1.4, 28.4);
+    addBox(world, unitBox, damask, 16.38, fy + 2.4, -2, 0.08, 2.0, 28.4);
+    addBox(world, unitBox, brass, -16.36, fy + 1.42, -2, 0.04, 0.05, 28.4);
+    addBox(world, unitBox, brass, 16.36, fy + 1.42, -2, 0.04, 0.05, 28.4);
 
-    for (const [x, z] of [[-12.4, 6.2], [-10.2, 6.8], [-12.6, 4.1], [9.4, 7.2]]) {
-        addBox(world, unitBox, wood, x, fy + 0.22, z, 1.5, 0.12, 0.7);
-        addBox(world, unitBox, metalDark, x, fy + 0.42, z - 0.28, 1.5, 0.42, 0.12);
-        addBox(world, unitBox, emissiveAmber, x, fy + 0.72, z, 0.1, 0.04, 0.1);
+    addBox(world, unitBox, wood, 0, fy + 0.22, -13.2, 7.2, 0.44, 2.6);
+    addBox(world, unitBox, brass, 0, fy + 1.15, -14.45, 6.2, 0.06, 0.08);
+    const curtain = addBox(world, unitBox, new THREE.MeshStandardMaterial({ color: 0x5a1020, roughness: 0.8 }), 0, fy + 1.7, -14.58, 7.4, 2.4, 0.08);
+    curtain.material.emissive = new THREE.Color(0x300010);
+    curtain.material.emissiveIntensity = 0.28;
+    addBox(world, unitBox, wood, -1.7, fy + 0.55, -13.4, 1.7, 0.55, 0.85);
+    addBox(world, unitBox, brass, -1.7, fy + 0.86, -13.4, 1.5, 0.04, 0.7);
+    addBox(world, unitBox, new THREE.MeshBasicMaterial({ color: 0xf2eee0 }), -1.7, fy + 0.84, -13.15, 1.35, 0.02, 0.18);
+    addBox(world, unitBox, metalDark, 1.8, fy + 0.7, -13.15, 0.35, 0.9, 0.35);
+    addBox(world, unitBox, wood, 1.8, fy + 1.15, -13.15, 0.55, 0.12, 0.18);
+    addBox(world, unitBox, metal, 0.15, fy + 1.35, -12.55, 0.04, 1.1, 0.04);
+    addBox(world, unitBox, metal, 0.15, fy + 1.95, -12.4, 0.08, 0.06, 0.12);
+
+    function chandelier(x, z) {
+        addBox(world, unitBox, brass, x, fy + 3.55, z, 0.05, 0.7, 0.05);
+        addBox(world, unitBox, brass, x, fy + 3.15, z, 0.7, 0.06, 0.7);
+        for (const [dx, dz] of [[0.28, 0.28], [-0.28, 0.28], [0.28, -0.28], [-0.28, -0.28], [0.38, 0], [-0.38, 0]]) {
+            addBox(world, unitBox, emissiveAmber, x + dx, fy + 3.0, z + dz, 0.1, 0.14, 0.1);
+        }
     }
+    chandelier(-11.2, 6.4);
+    chandelier(10.6, 6.2);
+    chandelier(-10.8, -4.5);
+    chandelier(10.4, -5.2);
+
+    const loungeTables = [
+        [-12.2, 7.0], [-9.4, 6.5], [-12.4, 4.2],
+        [9.2, 7.1], [11.4, 5.4],
+        [-11.6, -3.4], [-9.2, -5.6],
+        [9.6, -4.2], [11.5, -6.4],
+        [-12.0, 1.2],
+    ];
+    for (const [x, z] of loungeTables) {
+        addBox(world, unitBox, wood, x, fy + 0.38, z, 0.95, 0.08, 0.95);
+        addBox(world, unitBox, brass, x, fy + 0.2, z, 0.08, 0.36, 0.08);
+        addBox(world, unitBox, emissiveAmber, x, fy + 0.52, z, 0.08, 0.16, 0.08);
+        addBox(world, unitBox, wood, x + 0.7, fy + 0.22, z + 0.15, 0.55, 0.1, 0.5);
+        addBox(world, unitBox, metalDark, x + 0.7, fy + 0.42, z + 0.32, 0.55, 0.38, 0.1);
+        addBox(world, unitBox, wood, x - 0.7, fy + 0.22, z - 0.1, 0.55, 0.1, 0.5);
+        addBox(world, unitBox, metalDark, x - 0.7, fy + 0.42, z - 0.28, 0.55, 0.38, 0.1);
+    }
+
+    addBox(world, unitBox, wood, -14.6, fy + 0.55, -8.2, 1.4, 1.1, 4.6);
+    addBox(world, unitBox, brass, -14.6, fy + 1.12, -8.2, 1.3, 0.04, 4.4);
+    addBox(world, unitBox, emissiveAmber, -14.6, fy + 0.08, -8.2, 1.2, 0.04, 4.4);
 
     addBox(world, unitBox, metalDark, 11.15, fy + 0.7, -9.35, 0.7, 1.4, 0.45);
     addBox(world, unitBox, emissiveMag, 11.15, fy + 0.9, -9.12, 0.55, 0.7, 0.04);
     addBox(world, unitBox, emissiveCyan, 11.15, fy + 0.5, -9.12, 0.4, 0.12, 0.04);
 
-    // Windows to street on 2F
-    for (const x of [-10, -4, 4, 10]) {
-        const pane = addBox(world, unitBox, glass, x, fy + 1.6, 12.42, 3.2, 1.8, 0.06);
-        pane.material = glass;
-        addBox(world, unitBox, brass, x, fy + 1.6, 12.48, 3.4, 2.0, 0.04);
+    for (const x of [-12, -7.5, -3, 3, 7.5, 12]) {
+        addBox(world, unitBox, glass, x, fy + 1.65, 12.42, 3.4, 1.9, 0.06);
+        addBox(world, unitBox, brass, x, fy + 1.65, 12.5, 3.6, 2.1, 0.04);
+        addBox(world, unitBox, new THREE.MeshBasicMaterial({
+            color: 0xffb070, transparent: true, opacity: 0.22, depthWrite: false,
+        }), x, fy + 1.65, 12.55, 3.2, 1.7, 0.02);
+    }
+
+    for (const [x, z] of [[-15.6, 8], [-15.6, -8], [15.6, 8], [15.6, -9]]) {
+        addBox(world, unitBox, wood, x, fy + 1.5, z, 0.08, 1.4, 1.1);
+        addBox(world, unitBox, brass, x, fy + 1.5, z, 0.1, 1.5, 1.2);
     }
 
     // Fire escape
@@ -351,26 +419,76 @@ export function buildClub(scene, env) {
         return { id: npc.id, obj, npc, x: npc.x, z: npc.z, y: npc.y || 0 };
     });
 
-    // Dancers on the floor (full humans)
-    const dancers = [];
-    for (let i = 0; i < 12; i++) {
-        const ang = (i / 12) * Math.PI * 2 + 0.2;
-        const rad = 2.5 + (i % 3) * 1.1;
-        const x = Math.cos(ang) * rad;
-        const z = Math.sin(ang) * rad * 0.9;
-        if (NPCS.some((n) => Math.hypot(x - n.x, z - n.z) < 1.4 && !n.y)) continue;
-        const h = createHuman({
-            outfit: "raver",
-            skin: [0x8d5524, 0xc68642, 0xe0ac69, 0xf1c27d][i % 4],
-            hair: 0x1a0a08,
-            color: ["#ff00aa", "#00fff7", "#39ff14", "#ffb703"][i % 4],
-            anim: "dance",
-            scale: 0.95 + (i % 4) * 0.03,
-        });
-        h.position.set(x, 0, z);
-        h.rotation.y = ang + Math.PI;
+    function taken(x, z, y, pad = 1.25) {
+        if (NPCS.some((n) => Math.abs((n.y || 0) - y) < 1.5 && Math.hypot(x - n.x, z - n.z) < pad)) return true;
+        return false;
+    }
+
+    function placePerson(h, x, z, y, yaw, mode) {
+        h.position.set(x, y, z);
+        h.rotation.y = yaw;
+        h.userData.mode = mode;
         scene.add(h);
-        dancers.push(h);
+        return h;
+    }
+
+    const dancers = [];
+    const rings = [[2.15, 8], [3.35, 12], [4.55, 14], [5.85, 10]];
+    let di = 0;
+    for (const [rad, n] of rings) {
+        for (let i = 0; i < n; i++) {
+            const ang = (i / n) * Math.PI * 2 + rad;
+            const x = Math.cos(ang) * rad;
+            const z = Math.sin(ang) * rad * 0.92;
+            if (taken(x, z, 0, 1.35)) continue;
+            dancers.push(placePerson(randomRaver(0.17 * di + 0.11), x, z, 0, ang + Math.PI, "dance"));
+            di += 1;
+        }
+    }
+    for (const [x, z, yaw] of [[8.6, 2.2, -1.2], [8.2, -2.8, 2.1], [-8.4, 4.1, 0.6], [-7.8, -6.2, 2.8], [9.4, 5.5, -0.4], [-9.1, 1.2, 1.4]]) {
+        if (taken(x, z, 0)) continue;
+        dancers.push(placePerson(randomRaver(0.4 + Math.abs(x) * 0.07), x, z, 0, yaw, "dance"));
+    }
+
+    const barCrowd = [];
+    const stoolZ = [-6, -3.8, -1.6, 2.8, 5.0, 7.2];
+    for (let i = 0; i < stoolZ.length; i++) {
+        const z = stoolZ[i];
+        if (taken(-14.15, z, 0, 1.1)) continue;
+        barCrowd.push(placePerson(randomRaver(0.55 + i * 0.13, { outfit: i % 2 ? "raver" : "host", anim: "sit" }), -14.15, z, 0, -Math.PI / 2, "sit"));
+    }
+    for (const [x, z, yaw] of [[-13.05, -5.1, -1.4], [-13.1, -2.4, -1.7], [-13.0, 1.7, -1.55], [-13.12, 4.15, -1.2], [-12.85, 6.4, -1.8], [-12.6, -7.2, 3.4]]) {
+        if (taken(x, z, 0, 1.0)) continue;
+        barCrowd.push(placePerson(randomRaver(0.8 + Math.abs(z) * 0.05, { anim: "lean" }), x, z, 0, yaw, "lean"));
+    }
+    for (const [x, z, yaw] of [[13.5, -4.0, 1.2], [13.55, 1.95, -0.3], [13.15, 6.45, 3.0], [12.4, -6.5, 0.4]]) {
+        barCrowd.push(placePerson(randomRaver(1.1 + x * 0.02, { outfit: "host", anim: "sit" }), x, z, 0, yaw, "sit"));
+    }
+
+    const loungeCrowd = [];
+    const seatPairs = [
+        [-12.2, 7.0, 0.2], [-9.4, 6.5, -0.4], [-12.4, 4.2, 0.5],
+        [9.2, 7.1, 3.0], [11.4, 5.4, 2.5],
+        [-11.6, -3.4, 0.1], [-9.2, -5.6, 0.8],
+        [9.6, -4.2, -2.2], [11.5, -6.4, 2.8],
+        [-12.0, 1.2, 0.3],
+    ];
+    for (let i = 0; i < seatPairs.length; i++) {
+        const [x, z, yaw] = seatPairs[i];
+        const a = [x + 0.65, z + 0.12];
+        const b = [x - 0.65, z - 0.1];
+        if (!taken(a[0], a[1], fy, 1.15)) {
+            loungeCrowd.push(placePerson(randomLounge(0.21 * i + 0.04, { anim: "sit" }), a[0], a[1], fy, yaw + 0.4, "sit"));
+        }
+        if (!taken(b[0], b[1], fy, 1.15)) {
+            loungeCrowd.push(placePerson(randomLounge(0.33 * i + 0.18, { anim: "sit" }), b[0], b[1], fy, yaw + Math.PI - 0.3, "sit"));
+        }
+    }
+    for (const [x, z, yaw] of [[-7.85, 4.9, 0], [7.85, 4.6, Math.PI], [-7.85, -6.4, 0.2], [7.85, -6.1, Math.PI], [-7.9, 0.8, 0.1], [8.0, -1.2, Math.PI]]) {
+        loungeCrowd.push(placePerson(randomLounge(1.4 + x * 0.03, { anim: "lean" }), x, z, fy, yaw, "lean"));
+    }
+    for (const [x, z, yaw] of [[-4.4, -11.2, 0.2], [4.2, -11.0, -0.15], [-14.2, -6.5, Math.PI / 2], [8.4, 8.6, Math.PI]]) {
+        loungeCrowd.push(placePerson(randomLounge(2.1 + Math.abs(z) * 0.02, { anim: "idle", outfit: "clerk" }), x, z, fy, yaw, "idle"));
     }
 
     const lights = {
@@ -394,13 +512,25 @@ export function buildClub(scene, env) {
     const barLight = new THREE.PointLight(0xff2299, 70, 14, 2);
     barLight.position.set(-14.5, 1.4, 0);
     scene.add(barLight);
-    const loungeLight = new THREE.PointLight(0xe0b25a, 40, 16, 2);
+    const loungeLight = new THREE.PointLight(0xe0b25a, 55, 18, 2);
     loungeLight.position.set(0, fy + 2.2, -12);
     scene.add(loungeLight);
+    const loungeWarm = new THREE.PointLight(0xffc090, 36, 14, 2);
+    loungeWarm.position.set(-11, fy + 2.4, 6);
+    scene.add(loungeWarm);
+    const loungeWarm2 = new THREE.PointLight(0xffb070, 28, 12, 2);
+    loungeWarm2.position.set(10.5, fy + 2.3, 6);
+    scene.add(loungeWarm2);
+    const windowDusk = new THREE.PointLight(0xff8a50, 22, 10, 2);
+    windowDusk.position.set(0, fy + 2.0, 11.2);
+    scene.add(windowDusk);
     lights.spot = spot;
     lights.booth = boothFill;
     lights.bar = barLight;
     lights.lounge = loungeLight;
+    lights.loungeWarm = loungeWarm;
+    lights.loungeWarm2 = loungeWarm2;
+    lights.windowDusk = windowDusk;
     lights.spotTarget = spotTarget;
 
     return {
@@ -415,6 +545,8 @@ export function buildClub(scene, env) {
         pVel,
         namedPeople,
         dancers,
+        barCrowd,
+        loungeCrowd,
         secretCube,
         lights,
         drawLed,

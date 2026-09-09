@@ -7,7 +7,7 @@ import { buildClub } from "./club.js";
 import { buildCity, updateCity } from "./city.js";
 import { animateHuman } from "./human.js";
 import { buildColliders, getFloorY, getZone, isOutside } from "./zones.js";
-import { makeCubeEnv } from "./kit.js";
+import { makeCubeEnv, makeDuskSky } from "./kit.js";
 
 const _color = new THREE.Color();
 const _vibe = new THREE.Color("#ff00ff");
@@ -23,17 +23,20 @@ export function createWorld(canvas) {
     renderer.setSize(window.innerWidth, window.innerHeight);
     renderer.outputColorSpace = THREE.SRGBColorSpace;
     renderer.toneMapping = THREE.ACESFilmicToneMapping;
-    renderer.toneMappingExposure = 0.95;
+    renderer.toneMappingExposure = 1.08;
     renderer.shadowMap.enabled = false;
-    renderer.setClearColor(0x07060c, 1);
+    renderer.setClearColor(0xc47858, 1);
 
     const scene = new THREE.Scene();
-    scene.fog = new THREE.FogExp2(0x0c0a12, 0.022);
-    scene.background = new THREE.Color(0x07060c);
+    scene.fog = new THREE.FogExp2(0xc47862, 0.012);
+    scene.background = new THREE.Color(0xc47858);
     const env = makeCubeEnv();
     scene.environment = env;
 
-    const camera = new THREE.PerspectiveCamera(82, window.innerWidth / window.innerHeight, 0.08, 180);
+    const dusk = makeDuskSky(280);
+    scene.add(dusk.sky, dusk.sun, dusk.glow, dusk.sunLight);
+
+    const camera = new THREE.PerspectiveCamera(82, window.innerWidth / window.innerHeight, 0.08, 420);
     camera.position.set(0, 1.7, 8);
     scene.add(camera);
 
@@ -45,7 +48,7 @@ export function createWorld(canvas) {
     let bloomKick = 0;
     let baseFov = 82;
 
-    const hemi = new THREE.HemisphereLight(0x8890b0, 0x1a1010, 0.95);
+    const hemi = new THREE.HemisphereLight(0xffc090, 0x4a3048, 1.15);
     scene.add(hemi);
 
     const club = buildClub(scene, env);
@@ -115,6 +118,8 @@ export function createWorld(canvas) {
         setCrowdVisible(v) {
             crowdOn = !!v;
             for (const d of club.dancers) d.visible = crowdOn;
+            for (const p of club.barCrowd || []) p.visible = crowdOn;
+            for (const p of club.loungeCrowd || []) p.visible = crowdOn;
             for (const p of city.peds) p.visible = crowdOn;
         },
         setFov(fov) {
@@ -124,8 +129,8 @@ export function createWorld(canvas) {
         },
         setBloomReduced(v) { bloom.strength = v ? 0.1 : 0.48; },
         setTipsy(v) {
-            scene.fog.density = v ? 0.018 : 0.022;
-            renderer.toneMappingExposure = v ? 1.08 : 0.95;
+            scene.fog.density = v ? 0.01 : 0.012;
+            renderer.toneMappingExposure = v ? 1.18 : 1.08;
         },
         flashFloor() { floorFlash = 0.22; bloomKick = 0.18; },
         pulseKick() { bloomKick = 0.12; },
@@ -146,27 +151,47 @@ export function createWorld(canvas) {
             const zone = getZone(p.x, p.z, p.y - 1.7);
             const outside = isOutside(p.x, p.z);
 
+            dusk.sky.visible = true;
+            dusk.sun.visible = outside;
+            dusk.glow.visible = outside;
             if (outside) {
-                scene.fog.color.set(0x0c1018);
-                scene.fog.density = reduced ? 0.012 : 0.016;
-                hemi.intensity = 0.7;
-                renderer.setClearColor(0x07080e, 1);
-                scene.background.set(0x07080e);
-            } else if (zone === "lounge" || zone === "diner" || zone === "hotel") {
-                scene.fog.color.set(0x1a120c);
-                scene.fog.density = 0.02;
-                hemi.intensity = 1.05;
+                scene.fog.color.set(0xc47862);
+                scene.fog.density = reduced ? 0.006 : 0.0085;
+                hemi.color.set(0xffc090);
+                hemi.groundColor.set(0x4a3048);
+                hemi.intensity = 1.35;
+                dusk.sunLight.intensity = 1.2;
+                renderer.setClearColor(0xc47858, 1);
+                renderer.toneMappingExposure = reduced ? 1.0 : 1.12;
+            } else if (zone === "lounge") {
+                scene.fog.color.set(0x3a2018);
+                scene.fog.density = 0.016;
+                hemi.color.set(0xffd0a0);
+                hemi.groundColor.set(0x2a1018);
+                hemi.intensity = 1.15;
+                dusk.sunLight.intensity = 0.25;
+                renderer.toneMappingExposure = 1.05;
+            } else if (zone === "diner" || zone === "hotel") {
+                scene.fog.color.set(0x2a1810);
+                scene.fog.density = 0.018;
+                hemi.intensity = 1.1;
+                dusk.sunLight.intensity = 0.15;
             } else {
                 scene.fog.color.copy(_vibe).multiplyScalar(0.12);
-                scene.fog.density = 0.028;
-                hemi.intensity = 1.2;
+                scene.fog.density = 0.026;
+                hemi.color.set(0x8877cc);
+                hemi.groundColor.set(0x180010);
+                hemi.intensity = 1.15;
+                dusk.sunLight.intensity = 0.05;
             }
 
             const dim = 1;
             club.lights.spot.intensity = (380 + bass * 160) * dim;
             club.lights.booth.intensity = 55 * (0.6 + bass);
             club.lights.bar.intensity = 70;
-            club.lights.lounge.intensity = 32 + Math.sin(t * 1.5) * 6;
+            club.lights.lounge.intensity = 48 + Math.sin(t * 1.5) * 8;
+            if (club.lights.loungeWarm) club.lights.loungeWarm.intensity = 32 + Math.sin(t * 1.1) * 5;
+            if (club.lights.windowDusk) club.lights.windowDusk.intensity = 18 + Math.sin(t * 0.4) * 4;
             const sweep = t * 0.25;
             club.lights.spotTarget.position.set(Math.sin(sweep) * 5.5, 0, Math.cos(sweep * 0.7) * 4);
 
@@ -184,7 +209,9 @@ export function createWorld(canvas) {
                 });
             }
             if (crowdOn) {
-                for (const d of club.dancers) animateHuman(d, t, { mode: "dance", bpm });
+                for (const d of club.dancers) animateHuman(d, t, { mode: d.userData.mode || "dance", bpm });
+                for (const p of club.barCrowd || []) animateHuman(p, t, { mode: p.userData.mode || "idle", bpm });
+                for (const p of club.loungeCrowd || []) animateHuman(p, t, { mode: p.userData.mode || "idle", bpm: 96 });
                 for (const ped of city.peds) animateHuman(ped, t, { mode: "walk", bpm: 96 });
             }
 

@@ -15,7 +15,7 @@ export const FIRE_ESC = {
     zBottom: -24.05, zTop: -16.32,
 };
 
-export const BOUNDS = { minX: -39.6, maxX: 39.6, minZ: -29.4, maxZ: 37.8 };
+export const BOUNDS = { minX: -52.5, maxX: 52.5, minZ: -29.4, maxZ: 37.8 };
 
 function inRect(x, z, r) {
     return x >= r.minX && x <= r.maxX && z >= r.minZ && z <= r.maxZ;
@@ -159,22 +159,33 @@ export function buildColliders() {
     // Stair rails (gaps at top + bottom so you can step on)
     wall(boxes, 13.05, 13.22, 2.9, 9.5, -1, 6.2);
 
-    // Lounge stage + jukebox
-    wall(boxes, -3.4, 3.4, -14.6, -12.4, 4.2, 5.4);
+    // Lounge stage + jukebox + tables + lounge bar
+    wall(boxes, -3.6, 3.6, -14.7, -12.2, 4.2, 5.6);
     wall(boxes, 10.7, 11.6, -9.7, -9.0, 4.2, 6.2);
+    wall(boxes, -15.4, -13.8, -10.6, -5.8, 4.2, 6.0);
+    for (const [x, z] of [[-12.2, 7.0], [-9.4, 6.5], [-12.4, 4.2], [9.2, 7.1], [11.4, 5.4], [-11.6, -3.4], [-9.2, -5.6], [9.6, -4.2], [11.5, -6.4], [-12.0, 1.2]]) {
+        wall(boxes, x - 0.55, x + 0.55, z - 0.55, z + 0.55, 4.2, 5.35);
+    }
+
+    // Ground VIP couches
+    wall(boxes, 12.4, 14.8, -5.0, -3.4, -1, 1.4);
+    wall(boxes, 12.4, 14.8, 1.0, 2.6, -1, 1.4);
+    wall(boxes, 12.0, 14.4, 5.8, 7.4, -1, 1.4);
 
     // Alley junk
     wall(boxes, -9.4, -6.2, -23.5, -20.8, -1, 1.8);
     wall(boxes, 3.6, 6.6, -27.2, -24.6, -1, 1.6);
     wall(boxes, -2.2, 0.4, -22.4, -20.6, -1, 1.4);
 
-    // Alley back wall + side fences
-    wall(boxes, -39, 39, -30.2, -29.55);
+    // Alley back wall + side fences + lots beside the block
+    wall(boxes, -55, 55, -30.2, -29.55);
     wall(boxes, -39.2, -38.7, -30, -16.5);
     wall(boxes, 38.7, 39.2, -30, -16.5);
+    wall(boxes, 38.9, 55, -30, 12.5);
+    wall(boxes, -55, -38.9, -30, 12.5);
 
     // Far buildings across the street
-    wall(boxes, -40, 40, 32.1, 48, -1, 40);
+    wall(boxes, -90, 90, 32.05, 90, -1, 120);
 
     // Parked cars
     wall(boxes, -22.4, -17.8, 18.7, 20.7, -1, 1.4);

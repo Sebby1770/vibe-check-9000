@@ -4,6 +4,22 @@ All notable changes to VIBE CHECK 9000™ are documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
+## [15.0.0] - 2026-09-09
+
+Dusk on 47th. The club fills up. The lounge becomes a supper club. The other side of the street is a wall of towers.
+
+### Added
+
+- Packed dance floor (rings of ravers), a full bar crowd on stools and leaning the rail, VIP couches.
+- Second-floor supper club: damask, chandeliers, candlelit tables, piano, curtains, dusk in the windows, a seated audience.
+- Dusk sky (rose/gold horizon, sun between the towers) instead of a black night.
+- A Midtown wall of setback skyscrapers across the street — 16 to 38 stories, water towers, a spire, lit windows, a gin billboard.
+
+### Changed
+
+- Fog, hemisphere, and exposure follow dusk outside and stay neon-dark on the floor.
+- Version badge bumped to v15.0.0.
+
 ## [14.0.0] - 2026-09-09
 
 Midtown, November 12, 1954. The club grew a second story, a back alley, and a city.

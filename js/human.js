@@ -379,9 +379,44 @@ export function animateHuman(obj, t, ctx = {}) {
         j.rUpper.rotation.x = -0.5 + Math.cos(beat * 2) * 0.25;
         j.lThigh.rotation.x = b * 0.15;
         j.rThigh.rotation.x = (1 - b) * 0.12;
+        j.lShin.rotation.x = 0.08;
+        j.rShin.rotation.x = 0.1;
         j.spine.rotation.x = -0.08;
         j.head.rotation.y = Math.sin(t * 0.7 + ph) * 0.2;
         if (obj.userData.stick) obj.userData.stick.rotation.z = Math.sin(beat * 2) * 0.6;
+    } else if (mode === "sit") {
+        const breath = Math.sin(t * 1.2 + ph) * 0.008;
+        j.hips.position.y = 0.58 + breath;
+        j.hips.rotation.y = Math.sin(t * 0.2 + ph) * 0.04;
+        j.spine.rotation.x = 0.08;
+        j.spine.rotation.y = Math.sin(t * 0.3 + ph) * 0.06;
+        j.head.rotation.y = Math.sin(t * 0.22 + ph) * 0.15;
+        j.head.rotation.x = 0.04;
+        j.lThigh.rotation.x = 1.18;
+        j.rThigh.rotation.x = 1.22;
+        j.lShin.rotation.x = 1.15;
+        j.rShin.rotation.x = 1.12;
+        j.lUpper.rotation.z = 0.18;
+        j.rUpper.rotation.z = -0.22;
+        j.lUpper.rotation.x = -0.25;
+        j.rUpper.rotation.x = -0.15 + Math.sin(t * 0.5 + ph) * 0.08;
+        j.lFore.rotation.x = -0.35;
+        j.rFore.rotation.x = -0.2;
+    } else if (mode === "lean") {
+        const breath = Math.sin(t * 1.3 + ph) * 0.01;
+        j.hips.position.y = 0.95 + breath;
+        j.spine.rotation.x = 0.18;
+        j.spine.rotation.y = Math.sin(t * 0.25 + ph) * 0.05;
+        j.head.rotation.y = Math.sin(t * 0.3 + ph) * 0.18;
+        j.lUpper.rotation.z = 0.55;
+        j.rUpper.rotation.z = -0.15;
+        j.lUpper.rotation.x = -0.55;
+        j.rUpper.rotation.x = 0.12;
+        j.lFore.rotation.x = -0.5;
+        j.lThigh.rotation.x = 0.08;
+        j.rThigh.rotation.x = -0.04;
+        j.lShin.rotation.x = 0.06;
+        j.rShin.rotation.x = 0.02;
     } else {
         const breath = Math.sin(t * 1.4 + ph) * 0.01;
         j.hips.position.y = 0.95 + breath;
@@ -407,14 +442,39 @@ const PED_SKINS = [0x8d5524, 0xc68642, 0xe0ac69, 0xf1c27d, 0x5c3317, 0x3b2219];
 const PED_HAIR = [0x1a1208, 0x3b2219, 0x0d0d0d, 0x6b2a18, 0x2a2010, 0x4a3a28];
 const PED_OUTFITS = ["salesman", "lady", "hood", "clerk", "cabbie", "pedestrian", "lounge"];
 
-export function randomPedestrian(seed = Math.random()) {
+export function randomPedestrian(seed = Math.random(), extra = {}) {
     const i = Math.floor(seed * 97);
     return createHuman({
-        outfit: PED_OUTFITS[i % PED_OUTFITS.length],
-        skin: PED_SKINS[i % PED_SKINS.length],
-        hair: PED_HAIR[(i * 3) % PED_HAIR.length],
-        hairStyle: i % 3 === 0 ? "updo" : i % 3 === 1 ? "pompadour" : "short",
-        scale: 0.94 + (i % 5) * 0.025,
-        anim: "walk",
+        outfit: extra.outfit || PED_OUTFITS[i % PED_OUTFITS.length],
+        skin: extra.skin || PED_SKINS[i % PED_SKINS.length],
+        hair: extra.hair || PED_HAIR[(i * 3) % PED_HAIR.length],
+        hairStyle: extra.hairStyle || (i % 3 === 0 ? "updo" : i % 3 === 1 ? "pompadour" : "short"),
+        scale: extra.scale || 0.94 + (i % 5) * 0.025,
+        anim: extra.anim || "walk",
+        color: extra.color,
+        accent: extra.accent,
+    });
+}
+
+const RAVER_OUTFITS = ["raver", "host", "dj"];
+const LOUNGE_OUTFITS = ["lounge", "socialite", "singer", "lady", "salesman", "clerk"];
+
+export function randomRaver(seed = Math.random(), extra = {}) {
+    const i = Math.floor(seed * 131);
+    const neon = ["#ff00aa", "#00fff7", "#39ff14", "#ffb703", "#c77dff"][i % 5];
+    return randomPedestrian(seed, {
+        outfit: extra.outfit || RAVER_OUTFITS[i % RAVER_OUTFITS.length],
+        anim: extra.anim || "dance",
+        color: neon,
+        accent: neon,
+        ...extra,
+    });
+}
+
+export function randomLounge(seed = Math.random(), extra = {}) {
+    return randomPedestrian(seed, {
+        outfit: extra.outfit || LOUNGE_OUTFITS[Math.floor(seed * 90) % LOUNGE_OUTFITS.length],
+        anim: extra.anim || "idle",
+        ...extra,
     });
 }
