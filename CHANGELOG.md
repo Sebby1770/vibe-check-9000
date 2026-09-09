@@ -4,41 +4,52 @@ All notable changes to VIBE CHECK 9000™ are documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
-## [9.1.0] - 2026-07-02
+## [14.0.0] - 2026-09-09
+
+Midtown, November 12, 1954. The club grew a second story, a back alley, and a city.
 
 ### Added
-- **AnimatedContent entrance animations** — a dependency-free vanilla JS port of
-  [ReactBits AnimatedContent](https://reactbits.dev/animations/animated-content)
-  (`animated-content.js`). Mirrors the ReactBits prop API via `data-animate-*`
-  attributes (direction, distance, duration, ease, delay, threshold, initial
-  opacity, scale, reverse) and drives the hero, result card, and side panels
-  with IntersectionObserver + the Web Animations API.
-- **Animated radar chart** on the result card plotting CHAOS / CHARM / COSMIC /
-  STATIC on a glowing four-axis radar, drawn with canvas at device pixel ratio.
-- **3 new questions** (9 total): the rogue AI superpower, the browser-history
-  gala, and the soul-frequency calibration.
-- **3 new vibes**: HAUNTED HOTSPOT WITH FULL BARS, CHAIR OF THE MIDNIGHT
-  COMMITTEE, and GILDED BUFFERING ICON — each with dedicated stat rules.
-- **2 new achievements**: VIBE CARTOGRAPHER (discover 5 different vibes,
-  tracked across sessions) and ANY% VIBER (answer every question in under
-  15 seconds).
-- **Keyboard support**: number keys 1–5 answer the visible question, Escape
-  closes modals, and interactive elements have visible focus outlines.
-- SVG favicon.
+
+- **Walkable 1954 block.** Brick, rain, steam, Checkers, street lamps, a phone booth, a newsstand, Dottie's Diner, Hotel Astoria, and the Rivoli marquee across 47th Street.
+- **Second-floor lounge.** Stairs on the east wall, atrium looking down on the LEDs, brass rail, Velma's trio, jukebox, windows on the rain.
+- **Back alley.** Dumpsters, hanging bulb, fire escape back up to the lounge, Vinnie, Officer Muldoon, Socks the cat.
+- **Articulated people.** Head, torso, arms, legs, faces, hats, dresses, glowsticks — idle, walk, and dance. Named cast of 19 plus sidewalk pedestrians and floor dancers.
+- **Zone audio.** Techno on the floor, jazz in the lounge, rain on the street, the kick leaking through the alley wall.
+- **Toys.** Hail a Checker, read the Midtown Gazette, pick up the phone booth, pet the cat, coffee and cherry pie at Dottie's.
 
 ### Changed
-- Version badge bumped to v9.1.0.
-- ABOUT and SCIENCE modals updated for the new question count, radar chart,
-  and ReactBits credit.
 
-### Accessibility
-- `prefers-reduced-motion` is now respected everywhere: entrance animations,
-  confetti, the radar draw-in, and all ambient CSS animations reduce to
-  near-instant states.
+- Front and back doors are real exits, not walls.
+- Collision is 3D (floor-aware) so the bar does not block the lounge.
+- Version badge bumped to v14.0.0.
 
-## [9.0.0] - 2026-05-03
+## [13.0.0] - 2026-09-07
+
+The quiz is gone. The club is the product: named people to talk to, SPACE to
+dance on the floor, and a DECK that plays your own audio files.
+
+## [12.0.0] - 2026-09-07
+
+GitHub already shipped a separate 11.0 atlas/streak release. This is the
+first-person nightclub visor line.
+
+## [11.0.0] - 2026-09-07
 
 ### Added
-- Initial release: six-question cyberpunk vibe scanner with twelve vibes,
-  four neon stats, shareable result links, PNG report export, achievements,
-  local history, rave mode, and a suspicious amount of static.
+
+- Unreal Bloom post-process, kick FOV pulse, first-person visor hands.
+- Crowd is now torso + head + glowstick instances instead of single capsules.
+- Wall EQ screen, VIP couches, claps on beats 2 and 4, result radar chart.
+
+## [10.0.0] - 2026-09-07
+
+### Added
+
+- **First-person VR nightclub.** Warehouse rave in Three.js r160.
+- **Pointer-lock visor.** WASD + mouse look, head bob, AABB collision.
+- **Procedural techno** (Web Audio, no files).
+- Optional WebXR via `VRButton`.
+
+## [9.1.0] - 2026-07-02
+
+AnimatedContent port, radar chart, extra questions and vibes, keyboard play.

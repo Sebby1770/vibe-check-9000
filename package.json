@@ -1,0 +1,11 @@
+{
+  "name": "vibe-check-9000",
+  "version": "14.0.0",
+  "private": true,
+  "type": "module",
+  "description": "First-person 1954 Midtown night: club, lounge, alley, 47th Street.",
+  "scripts": {
+    "test": "node tests/people.test.js && node tests/engine.test.js && node tests/zones.test.js",
+    "start": "python3 -m http.server 8000"
+  }
+}

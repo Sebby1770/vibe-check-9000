@@ -1,54 +1,37 @@
 # VIBE CHECK 9000™
 
-> A cyberpunk-themed website that scans your vibe and returns a deeply official, deeply unserious diagnosis.
+A first-person night in Midtown. November 12, 1954. The visor is from later.
 
-[![status](https://img.shields.io/badge/status-neon%20online-ff00ff?style=for-the-badge)](#)
-[![stack](https://img.shields.io/badge/stack-HTML%20CSS%20JS-00fff7?style=for-the-badge)](#)
-[![accuracy](https://img.shields.io/badge/accuracy-emotionally%20suspicious-39ff14?style=for-the-badge)](#)
+Walk the club, take the stairs to the lounge, step out the front door onto 47th Street, or slip out the back into the alley.
 
-## Live Site
+Live: <https://sebby1770.github.io/vibe-check-9000/>
 
-Once GitHub Pages is enabled for this repo:
+## The night
 
-<https://sebby1770.github.io/vibe-check-9000/>
+1. Click **ENTER THE NIGHT** (pointer lock + house system).
+2. **WASD** to move, mouse to look, **SPACE** on the LED floor to dance.
+3. Walk up to a named person and press **E** to talk.
+4. **Front doors** open onto 47th Street — rain, Checkers, Dottie's, Hotel Astoria.
+5. **Back doors** dump you in the alley — Vinnie, Muldoon, Socks the cat, fire escape.
+6. **Stairs** on the east wall (and the wet fire escape) go up to Velma's lounge.
+7. **ESC** opens the deck. Drop MP3 / WAV / FLAC / OGG. Hail a Checker. Read the Gazette.
 
-## Features
+## People
 
-- Animated cyberpunk UI with neon grid, scanlines, glitch text, scanner rings, and canvas particles
-- Entrance animations powered by a vanilla JS port of [ReactBits AnimatedContent](https://reactbits.dev/animations/animated-content) — same prop API (direction, distance, duration, ease, delay, threshold, scale, reverse), zero dependencies
-- Multi-stage fake terminal scan with absurd loading messages
-- Nine interactive questions scored across Chaos, Charm, Cosmic, and Static
-- Animated four-axis radar chart of your stat profile on the result card
-- Fifteen ridiculous result archetypes
-- Encoded result URLs that can be copied or shared
-- PNG result-card export
-- Local scan history and ten achievements, including cross-session vibe discovery tracking
-- Keyboard play: answer questions with keys 1–5, close modals with Escape
-- Full `prefers-reduced-motion` support
-- Hidden keyboard easter eggs
-- GitHub profile/repo links wired into the interface
+**The floor** — REXA, ION, PIXEL, GHOST, KAI, NOVA  
+**The lounge** — VELMA, MARCO, RUBY, FRANK  
+**The alley** — VINNIE, MULDOON, SOCKS  
+**47th Street** — DOTTIE, CABBY, SCOTTY, CLARA, HAROLD, ELEANOR
 
-See [CHANGELOG.md](CHANGELOG.md) for release history.
-
-## Run Locally
+## Run locally
 
 ```bash
-open index.html
+python3 -m http.server 8000
+npm test
 ```
 
-No build step, no dependencies, no framework. Just static files.
-
-## Deploy
-
-Set GitHub Pages to deploy from the `main` branch and the repository root. The site is plain static HTML/CSS/JS, so no build step is needed.
+Needs HTTP because of ES modules. No build step.
 
 ## Stack
 
-- HTML5
-- CSS3
-- Vanilla JavaScript
-- Canvas API
-
-## Disclaimer
-
-Results are not valid in court, therapy, hiring, dating, banking, or interdimensional arbitration.
+Three.js r160, Web Audio, vanilla HTML/CSS/JS. Procedural people, brick, rain, jazz, and techno — no asset pack.
