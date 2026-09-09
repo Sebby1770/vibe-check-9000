@@ -1,10 +1,12 @@
 # VIBE CHECK 9000™
 
+**Play it in the browser:** [sebby1770.github.io/vibe-check-9000](https://sebby1770.github.io/vibe-check-9000/)
+
 A first-person dusk in Midtown. November 12, 1954. The visor is from later. The sun is still in the street.
 
 Walk a packed floor, take the stairs to a candlelit supper-club lounge, step out into dusk on 47th Street under a wall of towers, or slip out the back into the alley.
 
-Live: <https://sebby1770.github.io/vibe-check-9000/>
+No install. Click **ENTER THE NIGHT**.
 
 ## The night
 
