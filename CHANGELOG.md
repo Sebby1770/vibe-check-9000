@@ -4,6 +4,17 @@ All notable changes to VIBE CHECK 9000™ are documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
+## [18.0.0] - 2026-09-09
+
+47th Street grew a far sidewalk that isn't a wall.
+
+### Added
+
+- Walkable shops across the street: Rex's Records, 47th Pharmacy, Lily's, the Rivoli lobby, Midtown Gin, Tony's Barber.
+- Workers and customers: SID, IRIS, LILY, WALTER, ROSIE, TONY, plus LOU at the grill and OTIS the bellhop.
+- Crosswalks, a traffic signal, a spinning barber pole, more neon, towers pushed back so the block can breathe.
+- Looks: B-side violet, pharmacy mint, Tony's clip. Dares that send you across 47th.
+
 ## [17.0.0] - 2026-09-09
 
 The visor remembers. Come back tomorrow.

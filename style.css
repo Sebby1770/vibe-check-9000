@@ -810,6 +810,13 @@ body[data-zone="lounge"] .hud-bracket { border-color: rgba(224, 178, 90, 0.8); }
 body[data-zone="lounge"] .logo { color: #e0b25a; text-shadow: 0 0 12px #e0b25a; }
 body[data-zone="diner"] .hud-bracket { border-color: rgba(255, 107, 107, 0.8); }
 body[data-zone="hotel"] .hud-bracket { border-color: rgba(212, 196, 168, 0.75); }
+body[data-zone="records"] .hud-bracket { border-color: rgba(199, 125, 255, 0.85); }
+body[data-zone="records"] .logo { color: #c77dff; text-shadow: 0 0 12px #c77dff; }
+body[data-zone="pharmacy"] .hud-bracket { border-color: rgba(102, 255, 224, 0.85); }
+body[data-zone="florist"] .hud-bracket { border-color: rgba(255, 107, 154, 0.85); }
+body[data-zone="rivoli"] .hud-bracket { border-color: rgba(255, 231, 168, 0.85); }
+body[data-zone="liquor"] .hud-bracket { border-color: rgba(224, 178, 90, 0.85); }
+body[data-zone="barber"] .hud-bracket { border-color: rgba(255, 51, 85, 0.85); }
 
 .boot h1 {
     font-family: "Limelight", "Orbitron", serif;

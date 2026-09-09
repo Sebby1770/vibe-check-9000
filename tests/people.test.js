@@ -13,7 +13,10 @@ import {
     PHONE_LINES,
 } from "../js/people.js";
 
-assert.ok(NPCS.length >= 18, "cast of the night");
+assert.ok(NPCS.length >= 26, "cast of the night plus the block");
+assert.ok(NPCS.some((n) => n.id === "sid"));
+assert.ok(NPCS.some((n) => n.id === "tony"));
+assert.ok(NPCS.some((n) => n.id === "iris"));
 assert.ok(NPCS.every((n) => n.id && n.nodes && n.nodes.start && n.nodes.start.choices));
 assert.ok(NPCS.every((n) => typeof n.x === "number" && typeof n.z === "number"));
 

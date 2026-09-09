@@ -2,6 +2,7 @@ import * as THREE from "three";
 import { addBox, unitBox, neonCanvas, marqueeCanvas } from "./kit.js";
 import { brickTex, darkBrickTex, asphaltTex, sidewalkTex, plasterTex, woodTex, checkerTex, gazetteTex } from "./textures.js";
 import { randomPedestrian } from "./human.js";
+import { buildShops } from "./shops.js";
 
 const RAIN_N = 900;
 const STEAM_N = 80;
@@ -87,6 +88,22 @@ export function buildCity(scene) {
     addBox(root, unitBox, neonAmber, 0, 0.01, 18.75, 180, 0.02, 0.12);
     addBox(root, unitBox, neonAmber, 0, 0.01, 26.85, 180, 0.02, 0.12);
 
+    const stripe = new THREE.MeshBasicMaterial({ color: 0xf2eee0 });
+    for (const cx of [0, -27, 25]) {
+        for (let i = 0; i < 9; i++) {
+            addBox(root, unitBox, stripe, cx, 0.02, 19.4 + i * 0.85, 1.8, 0.02, 0.38);
+        }
+    }
+
+    const signal = new THREE.Group();
+    addBox(signal, unitBox, black, 0, 1.7, 0, 0.12, 3.4, 0.12);
+    const sigRed = addBox(signal, unitBox, new THREE.MeshBasicMaterial({ color: 0xff3355 }), 0, 3.35, -0.12, 0.28, 0.28, 0.12);
+    const sigAmb = addBox(signal, unitBox, new THREE.MeshBasicMaterial({ color: 0x3a2810 }), 0, 2.95, -0.12, 0.28, 0.28, 0.12);
+    const sigGrn = addBox(signal, unitBox, new THREE.MeshBasicMaterial({ color: 0x1a4a32 }), 0, 2.55, -0.12, 0.28, 0.28, 0.12);
+    signal.position.set(-2.4, 0, 18.35);
+    root.add(signal);
+    signal.userData.lamps = { red: sigRed.material, amber: sigAmb.material, green: sigGrn.material };
+
     // Puddles
     const puddleG = new THREE.CircleGeometry(1.4, 16);
     for (const [x, z, s] of [[-6, 16.2, 1.2], [2.5, 17.4, 0.8], [12, 15.9, 1], [-18, 16.8, 0.9], [0, -20.5, 1.1], [-10, -22, 0.7]]) {
@@ -135,6 +152,9 @@ export function buildCity(scene) {
     pie.material.emissive = new THREE.Color(0x401000);
     pie.material.emissiveIntensity = 0.2;
     addBox(root, unitBox, glass, -22.4, 1.7, 3.7, 1.1, 0.7, 1.1);
+    addBox(root, unitBox, chrome, -22.8, 0.7, 6.4, 8.4, 1.4, 1.6);
+    addBox(root, unitBox, neonRed, -22.8, 1.15, 6.4, 7.6, 0.06, 1.2);
+    addBox(root, unitBox, black, -19.4, 1.35, 6.4, 1.4, 0.35, 1.1);
 
     // Hotel shell — lobby is walkable
     addBox(root, unitBox, brickBrown, 20.05, 7.2, 12.62, 7.1, 14.5, 0.28);
@@ -147,6 +167,9 @@ export function buildCity(scene) {
     addBox(root, unitBox, black, 27.65, 0.02, -2, 21.8, 0.04, 28.4);
     addBox(root, unitBox, wood, 25.2, 0.55, 5.9, 7.4, 1.1, 2.6);
     addBox(root, unitBox, cream, 25.2, 1.2, 5.9, 7.2, 0.08, 2.4);
+    addBox(root, unitBox, chrome, 21.4, 0.45, 9.4, 1.1, 0.7, 0.7);
+    addBox(root, unitBox, cream, 21.4, 0.85, 9.4, 0.9, 0.12, 0.55);
+    addBox(root, unitBox, black, 21.4, 0.22, 9.85, 0.18, 0.18, 0.18);
     const hotelSign = new THREE.Mesh(new THREE.PlaneGeometry(2.2, 10), new THREE.MeshBasicMaterial({ map: neonCanvas("HOTEL", "#E0B25A", 256, 1024, "#120c08") }));
     hotelSign.position.set(38.95, 8.2, 4);
     hotelSign.rotation.y = -Math.PI / 2;
@@ -260,15 +283,15 @@ export function buildCity(scene) {
 
     const stone = new THREE.MeshStandardMaterial({ map: plasterTex(), roughness: 0.75, color: 0xc4b496 });
     const towers = [
-        { x: -78, z: 46, w: 20, d: 24, floors: 18, mat: brickDark, seed: 2 },
-        { x: -56, z: 48, w: 18, d: 26, floors: 26, mat: brick, seed: 3 },
-        { x: -36, z: 44, w: 22, d: 22, floors: 20, mat: brickBrown, seed: 4 },
-        { x: -16, z: 50, w: 16, d: 28, floors: 32, mat: brickDark, seed: 5 },
-        { x: 2, z: 47, w: 20, d: 24, floors: 24, mat: stone, seed: 6 },
-        { x: 22, z: 52, w: 18, d: 26, floors: 38, mat: brick, spire: true, seed: 7 },
-        { x: 42, z: 46, w: 22, d: 22, floors: 22, mat: brickBrown, seed: 8 },
-        { x: 64, z: 49, w: 20, d: 24, floors: 28, mat: brickDark, seed: 9 },
-        { x: 84, z: 45, w: 18, d: 20, floors: 16, mat: brick, seed: 10 },
+        { x: -78, z: 58, w: 20, d: 24, floors: 18, mat: brickDark, seed: 2 },
+        { x: -56, z: 60, w: 18, d: 26, floors: 26, mat: brick, seed: 3 },
+        { x: -36, z: 56, w: 22, d: 22, floors: 20, mat: brickBrown, seed: 4 },
+        { x: -16, z: 62, w: 16, d: 28, floors: 32, mat: brickDark, seed: 5 },
+        { x: 2, z: 59, w: 20, d: 24, floors: 24, mat: stone, seed: 6 },
+        { x: 22, z: 64, w: 18, d: 26, floors: 38, mat: brick, spire: true, seed: 7 },
+        { x: 42, z: 58, w: 22, d: 22, floors: 22, mat: brickBrown, seed: 8 },
+        { x: 64, z: 61, w: 20, d: 24, floors: 28, mat: brickDark, seed: 9 },
+        { x: 84, z: 57, w: 18, d: 20, floors: 16, mat: brick, seed: 10 },
         { x: -68, z: 72, w: 24, d: 20, floors: 22, mat: brickBrown, seed: 11 },
         { x: -28, z: 76, w: 20, d: 18, floors: 30, mat: brickDark, seed: 12 },
         { x: 10, z: 78, w: 26, d: 20, floors: 26, mat: brick, seed: 13 },
@@ -297,9 +320,12 @@ export function buildCity(scene) {
     fillWins(offList, winOff);
 
     const billboard = new THREE.Mesh(new THREE.PlaneGeometry(14, 6), new THREE.MeshBasicMaterial({ map: marqueeCanvas("MIDTOWN GIN", "THE SMOOTH CENTURY") }));
-    billboard.position.set(-16, 38, 35.7);
+    billboard.position.set(-16, 36, 47.4);
     root.add(billboard);
-    addBox(root, unitBox, black, -16, 38, 36.1, 14.4, 6.4, 0.4);
+    addBox(root, unitBox, black, -16, 36, 47.8, 14.4, 6.4, 0.4);
+    const bill2 = new THREE.Mesh(new THREE.PlaneGeometry(12, 5), new THREE.MeshBasicMaterial({ map: marqueeCanvas("LUCKIES", "SO ROUND  ·  SO FIRM") }));
+    bill2.position.set(48, 34, 49.2);
+    root.add(bill2);
 
     // Alley back wall
     addBox(root, unitBox, brickDark, 0, 8, -32.2, 80, 16, 4);
@@ -383,20 +409,14 @@ export function buildCity(scene) {
         return new THREE.MeshStandardMaterial({ color: 0x1a4a32, roughness: 0.6, metalness: 0.2 });
     }
 
-    // Theater podium under the towers
-    addBox(root, unitBox, brickDark, 8, 5.5, 33.6, 22, 11, 3.2);
-    const rivoli = new THREE.Mesh(new THREE.PlaneGeometry(12, 2.2), new THREE.MeshBasicMaterial({ map: marqueeCanvas("RIVOLI", "NOW SHOWING") }));
-    rivoli.position.set(8, 8.4, 32.35);
-    root.add(rivoli);
     const titles = ["NEON IN THE RAIN", "THE MIDNIGHT VISOR", "ALLEY CATS OF 47TH", "A PIE TO REMEMBER"];
     const titlePlane = new THREE.Mesh(new THREE.PlaneGeometry(10, 1.1), new THREE.MeshBasicMaterial({ map: neonCanvas(titles[0], "#FFE7A8", 1024, 160, "#100808") }));
-    titlePlane.position.set(8, 6.6, 32.35);
+    titlePlane.position.set(6.0, 6.55, 31.78);
     root.add(titlePlane);
 
-    addBox(root, unitBox, brick, -18, 4.6, 33.4, 16, 9.2, 2.8);
-    const pharm = new THREE.Mesh(new THREE.PlaneGeometry(7, 1.3), new THREE.MeshBasicMaterial({ map: neonCanvas("PHARMACY", "#66FFE0", 1024, 256, "#081210") }));
-    pharm.position.set(-18, 6.8, 32.05);
-    root.add(pharm);
+    const shops = buildShops(root, scene, {
+        wood, cream, black, chrome, brick, brickDark, neonRed, neonAmber, neonCyan,
+    });
 
     // Manholes + steam
     for (const [x, z] of [[-3, 22.5], [14, 23.2], [-16, 21.8]]) {
@@ -508,6 +528,9 @@ export function buildCity(scene) {
         dinerLight,
         hotelLight,
         marquee,
+        shopCrowd: shops.crowds,
+        barberPole: shops.pole,
+        signal,
         setMarquee(line1, line2) {
             const tex = marqueeCanvas(String(line1 || "VIBE CHECK").slice(0, 14), String(line2 || "TONIGHT").slice(0, 22));
             const old = marquee.material.map;
@@ -583,4 +606,12 @@ export function updateCity(city, dt, t, { outside, reduced, lampMul = 1 }) {
         l.intensity = (l.userData.base || 16) * mul;
     }
     if (city.alleyLight) city.alleyLight.intensity = 28 * Math.max(1, mul * 0.85);
+    if (city.barberPole) city.barberPole.rotation.y += dt * 2.4;
+    if (city.signal?.userData.lamps) {
+        const phase = Math.floor(t / 3.2) % 3;
+        const L = city.signal.userData.lamps;
+        L.red.color.set(phase === 0 ? 0xff3355 : 0x3a1010);
+        L.amber.color.set(phase === 1 ? 0xffb25a : 0x3a2810);
+        L.green.color.set(phase === 2 ? 0x39ff14 : 0x1a4a32);
+    }
 }

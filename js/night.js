@@ -201,6 +201,9 @@ export const DARES = [
     { id: "jazz", text: "Ask Velma for something slow." },
     { id: "guest", text: "Tell Nova you're on the list." },
     { id: "drop", text: "Be on the floor when midnight hits." },
+    { id: "shop", text: "Cross 47th and go inside a shop with a cash register." },
+    { id: "vinyl", text: "Buy a record at Rex's. The visor needs a B-side." },
+    { id: "haircut", text: "Sit in Tony's chair. Midnight is not a hairstyle." },
 ];
 
 export function dareFor(hash) {
@@ -225,6 +228,9 @@ export function dareComplete(progress, dare) {
         case "jazz": return !!flags.jazz;
         case "guest": return !!flags.guest;
         case "drop": return !!flags.peakFloor;
+        case "shop": return ["records", "pharmacy", "florist", "rivoli", "liquor", "barber"].some((z) => zones.includes(z));
+        case "vinyl": return !!flags.vinyl;
+        case "haircut": return !!flags.haircut;
         default: return false;
     }
 }
@@ -334,6 +340,34 @@ export const NPC_PHASE_LINES = {
         lastcall: "Last call means the sidewalk inherits the club. I inherited the sidewalk.",
         close: "2am. Go home pretty. I already wrote the report in my head and threw it out.",
     },
+    sid: {
+        doors: "Early crate-diggers are my people. The illegal stuff isn't out yet. That's a joke. It's always out.",
+        heat: "Floor's filling. Bins are filling. Different religions, same night.",
+        peak: "I can feel midnight through the vinyl. Don't talk. Flip.",
+        lastcall: "Last call across the street. Last copies in here. Coincidence? No.",
+        close: "2am browsers. That's when the honest records come out.",
+    },
+    iris: {
+        doors: "Too early for tonic, too late for virtue. Pick.",
+        heat: "Lipstick's moving. That's how I know the club opened.",
+        peak: "If your pupils look like that at midnight, the tonic is a suggestion, not a cure.",
+        lastcall: "They'll spill in asking for something that isn't gin. I have something that isn't gin.",
+        close: "2am soda is a public service. Don't make it a personality.",
+    },
+    tony: {
+        doors: "You're early. The pole isn't even awake.",
+        heat: "Chair's warm. The decade on your head is not.",
+        peak: "I don't cut during the drop. That's respect. Sit after.",
+        lastcall: "Last call haircuts are my specialty. Nobody argues with a clipper at 1am.",
+        close: "2am. You look like the street. I can fix one of those.",
+    },
+    walter: {
+        doors: "Doors of the picture house. Different doors than yours. Same rain.",
+        heat: "Lobby's filling with people who prefer plots that sit still.",
+        peak: "You can hear midnight through the newsreel. Don't clap.",
+        lastcall: "Feature's over in the sense that it never started. Sit anyway.",
+        close: "I lock up when the visors go home. That's a rumor I tell the broom.",
+    },
 };
 
 export function nightSay(npc, node, phase) {
@@ -358,5 +392,11 @@ export function memoryLine(npcId, flags = {}) {
     if (npcId === "marco" && flags.sat) return "You sat. The chair filed a report. Complimentary.";
     if (npcId === "scotty" && flags.paper) return "You bought the extra. Don't fold it on the crossword.";
     if (npcId === "muldoon" && flags.cat) return "You pet the cat. That's the only good decision I've seen all shift.";
+    if (npcId === "sid" && flags.vinyl) return "You already bought the B-side. If you scratch it I will know. I always know.";
+    if (npcId === "iris" && flags.tonic) return "You had the tonic. If the street doubled, that's on you and ION, in that order.";
+    if (npcId === "tony" && flags.haircut) return "I already fixed the decade. Don't make me do it twice. The pole gets jealous.";
+    if (npcId === "walter" && flags.ticket) return "You have a stub. That's the whole relationship. Enjoy the dark.";
+    if (npcId === "lily" && flags.rose) return "The rose is still not a visor accessory. I said what I said.";
+    if (npcId === "rosie" && flags.gin) return "You took the century. Don't open it where Muldoon can smell ambition.";
     return null;
 }

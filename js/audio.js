@@ -463,6 +463,12 @@ export function createAudio() {
                 lounge: [0.18, 1, 0.02],
                 diner: [0.08, 0.22, 0.08],
                 hotel: [0.06, 0.18, 0.06],
+                records: [0.22, 0.35, 0.08],
+                pharmacy: [0.05, 0.12, 0.12],
+                florist: [0.04, 0.16, 0.1],
+                rivoli: [0.06, 0.28, 0.06],
+                liquor: [0.08, 0.2, 0.1],
+                barber: [0.05, 0.14, 0.08],
                 street: [0.1, 0.05, 0.45],
                 alley: [0.28, 0.04, 0.35],
             }[zone] || [1, 0, 0];
@@ -525,6 +531,13 @@ export function createAudio() {
             if (zone === "lounge") return "VELMA'S TRIO";
             if (zone === "street" || zone === "alley") return "RAIN ON 47TH";
             if (zone === "diner") return "COUNTER RADIO";
+            if (zone === "records") return "LISTENING BOOTH";
+            if (zone === "pharmacy") return "SODA FOUNTAIN";
+            if (zone === "florist") return "WET STEMS";
+            if (zone === "rivoli") return "NEWSREEL HUSH";
+            if (zone === "liquor") return "BOTTLE ROOM";
+            if (zone === "barber") return "OPEN LATE";
+            if (zone === "hotel") return "LOBBY CARPET";
             return houseName;
         },
         setHouseSet(set) {

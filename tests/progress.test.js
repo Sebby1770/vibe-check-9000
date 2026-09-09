@@ -20,7 +20,7 @@ const mem = {
 const empty = loadProgress(mem);
 assert.deepEqual(empty.unlocked, ["stock"]);
 assert.equal(empty.look, "stock");
-assert.equal(LOOKS.length, 12);
+assert.equal(LOOKS.length, 15);
 
 let p = empty;
 p = evaluateUnlocks(p, { talkId: "rexa" }).progress;
@@ -45,6 +45,12 @@ p = evaluateUnlocks(p, { flags: { cab: true } }).progress;
 assert.ok(p.unlocked.includes("cab"));
 p = evaluateUnlocks(p, { phase: "close" }).progress;
 assert.ok(p.unlocked.includes("afterhours"));
+p = evaluateUnlocks(p, { flags: { vinyl: true } }).progress;
+assert.ok(p.unlocked.includes("vinyl"));
+p = evaluateUnlocks(p, { flags: { tonic: true } }).progress;
+assert.ok(p.unlocked.includes("tonic"));
+p = evaluateUnlocks(p, { flags: { haircut: true } }).progress;
+assert.ok(p.unlocked.includes("clipper"));
 
 const day1 = touchVisit(empty, "2026-09-09");
 assert.equal(day1.streak, 1);

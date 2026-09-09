@@ -15,7 +15,16 @@ export const FIRE_ESC = {
     zBottom: -24.05, zTop: -16.32,
 };
 
-export const BOUNDS = { minX: -52.5, maxX: 52.5, minZ: -29.4, maxZ: 37.8 };
+export const BOUNDS = { minX: -52.5, maxX: 52.5, minZ: -29.4, maxZ: 40.15 };
+
+export const SHOPS = [
+    { id: "records", label: "REX'S RECORDS", minX: -38.2, maxX: -28.2, minZ: 32.05, maxZ: 40.0, doorX: -33.2 },
+    { id: "pharmacy", label: "47TH PHARMACY", minX: -26.8, maxX: -16.8, minZ: 32.05, maxZ: 40.0, doorX: -21.8 },
+    { id: "florist", label: "LILY'S", minX: -15.4, maxX: -9.0, minZ: 32.05, maxZ: 40.0, doorX: -12.2 },
+    { id: "rivoli", label: "RIVOLI", minX: -8.0, maxX: 18.2, minZ: 32.05, maxZ: 40.0, doorX: 6.0 },
+    { id: "liquor", label: "MIDTOWN GIN", minX: 19.6, maxX: 29.6, minZ: 32.05, maxZ: 40.0, doorX: 24.6 },
+    { id: "barber", label: "TONY'S", minX: 31.2, maxX: 40.6, minZ: 32.05, maxZ: 40.0, doorX: 35.8 },
+];
 
 function inRect(x, z, r) {
     return x >= r.minX && x <= r.maxX && z >= r.minZ && z <= r.maxZ;
@@ -45,8 +54,15 @@ export function inHotel(x, z) {
     return inRect(x, z, HOTEL);
 }
 
+export function shopAt(x, z) {
+    for (const s of SHOPS) {
+        if (inRect(x, z, s)) return s;
+    }
+    return null;
+}
+
 export function isOutside(x, z) {
-    return !inClubFootprint(x, z) && !inDiner(x, z) && !inHotel(x, z);
+    return !inClubFootprint(x, z) && !inDiner(x, z) && !inHotel(x, z) && !shopAt(x, z);
 }
 
 export function getFloorY(x, z, yHint = 0) {
@@ -69,6 +85,8 @@ export function getZone(x, z, y = 0) {
     if (inClubStairs(x, z)) return y > 2.2 ? "lounge" : "club";
     if (inDiner(x, z)) return "diner";
     if (inHotel(x, z)) return "hotel";
+    const shop = shopAt(x, z);
+    if (shop) return shop.id;
     if (inClubFootprint(x, z)) {
         if (y > SECOND_Y * 0.42 && !inAtrium(x, z)) return "lounge";
         return "club";
@@ -89,6 +107,12 @@ export function zoneLabel(zone) {
         case "street": return "47TH STREET";
         case "diner": return "DOTTIE'S DINER";
         case "hotel": return "HOTEL ASTORIA";
+        case "records": return "REX'S RECORDS";
+        case "pharmacy": return "47TH PHARMACY";
+        case "florist": return "LILY'S";
+        case "rivoli": return "THE RIVOLI";
+        case "liquor": return "MIDTOWN GIN";
+        case "barber": return "TONY'S BARBER";
         default: return "MIDTOWN";
     }
 }
@@ -101,6 +125,12 @@ export function zoneTint(zone) {
         case "street": return "#ffb25a";
         case "diner": return "#ff6b6b";
         case "hotel": return "#d4c4a8";
+        case "records": return "#c77dff";
+        case "pharmacy": return "#66ffe0";
+        case "florist": return "#ff6b9a";
+        case "rivoli": return "#ffe7a8";
+        case "liquor": return "#e0b25a";
+        case "barber": return "#ff3355";
         default: return "#00fff7";
     }
 }
@@ -151,6 +181,7 @@ export function buildColliders() {
     wall(boxes, -8.95, -7.45, 10.0, 11.15, -1, 2.5);
     wall(boxes, 7.45, 8.85, 10.15, 10.75, -1, 2.2);
     wall(boxes, -32.6, -18.4, 2.4, 5.1, -1, 1.8);
+    wall(boxes, -27.1, -18.6, 5.55, 7.25, -1, 1.85);
     wall(boxes, 21.4, 28.6, 4.6, 7.4, -1, 1.6);
 
     // Atrium railings (second floor) — full rectangle
@@ -194,8 +225,33 @@ export function buildColliders() {
     wall(boxes, 38.9, 55, -30, 12.5);
     wall(boxes, -55, -38.9, -30, 12.5);
 
-    // Far buildings across the street
-    wall(boxes, -90, 90, 32.05, 90, -1, 120);
+    // Shop row across 47th — shells with doors, then the towers behind
+    function shopShell(s, doorW = 2.5) {
+        const z0 = s.minZ;
+        const z1 = s.maxZ;
+        const dl = s.doorX - doorW / 2;
+        const dr = s.doorX + doorW / 2;
+        wall(boxes, s.minX, dl, z0 - 0.14, z0 + 0.14);
+        wall(boxes, dr, s.maxX, z0 - 0.14, z0 + 0.14);
+        wall(boxes, dl, dr, z0 - 0.14, z0 + 0.14, 2.55, 10);
+        wall(boxes, s.minX, s.maxX, z1 - 0.14, z1 + 0.14);
+        wall(boxes, s.minX - 0.14, s.minX + 0.14, z0, z1);
+        wall(boxes, s.maxX - 0.14, s.maxX + 0.14, z0, z1);
+    }
+    for (const s of SHOPS) shopShell(s);
+    wall(boxes, -90, SHOPS[0].minX - 0.2, 32.05, 90, -1, 120);
+    wall(boxes, SHOPS[SHOPS.length - 1].maxX + 0.2, 90, 32.05, 90, -1, 120);
+    wall(boxes, -90, 90, 40.12, 90, -1, 120);
+
+    // Shop counters / booths / chairs
+    wall(boxes, -37.4, -29.0, 37.55, 39.35, -1, 1.5); // records counter
+    wall(boxes, -26.0, -17.6, 37.45, 39.2, -1, 1.5); // pharmacy counter
+    wall(boxes, -14.7, -9.7, 37.6, 39.15, -1, 1.35); // florist table
+    wall(boxes, 3.4, 8.6, 36.7, 39.15, -1, 1.7); // rivoli ticket
+    wall(boxes, 20.4, 28.8, 37.5, 39.25, -1, 1.5); // gin counter
+    wall(boxes, 32.4, 39.4, 37.15, 38.55, -1, 1.45); // barber back bar
+    wall(boxes, 33.35, 34.95, 34.85, 36.35, -1, 1.25); // barber chair
+    wall(boxes, 36.15, 37.75, 34.85, 36.35, -1, 1.25);
 
     // Parked cars — parallel to the curb, out of the driving lanes
     wall(boxes, -22.1, -18.1, 18.05, 19.65, -1, 1.4);

@@ -15,6 +15,9 @@ export const LOOKS = [
     { id: "pie", name: "CHERRY PIE", visor: "#ff6b6b", left: "#ff6b6b", right: "#ffb703", how: "pie at DOTTIE'S" },
     { id: "cab", name: "CHECKER YELLOW", visor: "#f5c518", left: "#f5c518", right: "#ffe7a8", how: "hail a Checker" },
     { id: "afterhours", name: "2AM INDIGO", visor: "#7b8cff", left: "#c77dff", right: "#00fff7", how: "still here when the street is the room" },
+    { id: "vinyl", name: "B-SIDE VIOLET", visor: "#c77dff", left: "#c77dff", right: "#ff00aa", how: "buy a record at REX'S" },
+    { id: "tonic", name: "PHARMACY MINT", visor: "#66ffe0", left: "#66ffe0", right: "#39ff14", how: "tonic at the pharmacy" },
+    { id: "clipper", name: "TONY'S CLIP", visor: "#ff3355", left: "#ff3355", right: "#ffe7a8", how: "sit in Tony's chair" },
 ];
 
 function emptyNight() {
@@ -145,6 +148,9 @@ export function evaluateUnlocks(progress, events = {}) {
     if (flags.pie) unlock("pie");
     if (flags.cab) unlock("cab");
     if (events.phase === "close" || flags.afterhours) unlock("afterhours");
+    if (flags.vinyl) unlock("vinyl");
+    if (flags.tonic) unlock("tonic");
+    if (flags.haircut) unlock("clipper");
 
     const next = {
         ...progress,

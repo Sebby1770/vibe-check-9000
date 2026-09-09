@@ -631,7 +631,7 @@ export const NPCS = [
                 choices: [{ text: "I'll read it in the rain.", next: null }],
             },
             tips: {
-                say: "Dottie's for pie. Astoria if you like carpets. Alley if you like the truth. Club if you like lying to the truth at 128 BPM.",
+                say: "Dottie's for pie. Astoria if you like carpets. Across 47th: records, tonic, flowers, the Rivoli, gin, a haircut. Alley if you like the truth. Club if you like lying to the truth at 128 BPM.",
                 choices: [{ text: "That's a whole itinerary.", next: null }],
             },
         },
@@ -669,6 +669,276 @@ export const NPCS = [
             },
         },
     },
+    {
+        id: "lou",
+        name: "LOU",
+        role: "COOK",
+        x: -25.4,
+        z: 5.35,
+        y: 0,
+        facing: Math.PI,
+        color: "#c45c28",
+        outfit: "cook",
+        skin: 0x8d5524,
+        hair: 0x1a1208,
+        hairStyle: "short",
+        anim: "idle",
+        greeting: "Grill's honest. I'm on the fence.",
+        nodes: {
+            start: {
+                say: "Dottie owns the room. I own the heat. You want something that isn't pie, you came to the wrong religion.",
+                choices: [
+                    { text: "What do you recommend?", next: "rec" },
+                    { text: "How's the club treating the grill?", next: "club" },
+                ],
+            },
+            rec: {
+                say: "Coffee, then pie, then regret, then coffee. That's the cycle. I don't fight cycles. I flip them.",
+                choices: [{ text: "A man of science.", next: null }],
+            },
+            club: {
+                say: "They come in after last call smelling like a geometry problem. I feed them anyway. The grill doesn't unionize. Yet.",
+                choices: [{ text: "Solidarity with the grill.", next: null }],
+            },
+        },
+    },
+    {
+        id: "otis",
+        name: "OTIS",
+        role: "BELLHOP",
+        x: 22.6,
+        z: 10.6,
+        y: 0,
+        facing: 0,
+        color: "#c9a227",
+        outfit: "bellhop",
+        skin: 0xc68642,
+        hair: 0x1a1208,
+        hairStyle: "short",
+        anim: "idle",
+        greeting: "Bags, rumors, and the elevator's opinions.",
+        nodes: {
+            start: {
+                say: "I carry what the century won't. Frank's ice. Clara's patience. Your visor, if you ask nice and I pretend I didn't hear the question.",
+                choices: [
+                    { text: "Any rooms with a view of the drop?", next: "view" },
+                    { text: "You ever go across the street?", next: "shops" },
+                ],
+            },
+            view: {
+                say: "Fourth floor faces 47th. You hear the kick and the rain in the same key. Eleanor will deny I said that.",
+                choices: [{ text: "I'll be discreet.", next: null }],
+            },
+            shops: {
+                say: "Rex's for vinyl. Pharmacy if the visor throbs. Tony if midnight is growing on your head. Gin if you're writing a letter to tomorrow.",
+                choices: [{ text: "That's a map.", next: null }],
+            },
+        },
+    },
+    {
+        id: "sid",
+        name: "SID",
+        role: "RECORDS",
+        x: -33.2,
+        z: 37.15,
+        y: 0,
+        facing: Math.PI,
+        color: "#c77dff",
+        outfit: "dj",
+        skin: 0x3b2219,
+        hair: 0x0d0d0d,
+        hairStyle: "short",
+        anim: "idle",
+        greeting: "If it isn't on vinyl it didn't happen.",
+        nodes: {
+            start: {
+                say: "Rex's. We stock the decade and the one the club is smuggling in. Listening booth's on your left. Don't scratch the jazz. The jazz scratches back.",
+                choices: [
+                    { text: "Sell me something illegal.", next: "vinyl", action: "vinyl" },
+                    { text: "What does the club steal from you?", next: "steal" },
+                ],
+            },
+            vinyl: {
+                say: "B-side's a rumor with a backbeat. Take it. If REXA asks, you found it in a dumpster that had opinions.",
+                action: "vinyl",
+                choices: [{ text: "The visor needed a B-side.", next: null }],
+            },
+            steal: {
+                say: "Kicks. Filters. The idea that a room can refuse a year. I sell the evidence. They sell the crime.",
+                choices: [{ text: "I'll take both.", next: null }],
+            },
+        },
+    },
+    {
+        id: "iris",
+        name: "IRIS",
+        role: "PHARMACIST",
+        x: -21.8,
+        z: 37.2,
+        y: 0,
+        facing: Math.PI,
+        color: "#66ffe0",
+        outfit: "pharmacist",
+        skin: 0xf1c27d,
+        hair: 0x2a2018,
+        hairStyle: "updo",
+        anim: "idle",
+        greeting: "Tonic, advice, and other controlled substances.",
+        nodes: {
+            start: {
+                say: "Soda's up. Lipstick's moving. Whatever that visor is doing to your pupils is not in the Merck manual, and I checked twice.",
+                choices: [
+                    { text: "Give me the tonic.", next: "tonic", action: "tonic" },
+                    { text: "Any cure for 128 BPM?", next: "bpm" },
+                ],
+            },
+            tonic: {
+                say: "Quinine and a look. Don't mix it with ION's sermon unless you enjoy seeing a second 47th Street.",
+                action: "tonic",
+                choices: [{ text: "I'll risk one street.", next: null }],
+            },
+            bpm: {
+                say: "Sit down. Breathe like a civilian. Or buy the tonic and lie to me later.",
+                choices: [{ text: "Lying later is the plan.", next: null }],
+            },
+        },
+    },
+    {
+        id: "lily",
+        name: "LILY",
+        role: "FLORIST",
+        x: -12.2,
+        z: 37.15,
+        y: 0,
+        facing: Math.PI,
+        color: "#ff6b9a",
+        outfit: "florist",
+        skin: 0xe0ac69,
+        hair: 0x6b2a18,
+        hairStyle: "updo",
+        anim: "idle",
+        greeting: "The roses are in on it.",
+        nodes: {
+            start: {
+                say: "Carnations for apologies. Roses for people who don't apologize. You smell like a basement that learned to dance. I can work with that.",
+                choices: [
+                    { text: "Something that survives the rain.", next: "rose", action: "rose" },
+                    { text: "Who buys flowers at this hour?", next: "who" },
+                ],
+            },
+            rose: {
+                say: "A rose that doesn't care what year you think it is. Don't put it in the visor. The visor is not a vase.",
+                action: "rose",
+                choices: [{ text: "I'll behave.", next: null }],
+            },
+            who: {
+                say: "Men who missed last call and women who didn't. The Rivoli usher on his break. Once, a cop. He said it was for the cat. I didn't ask.",
+                choices: [{ text: "The cat has taste.", next: null }],
+            },
+        },
+    },
+    {
+        id: "walter",
+        name: "WALTER",
+        role: "USHER",
+        x: 6.0,
+        z: 34.2,
+        y: 0,
+        facing: Math.PI,
+        color: "#e0b25a",
+        outfit: "usher",
+        skin: 0xc68642,
+        hair: 0x1a1208,
+        hairStyle: "pompadour",
+        anim: "idle",
+        greeting: "Tickets, hush, and a flashlight with opinions.",
+        nodes: {
+            start: {
+                say: "Rivoli lobby. Feature's a lie we agreed to believe. Balcony's closed on account of the rain having a better plot. You can sit. You cannot clap on one.",
+                choices: [
+                    { text: "One for the feature.", next: "ticket", action: "ticket" },
+                    { text: "What's actually showing?", next: "show" },
+                ],
+            },
+            ticket: {
+                say: "Stub's a souvenir. The picture is whatever the visor projects on the dark. Don't tell the projectionist. He has a union.",
+                action: "ticket",
+                choices: [{ text: "I was never here.", next: null }],
+            },
+            show: {
+                say: "Tonight it's NEON IN THE RAIN. Yesterday it was the same picture with a different lie on the marquee. I respect consistency.",
+                choices: [{ text: "Honest advertising.", next: null }],
+            },
+        },
+    },
+    {
+        id: "rosie",
+        name: "ROSIE",
+        role: "LIQUOR",
+        x: 24.6,
+        z: 37.15,
+        y: 0,
+        facing: Math.PI,
+        color: "#e0b25a",
+        outfit: "clerk",
+        skin: 0x8d5524,
+        hair: 0x2a2010,
+        hairStyle: "updo",
+        anim: "idle",
+        greeting: "Gin, rye, and plausible deniability.",
+        nodes: {
+            start: {
+                say: "Midtown Gin. The billboard's louder than the bottles. ION buys the well. You look like a person who wants the bottle that makes the visor tell the truth.",
+                choices: [
+                    { text: "The smooth century, then.", next: "gin", action: "gin" },
+                    { text: "Does ION have a tab?", next: "tab" },
+                ],
+            },
+            gin: {
+                say: "Take it. Don't open it on 47th. The rain will file a complaint and Muldoon will agree with the rain.",
+                action: "gin",
+                choices: [{ text: "I'll drink like a civilian.", next: null }],
+            },
+            tab: {
+                say: "ION's tab is a novella. Chapter one is 'put it on the club.' Chapter two is still chapter one.",
+                choices: [{ text: "Literature.", next: null }],
+            },
+        },
+    },
+    {
+        id: "tony",
+        name: "TONY",
+        role: "BARBER",
+        x: 35.9,
+        z: 36.9,
+        y: 0,
+        facing: Math.PI,
+        color: "#ff3355",
+        outfit: "barber",
+        skin: 0xe0ac69,
+        hair: 0x1a1208,
+        hairStyle: "pompadour",
+        anim: "idle",
+        greeting: "Midnight is not a hairstyle. Sit down.",
+        nodes: {
+            start: {
+                say: "Tony's. Open late because the visor crowd discovers their hair at 1am. Sit. Don't tell me about the drop. I can hear the drop. The pole can hear the drop.",
+                choices: [
+                    { text: "Take a little off the decade.", next: "cut", action: "haircut" },
+                    { text: "Just browsing the mirrors.", next: "mirrors" },
+                ],
+            },
+            cut: {
+                say: "There. You look like someone 47th might let into a Checker. That's the highest compliment I give after midnight.",
+                action: "haircut",
+                choices: [{ text: "I feel legally handsome.", next: null }],
+            },
+            mirrors: {
+                say: "The mirrors remember everyone. They prefer people who sit. The chair's not a metaphor. Sit in it.",
+                choices: [{ text: "I'll sit like I mean it.", next: null }],
+            },
+        },
+    },
 ];
 
 export const PROPS = [
@@ -678,6 +948,9 @@ export const PROPS = [
     { id: "cabdoor", x: 14.4, z: 17.55, y: 0, r: 2.2, prompt: "[E] HAIL THE CHECKER", action: "hail-cab" },
     { id: "booth", x: -8.2, z: 10.45, y: 0, r: 1.7, prompt: "[E] PHOTO BOOTH — STAMP THE NIGHT", action: "booth" },
     { id: "coat", x: 8.15, z: 10.4, y: 0, r: 1.6, prompt: "[E] COAT CHECK (A RUMOR)", action: "coat" },
+    { id: "subway", x: -22.4, z: 27.2, y: 0, r: 1.8, prompt: "[E] THE 12:04 IS A RUMOR", action: "subway" },
+    { id: "vinyl-bin", x: -36.5, z: 33.8, y: 0, r: 1.5, prompt: "[E] FLIP THROUGH THE BINS", action: "vinyl" },
+    { id: "tonic-tap", x: -24.2, z: 33.6, y: 0, r: 1.45, prompt: "[E] SODA FOUNTAIN", action: "tonic" },
 ];
 
 export const SIT_SPOTS = [
@@ -690,6 +963,9 @@ export const SIT_SPOTS = [
     { id: "diner-counter", x: -28.6, z: 1.55, y: 0, eye: 1.2, lookX: -25.5, lookZ: 3.5, r: 1.55, prompt: "[E] SIT THE COUNTER" },
     { id: "diner-booth", x: -33.05, z: -8.0, y: 0, eye: 1.14, lookX: -34.6, lookZ: -8.0, r: 1.5, prompt: "[E] SLIDE INTO THE BOOTH" },
     { id: "hotel-lobby", x: 25.2, z: 3.85, y: 0, eye: 1.16, lookX: 25.2, lookZ: 5.9, r: 1.55, prompt: "[E] SIT IN THE LOBBY" },
+    { id: "rivoli-bench", x: 11.2, z: 34.2, y: 0, eye: 1.14, lookX: 6.0, lookZ: 37.4, r: 1.5, prompt: "[E] SIT THE RIVOLI" },
+    { id: "barber-chair", x: 34.15, z: 35.55, y: 0, eye: 1.16, lookX: 35.9, lookZ: 37.2, r: 1.4, prompt: "[E] SIT FOR TONY" },
+    { id: "listen-booth", x: -30.15, z: 33.85, y: 0, eye: 1.14, lookX: -33.2, lookZ: 35.2, r: 1.4, prompt: "[E] CROUCH THE BINS" },
 ];
 
 export const GAZETTE = {

@@ -95,6 +95,7 @@ export function createWorld(canvas) {
         (club.barCrowd || []).forEach((p, i) => { p.visible = crowdOn && (!close || i % 2 === 0); });
         (club.loungeCrowd || []).forEach((p, i) => { p.visible = crowdOn && (!close || i % 3 !== 0); });
         (city.peds || []).forEach((p, i) => { p.visible = crowdOn && (!close || i % 2 === 0); });
+        (city.shopCrowd || []).forEach((p, i) => { p.visible = crowdOn && (!close || i % 2 === 0); });
     }
 
     function applySky() {
@@ -216,6 +217,18 @@ export function createWorld(canvas) {
                 hemi.intensity = 1.1;
                 dusk.sunLight.intensity = 0.15 * look.sunInt;
                 renderer.toneMappingExposure = 1.0;
+            } else if (zone === "records" || zone === "pharmacy" || zone === "florist" || zone === "rivoli" || zone === "liquor" || zone === "barber") {
+                const shopFog = {
+                    records: 0x241028, pharmacy: 0x102820, florist: 0x281018,
+                    rivoli: 0x2a1810, liquor: 0x24180c, barber: 0x201818,
+                }[zone];
+                scene.fog.color.setHex(shopFog);
+                scene.fog.density = 0.02;
+                hemi.color.set(0xffd0a0);
+                hemi.groundColor.set(0x201018);
+                hemi.intensity = 1.05;
+                dusk.sunLight.intensity = 0.12 * look.sunInt;
+                renderer.toneMappingExposure = 1.02;
             } else {
                 scene.fog.color.copy(_vibe).multiplyScalar(0.12);
                 scene.fog.density = 0.026 * (nightPhase === "close" ? 1.35 : 1);
@@ -264,6 +277,9 @@ export function createWorld(canvas) {
                 for (const p of club.barCrowd || []) if (p.visible) animateHuman(p, t, { mode: p.userData.mode || "idle", bpm });
                 for (const p of club.loungeCrowd || []) if (p.visible) animateHuman(p, t, { mode: p.userData.mode || "idle", bpm: 96 });
                 for (const ped of city.peds) if (ped.visible) animateHuman(ped, t, { mode: "walk", bpm: 96 });
+                for (const p of city.shopCrowd || []) {
+                    if (p.visible) animateHuman(p, t, { mode: p.userData.mode || "idle", bpm: 96 });
+                }
             }
 
             const dancing = !!ctx.dancing;

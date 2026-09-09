@@ -51,6 +51,12 @@ const OUTFITS = {
     vendor: { top: 0x3a3428, bottom: 0x2a241c, accent: 0x6a5a3a, hat: "fedora", extra: "none", shoes: 0x111111 },
     clerk: { top: 0x2a2a32, bottom: 0x1a1a22, accent: 0xc9a227, hat: "none", extra: "tie", shoes: 0x111111 },
     pedestrian: { top: 0x2a2430, bottom: 0x1a1a22, accent: 0x4a3a28, hat: "fedora", extra: "none", shoes: 0x111111 },
+    barber: { top: 0xf0ece4, bottom: 0x1a1a22, accent: 0xb82828, hat: "none", extra: "none", shoes: 0x111111 },
+    pharmacist: { top: 0xe8e4dc, bottom: 0x2a2a32, accent: 0x66ffe0, hat: "none", extra: "tie", shoes: 0x111111 },
+    usher: { top: 0x6b1d3a, bottom: 0x1a1018, accent: 0xe0b25a, hat: "none", extra: "tie", shoes: 0x111111 },
+    cook: { top: 0xf2eee0, bottom: 0x2a241c, accent: 0xc45c28, hat: "none", extra: "apron", shoes: 0x111111 },
+    bellhop: { top: 0x8b1e1e, bottom: 0x1a1010, accent: 0xc9a227, hat: "bellhop", extra: "none", shoes: 0x111111 },
+    florist: { top: 0x3a4a32, bottom: 0x2a241c, accent: 0xff6b9a, hat: "none", extra: "apron", shoes: 0x111111 },
 };
 
 function mat(color, extra = {}) {
@@ -215,6 +221,13 @@ export function createHuman(spec = {}) {
         const cap = new THREE.Mesh(G.newsboy, mat(0x3a2a1c));
         cap.position.set(0, 0.06, 0.02);
         head.add(cap);
+    } else if (o.hat === "bellhop") {
+        const pill = new THREE.Mesh(new THREE.CylinderGeometry(0.09, 0.1, 0.1, 10), mat(0x8b1e1e));
+        pill.position.y = 0.14;
+        const strap = new THREE.Mesh(new THREE.TorusGeometry(0.1, 0.012, 6, 12), accentM);
+        strap.rotation.x = Math.PI / 2;
+        strap.position.y = 0.1;
+        head.add(pill, strap);
     }
 
     if (o.extra === "headphones") {

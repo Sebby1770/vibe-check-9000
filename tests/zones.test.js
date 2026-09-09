@@ -10,12 +10,22 @@ import {
     inAtrium,
     isOutside,
     buildColliders,
+    shopAt,
+    SHOPS,
 } from "../js/zones.js";
 
 assert.equal(getFloorY(0, 0, 0), 0);
 assert.equal(getZone(0, 0, 0), "club");
 assert.equal(getZone(0, 8, SECOND_Y), "lounge");
 assert.equal(getZone(0, 16, 0), "street");
+assert.equal(getZone(-33.2, 36, 0), "records");
+assert.equal(getZone(-21.8, 36, 0), "pharmacy");
+assert.equal(getZone(6, 36, 0), "rivoli");
+assert.equal(getZone(35.8, 36, 0), "barber");
+assert.equal(isOutside(-33.2, 36), false);
+assert.equal(isOutside(0, 20), true);
+assert.ok(SHOPS.length >= 5);
+assert.equal(shopAt(-12.2, 36).id, "florist");
 assert.equal(getZone(0, -22, 0), "alley");
 assert.equal(getZone(-30, 3, 0), "diner");
 assert.equal(getZone(24, 8, 0), "hotel");
