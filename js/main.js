@@ -4,7 +4,7 @@ import { createWorld } from "./world.js";
 import { createAudio } from "./audio.js";
 import { createControls } from "./controls.js";
 import { createHud } from "./hud.js";
-import { nearestNpc, nearestProp, onDanceFloor, applyChoice } from "./people.js";
+import { nearestNpc, nearestProp, nearestSit, onDanceFloor, applyChoice } from "./people.js";
 import { getZone, zoneLabel } from "./zones.js";
 
 const _dir = new Vector3();
@@ -211,7 +211,7 @@ async function boot() {
             hud.toast("MAGENTA STATIC", "#ff00ff");
         } else if (action === "tipsy") {
             hud.setTipsy(true);
-            hud.toast("TIPSY — free, not gone", "#ffb703");
+            hud.toast("DRUNK — the room has a second opinion", "#ffb703");
         } else if (action === "drink-lime") {
             world.setVibeColor("#39ff14");
             hud.toast("MYSTERIOUS WATER", "#39ff14");
@@ -257,6 +257,11 @@ async function boot() {
 
     function tryInteract() {
         if (hud.phase !== "explore") return;
+        if (controls.sitting) {
+            controls.stand();
+            hud.toast("BACK ON YOUR FEET", "#e0b25a");
+            return;
+        }
         const p = world.camera.position;
         const fy = controls.floorY;
         const hit = nearestNpc(p.x, p.z, fy, 2.3);
@@ -267,6 +272,12 @@ async function boot() {
         const prop = nearestProp(p.x, p.z, fy, 2.4);
         if (prop) {
             handleAction(prop.prop.action);
+            return;
+        }
+        const seat = nearestSit(p.x, p.z, fy, 1.85);
+        if (seat) {
+            controls.sit(seat.spot);
+            hud.toast("THE LOUNGE HAS YOU NOW", "#e0b25a");
             return;
         }
         if (!cubeFound.done && Math.hypot(p.x - world.cube.position.x, p.z - world.cube.position.z) < 1.8 && fy < 2) {
@@ -340,14 +351,19 @@ async function boot() {
         });
 
         if (hud.phase === "explore" && !ride) {
-            const hit = nearestNpc(p.x, p.z, fy, 2.3);
-            const prop = nearestProp(p.x, p.z, fy, 2.4);
-            const nearCube = !cubeFound.done && Math.hypot(p.x - world.cube.position.x, p.z - world.cube.position.z) < 1.8 && fy < 2;
-            if (hit) hud.setInteract(`[E] TALK TO ${hit.npc.name}`, true);
-            else if (prop) hud.setInteract(prop.prop.prompt, true);
-            else if (nearCube) hud.setInteract("[E] TOUCH THE CUBE", true);
-            else if (onFloor) hud.setInteract("SPACE TO DANCE", true);
-            else hud.setInteract("", false);
+            if (controls.sitting) hud.setInteract("[E] STAND UP  ·  WASD TO GET UP", true);
+            else {
+                const hit = nearestNpc(p.x, p.z, fy, 2.3);
+                const prop = nearestProp(p.x, p.z, fy, 2.4);
+                const seat = nearestSit(p.x, p.z, fy, 1.85);
+                const nearCube = !cubeFound.done && Math.hypot(p.x - world.cube.position.x, p.z - world.cube.position.z) < 1.8 && fy < 2;
+                if (hit) hud.setInteract(`[E] TALK TO ${hit.npc.name}`, true);
+                else if (prop) hud.setInteract(prop.prop.prompt, true);
+                else if (seat) hud.setInteract(seat.spot.prompt, true);
+                else if (nearCube) hud.setInteract("[E] TOUCH THE CUBE", true);
+                else if (onFloor) hud.setInteract("SPACE TO DANCE", true);
+                else hud.setInteract("", false);
+            }
         }
 
         if (xr) world.renderer.render(world.scene, world.camera);

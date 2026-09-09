@@ -376,19 +376,47 @@ export function animateHuman(obj, t, ctx = {}) {
         const pulse = 0.5 + 0.5 * Math.cos(beat);
         const sway = Math.sin(beat * 0.5 + ph);
         const groove = Math.sin(beat * 0.25 + ph * 0.7);
-        j.hips.position.y = 0.945 + (1 - pulse) * 0.028;
-        j.hips.rotation.set(0, groove * 0.09, sway * 0.045);
-        j.spine.rotation.set(-0.05 - pulse * 0.035, sway * 0.07, 0);
-        j.head.rotation.set(-0.04, Math.sin(t * 0.55 + ph) * 0.1, 0);
-        j.lUpper.rotation.set(-0.22 + sway * 0.1, 0, 0.26 + pulse * 0.1);
-        j.rUpper.rotation.set(-0.24 - sway * 0.1, 0, -0.3 - pulse * 0.08);
-        j.lFore.rotation.set(-0.32 - pulse * 0.12, 0, 0);
-        j.rFore.rotation.set(-0.28 - pulse * 0.1, 0, 0);
-        j.lThigh.rotation.set(-0.05 - pulse * 0.13, 0, 0.03);
-        j.rThigh.rotation.set(-0.04 - pulse * 0.1, 0, -0.03);
-        j.lShin.rotation.set(pulse * 0.16, 0, 0);
-        j.rShin.rotation.set(pulse * 0.13, 0, 0);
-        if (obj.userData.stick) obj.userData.stick.rotation.z = 0.2 + Math.sin(beat * 0.5 + ph) * 0.25;
+        const style = obj.userData.danceStyle || 0;
+        const bounce = (1 - pulse) * 0.08;
+        j.hips.position.y = 0.92 + bounce;
+        j.hips.rotation.set(0, groove * 0.16, sway * 0.07);
+        j.spine.rotation.set(-0.08 - pulse * 0.05, sway * 0.1, 0);
+        j.head.rotation.set(-0.08 + pulse * 0.06, Math.sin(t * 0.7 + ph) * 0.16, 0);
+        j.lThigh.rotation.set(-0.08 - pulse * 0.2, 0, 0.04);
+        j.rThigh.rotation.set(-0.06 - pulse * 0.16, 0, -0.04);
+        j.lShin.rotation.set(pulse * 0.22, 0, 0);
+        j.rShin.rotation.set(pulse * 0.18, 0, 0);
+        const pump = pulse * 0.28;
+        if (style === 0) {
+            j.lUpper.rotation.set(-0.2, 0, 2.25 + pump);
+            j.rUpper.rotation.set(-0.2, 0, -2.25 - pump);
+            j.lFore.rotation.set(-0.35, 0, 0.15);
+            j.rFore.rotation.set(-0.35, 0, -0.15);
+        } else if (style === 1) {
+            j.lUpper.rotation.set(-0.35 + sway * 0.15, 0, 0.55 + pulse * 0.2);
+            j.rUpper.rotation.set(-0.15, 0, -2.4 - pump);
+            j.lFore.rotation.set(-0.45, 0, 0);
+            j.rFore.rotation.set(-0.25, 0, -0.2);
+        } else if (style === 2) {
+            const hit = Math.sin(beat);
+            j.lUpper.rotation.set(-1.25 + hit * 0.4, 0, 0.85);
+            j.rUpper.rotation.set(-1.05 - hit * 0.4, 0, -0.8);
+            j.lFore.rotation.set(-0.55, 0, 0);
+            j.rFore.rotation.set(-0.5, 0, 0);
+        } else if (style === 3) {
+            j.hips.rotation.y = sway * 0.32;
+            j.lUpper.rotation.set(-0.35, 0, 1.55 + sway * 0.25);
+            j.rUpper.rotation.set(-0.35, 0, -1.55 + sway * 0.25);
+            j.lFore.rotation.set(-0.3 - pulse * 0.2, 0, 0.2);
+            j.rFore.rotation.set(-0.3 - pulse * 0.2, 0, -0.2);
+        } else {
+            const clap = Math.abs(Math.sin(beat));
+            j.lUpper.rotation.set(-0.95, 0, 0.85 + clap * 0.25);
+            j.rUpper.rotation.set(-0.95, 0, -0.85 - clap * 0.25);
+            j.lFore.rotation.set(-0.9 - clap * 0.35, 0, 0);
+            j.rFore.rotation.set(-0.9 - clap * 0.35, 0, 0);
+        }
+        if (obj.userData.stick) obj.userData.stick.rotation.z = 0.4 + Math.sin(beat + ph) * 0.55;
     } else if (mode === "sit") {
         const sitY = obj.userData.sitHips ?? 0.54;
         const breath = Math.sin(t * 1.15 + ph) * 0.006;

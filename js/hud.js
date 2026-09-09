@@ -191,7 +191,7 @@ export function createHud(hooks) {
         $("tipsyToggle").addEventListener("change", (e) => {
             run.tipsy = e.target.checked;
             applyReduced();
-            if (run.tipsy) toast("TIPSY — free, not gone", "#ffb703");
+            if (run.tipsy) toast("DRUNK — the room has a second opinion", "#ffb703");
         });
         $("fxToggle").checked = run.reducedFx;
         if (run.reducedFx) {
@@ -257,8 +257,8 @@ export function createHud(hooks) {
     const MODAL = {
         about: `
             <p><strong>VIBE CHECK 9000™</strong> is a first-person night in Midtown, November 12, 1954. The visor is from later. The street is not.</p>
-            <p>WASD to move. SPACE on the tiles to dance. E to talk. Walk out the front door onto 47th Street, out the back into the alley, or take the stairs / fire escape to the lounge.</p>
-            <p>Drop MP3 / WAV / FLAC on the DECK. Hail a Checker. Pet the cat. Read the Gazette.</p>
+            <p>WASD to move. SPACE on the tiles to dance. E to talk. Upstairs, E sits you on the banquette, chaise, or club chairs.</p>
+            <p>Drop MP3 / WAV / FLAC on the DECK. Hail a Checker. Pet the cat. Read the Gazette. ION will get you drunk if you ask.</p>
         `,
     };
 

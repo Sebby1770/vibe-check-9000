@@ -72,7 +72,12 @@ export function buildClub(scene, env) {
     // back wall split
     addBox(world, unitBox, concrete, -9, 4.1, -16.55, 15.1, 8.3, 0.28);
     addBox(world, unitBox, concrete, 7.3, 4.1, -16.55, 11.8, 8.3, 0.28);
-    addBox(world, unitBox, concrete, 14.55, 1.55, -16.55, 2.9, 3.1, 0.28);
+    addBox(world, unitBox, concrete, 14.9, 2.2, -16.55, 3.6, 4.4, 0.28);
+    addBox(world, unitBox, concrete, 16.2, 6.35, -16.55, 0.9, 4.0, 0.28);
+    addBox(world, unitBox, concrete, 14.7, 8.05, -16.55, 4.0, 0.6, 0.28);
+    addBox(world, unitBox, metal, 13.25, 5.9, -16.5, 0.1, 2.8, 0.18);
+    addBox(world, unitBox, metal, 15.8, 5.9, -16.5, 0.1, 2.8, 0.18);
+    addBox(world, unitBox, metal, 14.52, 7.35, -16.5, 2.7, 0.1, 0.18);
     addBox(world, unitBox, concrete, 0, 6.35, -16.55, 3.0, 3.8, 0.28);
 
     // Door frames
@@ -431,6 +436,30 @@ export function buildClub(scene, env) {
         }
     }
 
+    addBox(world, unitBox, velvet, 10.6, fy + 0.28, 8.55, 3.6, 0.28, 1.15);
+    addBox(world, unitBox, velvet, 10.6, fy + 0.48, 9.0, 3.6, 0.42, 0.28);
+    addBox(world, unitBox, gold, 10.6, fy + 0.12, 8.55, 3.7, 0.05, 1.25);
+    addBox(world, unitBox, velvet, 9.2, fy + 0.42, 8.55, 0.45, 0.22, 0.7);
+    addBox(world, unitBox, velvet, 12.0, fy + 0.42, 8.55, 0.45, 0.22, 0.7);
+
+    addBox(world, unitBox, velvet, 12.7, fy + 0.32, 2.6, 1.15, 0.38, 1.15);
+    addBox(world, unitBox, velvet, 13.15, fy + 0.62, 2.6, 0.28, 0.55, 1.15);
+    addBox(world, unitBox, gold, 12.7, fy + 0.12, 2.6, 1.25, 0.05, 1.25);
+    addBox(world, unitBox, velvet, 11.15, fy + 0.32, 1.1, 1.15, 0.38, 1.15);
+    addBox(world, unitBox, velvet, 10.7, fy + 0.62, 1.1, 0.28, 0.55, 1.15);
+    addBox(world, unitBox, marble, 11.9, fy + 0.28, 1.85, 0.7, 0.08, 0.7);
+    addBox(world, unitBox, brass, 11.9, fy + 0.16, 1.85, 0.08, 0.22, 0.08);
+    addBox(world, unitBox, emissiveAmber, 11.9, fy + 0.42, 1.85, 0.08, 0.14, 0.08);
+
+    addBox(world, unitBox, gold, 13.4, fy + 1.15, 8.4, 0.08, 2.2, 0.08);
+    addBox(world, unitBox, emissiveAmber, 13.4, fy + 2.35, 8.4, 0.35, 0.12, 0.35);
+    addBox(world, unitBox, brass, 13.4, fy + 2.22, 8.4, 0.5, 0.05, 0.5);
+
+    const bucket = new THREE.Mesh(new THREE.CylinderGeometry(0.14, 0.12, 0.32, 10), brass);
+    bucket.position.set(12.4, fy + 0.55, 7.7);
+    world.add(bucket);
+    addBox(world, unitBox, new THREE.MeshStandardMaterial({ color: 0xc9e8c4, roughness: 0.2, metalness: 0.1, transparent: true, opacity: 0.45 }), 12.4, fy + 0.78, 7.7, 0.08, 0.28, 0.08);
+
     addBox(world, unitBox, marble, -14.6, fy + 0.58, -8.2, 1.5, 0.12, 4.8);
     addBox(world, unitBox, wood, -14.6, fy + 0.28, -8.2, 1.4, 0.55, 4.6);
     addBox(world, unitBox, gold, -14.6, fy + 0.66, -8.2, 1.45, 0.04, 4.7);
@@ -492,6 +521,7 @@ export function buildClub(scene, env) {
         }
         obj.position.set(npc.x, npc.y || 0, npc.z);
         obj.rotation.y = npc.facing || 0;
+        if (npc.anim === "dance") obj.userData.danceStyle = npc.id === "rexa" ? 1 : npc.id === "pixel" ? 0 : 3;
         scene.add(obj);
         return { id: npc.id, obj, npc, x: npc.x, z: npc.z, y: npc.y || 0 };
     });
@@ -501,10 +531,11 @@ export function buildClub(scene, env) {
         return false;
     }
 
-    function placePerson(h, x, z, y, yaw, mode) {
+    function placePerson(h, x, z, y, yaw, mode, extra = {}) {
         h.position.set(x, y, z);
         h.rotation.y = yaw;
         h.userData.mode = mode;
+        if (extra.danceStyle != null) h.userData.danceStyle = extra.danceStyle;
         scene.add(h);
         return h;
     }
@@ -518,13 +549,13 @@ export function buildClub(scene, env) {
             const x = Math.cos(ang) * rad;
             const z = Math.sin(ang) * rad * 0.92;
             if (taken(x, z, 0, 1.35)) continue;
-            dancers.push(placePerson(randomRaver(0.17 * di + 0.11), x, z, 0, ang + Math.PI, "dance"));
+            dancers.push(placePerson(randomRaver(0.17 * di + 0.11), x, z, 0, ang + Math.PI, "dance", { danceStyle: di % 5 }));
             di += 1;
         }
     }
     for (const [x, z, yaw] of [[8.6, 2.2, -1.2], [8.2, -2.8, 2.1], [-8.4, 4.1, 0.6], [-7.8, -6.2, 2.8], [9.4, 5.5, -0.4], [-9.1, 1.2, 1.4]]) {
         if (taken(x, z, 0)) continue;
-        dancers.push(placePerson(randomRaver(0.4 + Math.abs(x) * 0.07), x, z, 0, yaw, "dance"));
+        dancers.push(placePerson(randomRaver(0.4 + Math.abs(x) * 0.07), x, z, 0, yaw, "dance", { danceStyle: (di++) % 5 }));
     }
 
     const barCrowd = [];

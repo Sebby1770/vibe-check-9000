@@ -84,6 +84,7 @@ export function createWorld(canvas) {
     let crowdOn = true;
     let vibeHex = "#ff00ff";
     let ledTick = 0;
+    let drunk = false;
 
     function setVibeColor(hex) {
         vibeHex = hex || "#ff00ff";
@@ -129,8 +130,9 @@ export function createWorld(canvas) {
         },
         setBloomReduced(v) { bloom.strength = v ? 0.1 : 0.48; },
         setTipsy(v) {
-            scene.fog.density = v ? 0.01 : 0.012;
-            renderer.toneMappingExposure = v ? 1.18 : 1.08;
+            drunk = !!v;
+            scene.fog.density = v ? 0.02 : 0.012;
+            renderer.toneMappingExposure = v ? 1.28 : 1.08;
         },
         flashFloor() { floorFlash = 0.22; bloomKick = 0.18; },
         pulseKick() { bloomKick = 0.12; },
@@ -257,8 +259,10 @@ export function createWorld(canvas) {
             club.floor.instanceColor.needsUpdate = true;
 
             if (bloomKick > 0) bloomKick -= dt;
-            bloom.strength = reduced ? 0.1 : 0.42 + bass * 0.28 + bloomKick * 1.4;
-            const targetFov = baseFov + (reduced ? 0 : bass * 2.4 + bloomKick * 8);
+            const drunkPulse = drunk && !reduced ? 0.22 + Math.sin(t * 1.3) * 0.08 : 0;
+            bloom.strength = reduced ? 0.1 : 0.42 + bass * 0.28 + bloomKick * 1.4 + drunkPulse;
+            const drunkFov = drunk && !reduced ? Math.sin(t * 0.7) * 4 + Math.sin(t * 1.9) * 1.6 : 0;
+            const targetFov = baseFov + (reduced ? 0 : bass * 2.4 + bloomKick * 8) + drunkFov;
             if (Math.abs(camera.fov - targetFov) > 0.05) {
                 camera.fov += (targetFov - camera.fov) * 0.18;
                 camera.updateProjectionMatrix();

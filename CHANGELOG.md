@@ -4,6 +4,19 @@ All notable changes to VIBE CHECK 9000™ are documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
+## [15.2.0] - 2026-09-09
+
+### Added
+
+- Five dance styles on the floor: hands up, one arm to the lights, air punches, wide sway, clap.
+- Player can sit upstairs: banquette, chaise, club chairs. E or WASD to stand.
+- Chaise, club chairs, floor lamp, champagne bucket in the lounge.
+- Drunk visor: weave, horizon roll, FOV breathe, bloom pulse, chromatic fringe.
+
+### Fixed
+
+- Hole in the back wall on the ground floor (fire-escape opening now starts at the second floor).
+
 ## [15.1.0] - 2026-09-09
 
 ### Fixed

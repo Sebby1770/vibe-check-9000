@@ -64,7 +64,7 @@ export const NPCS = [
                 say: "Menu's a few drinks and a feeling. The sour's cyan. The water's a lie. The third one makes the floor friendlier.",
                 choices: [
                     { text: "Neon sour.", next: "sour", action: "drink-cyan" },
-                    { text: "Something light. Just tipsy.", next: "tipsy", action: "tipsy" },
+                    { text: "Make the room dishonest.", next: "tipsy", action: "tipsy" },
                     { text: "Just water. I'm mysterious.", next: "water", action: "drink-lime" },
                 ],
             },
@@ -73,8 +73,8 @@ export const NPCS = [
                 choices: [{ text: "Cheers.", next: null }],
             },
             tipsy: {
-                say: "Not drunk. Just loose. 47th looks kinder through a little blur.",
-                choices: [{ text: "That's the one.", next: null }],
+                say: "That's not tipsy. That's the full sermon. Don't hail a Checker until the street stops moving.",
+                choices: [{ text: "I regret nothing.", next: null }],
             },
             water: {
                 say: "Respect. The lime light still finds you.",
@@ -672,6 +672,14 @@ export const PROPS = [
     { id: "cabdoor", x: 14.4, z: 17.55, y: 0, r: 2.2, prompt: "[E] HAIL THE CHECKER", action: "hail-cab" },
 ];
 
+export const SIT_SPOTS = [
+    { id: "banq-n", x: -13.55, z: 3.3, y: 4.4, eye: 1.18, lookX: -7.5, lookZ: 3.3, r: 1.6, prompt: "[E] SIT ON THE BANQUETTE" },
+    { id: "banq-s", x: -13.55, z: -1.6, y: 4.4, eye: 1.18, lookX: -7.5, lookZ: -1.6, r: 1.6, prompt: "[E] SIT ON THE BANQUETTE" },
+    { id: "chaise", x: 10.6, z: 7.55, y: 4.4, eye: 1.12, lookX: 10.6, lookZ: 3.2, r: 1.7, prompt: "[E] STRETCH OUT ON THE CHAISE" },
+    { id: "chair-e", x: 11.85, z: 2.6, y: 4.4, eye: 1.14, lookX: 8.2, lookZ: 1.8, r: 1.5, prompt: "[E] SINK INTO THE CLUB CHAIR" },
+    { id: "chair-w", x: 11.9, z: 1.1, y: 4.4, eye: 1.14, lookX: 8.4, lookZ: 2.2, r: 1.5, prompt: "[E] TAKE THE CLUB CHAIR" },
+];
+
 export const GAZETTE = {
     title: "MIDTOWN GAZETTE",
     date: "FRIDAY, NOVEMBER 12, 1954  ·  FIVE CENTS",
@@ -705,6 +713,20 @@ export function nearestNpc(x, z, y = 0, max = 2.2) {
         }
     }
     return best ? { npc: best, dist: bestD } : null;
+}
+
+export function nearestSit(x, z, y = 0, max = 1.8) {
+    let best = null;
+    let bestD = max;
+    for (const spot of SIT_SPOTS) {
+        if (Math.abs((spot.y || 0) - y) > 1.2) continue;
+        const d = Math.hypot(x - spot.x, z - spot.z);
+        if (d < bestD) {
+            bestD = d;
+            best = spot;
+        }
+    }
+    return best ? { spot: best, dist: bestD } : null;
 }
 
 export function nearestProp(x, z, y = 0, max = 2.2) {

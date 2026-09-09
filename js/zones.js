@@ -122,7 +122,8 @@ export function buildColliders() {
     wall(boxes, 1.4, 13.2, -16.72, -16.28);
     wall(boxes, 15.85, 16.5, -16.72, -16.28);
     wall(boxes, -1.4, 1.4, -16.72, -16.28, 3.15, 8.6);
-    wall(boxes, 13.2, 15.85, -16.72, -16.28, -1, 3.15);
+    wall(boxes, 13.2, 15.85, -16.72, -16.28, -1, 4.35);
+    wall(boxes, 13.2, 15.85, -16.72, -16.28, 7.2, 8.6);
 
     // Club side walls
     wall(boxes, -16.72, -16.28, -16.5, 12.5);
@@ -160,8 +161,11 @@ export function buildColliders() {
     wall(boxes, 13.08, 13.36, 2.9, 9.5, -1, 6.4);
     wall(boxes, 16.12, 16.42, 2.9, 9.5, -1, 6.4);
 
-    // West banquettes
+    // West banquettes + north chaise + club chairs
     wall(boxes, -15.7, -13.9, -4.0, 5.2, 4.2, 5.6);
+    wall(boxes, 8.7, 12.5, 7.95, 9.2, 4.2, 5.4);
+    wall(boxes, 12.05, 13.45, 1.95, 3.25, 4.2, 5.5);
+    wall(boxes, 10.45, 11.85, 0.45, 1.75, 4.2, 5.5);
 
     // Lounge stage + jukebox + tables + lounge bar
     wall(boxes, -3.6, 3.6, -14.7, -12.2, 4.2, 5.6);

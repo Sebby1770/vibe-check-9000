@@ -27,6 +27,9 @@ export function createControls(camera, domElement, colliders) {
     let baseLook = 1;
     let floorY = 0;
     let riding = false;
+    let sitting = false;
+    let sitSpot = null;
+    let drunkDrift = 0;
 
     camera.position.set(0, EYE, 8);
     camera.lookAt(0, 1.6, -12);
@@ -114,16 +117,37 @@ export function createControls(camera, domElement, colliders) {
         setReduced(v) { reduced = !!v; },
         setSensitivity(v) {
             baseLook = v;
-            plc.pointerSpeed = tipsy ? v * 0.84 : v;
+            plc.pointerSpeed = tipsy ? v * 0.62 : v;
         },
         setTipsy(v) {
             tipsy = !!v;
-            plc.pointerSpeed = tipsy ? baseLook * 0.84 : baseLook;
+            plc.pointerSpeed = tipsy ? baseLook * 0.62 : baseLook;
             if (!tipsy) {
                 _euler.setFromQuaternion(camera.quaternion);
                 _euler.z = 0;
                 camera.quaternion.setFromEuler(_euler);
             }
+        },
+        get sitting() { return sitting; },
+        sit(spot) {
+            sitting = true;
+            sitSpot = spot;
+            floorY = spot.y || 0;
+            camera.position.set(spot.x, floorY + (spot.eye || 1.16), spot.z);
+            camera.lookAt(spot.lookX, floorY + 1.32, spot.lookZ);
+            _euler.setFromQuaternion(camera.quaternion);
+            _euler.z = 0;
+            camera.quaternion.setFromEuler(_euler);
+        },
+        stand() {
+            if (!sitting) return false;
+            sitting = false;
+            sitSpot = null;
+            camera.position.y = floorY + EYE;
+            _euler.setFromQuaternion(camera.quaternion);
+            _euler.z = 0;
+            camera.quaternion.setFromEuler(_euler);
+            return true;
         },
         get tipsy() { return tipsy; },
         setFov(v) {
@@ -162,7 +186,22 @@ export function createControls(camera, domElement, colliders) {
             }
 
             swayT += dt;
-            const speed = (sprint ? 5.8 : 3.6) * (tipsy ? 0.9 : 1);
+            if (sitting) {
+                const eye = (sitSpot && sitSpot.eye) || 1.16;
+                let bob = 0;
+                if (tipsy && !reduced) {
+                    bob = Math.sin(swayT * 1.4) * 0.03;
+                    _euler.setFromQuaternion(camera.quaternion);
+                    _euler.z = Math.sin(swayT * 0.5) * 0.1 + Math.sin(swayT * 1.6) * 0.04;
+                    camera.quaternion.setFromEuler(_euler);
+                }
+                camera.position.y = floorY + eye + bob;
+                if (keys.w || keys.a || keys.s || keys.d) this.stand();
+                camera.getWorldDirection(_fwd);
+                return { moving: false, dancing: false, tipsy, sitting: true, forward: _fwd, floorY };
+            }
+
+            const speed = (sprint ? 5.8 : 3.6) * (tipsy ? 0.68 : 1);
             let f = 0;
             let r = 0;
             if (keys.w) f += 1;
@@ -176,7 +215,11 @@ export function createControls(camera, domElement, colliders) {
 
             if (f !== 0) plc.moveForward(f * speed * dt);
             if (r !== 0) plc.moveRight(r * speed * dt);
-            if (tipsy && !reduced && mag > 0.04) plc.moveRight(Math.sin(swayT * 0.85) * 0.18 * dt);
+            if (tipsy && !reduced) {
+                drunkDrift += dt;
+                plc.moveRight((Math.sin(swayT * 0.55) * 0.85 + Math.sin(swayT * 1.65) * 0.4) * dt);
+                plc.moveForward(Math.sin(swayT * 0.38) * 0.28 * dt);
+            }
 
             resolve(camera.position);
             floorY = colliders.getFloorY(camera.position.x, camera.position.z, floorY);
@@ -187,14 +230,17 @@ export function createControls(camera, domElement, colliders) {
                 bobPhase += dt * (bpm / 60) * Math.PI * 2 * (dance ? 1.35 : 1);
                 bob = Math.sin(bobPhase) * (dance ? 0.07 : 0.035);
             } else if (tipsy && !reduced) {
-                bob = Math.sin(swayT * 1.05) * 0.02;
+                bob = Math.sin(swayT * 1.7) * 0.045 + Math.sin(swayT * 2.8) * 0.02;
             } else if (!moving && !dance) bobPhase = 0;
 
+            if (tipsy && !reduced) bob += Math.sin(swayT * 3.4) * 0.018;
             camera.position.y = floorY + EYE + bob;
 
             if (tipsy && !reduced) {
                 _euler.setFromQuaternion(camera.quaternion);
-                _euler.z = Math.sin(swayT * 0.62) * 0.048 + Math.sin(swayT * 1.28) * 0.016;
+                _euler.z = Math.sin(swayT * 0.48) * 0.16 + Math.sin(swayT * 1.55) * 0.07 + Math.sin(swayT * 2.4) * 0.03;
+                _euler.x += Math.sin(swayT * 0.9) * 0.012;
+                _euler.x = Math.max(PI_2 - plc.maxPolarAngle, Math.min(PI_2 - plc.minPolarAngle, _euler.x));
                 camera.quaternion.setFromEuler(_euler);
             }
 
