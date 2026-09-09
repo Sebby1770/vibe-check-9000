@@ -449,7 +449,19 @@ export function buildCity(scene) {
         sedan(scene, { x: -10, z: 21.35, yaw: 0, color: 0x3a2a18, moving: 1 }),
         sedan(scene, { x: 36, z: 21.35, yaw: 0, taxi: true, moving: 1 }),
         sedan(scene, { x: -28, z: 24.55, yaw: Math.PI, color: 0x4a1a1a, moving: -1 }),
+        sedan(scene, { x: 8, z: 24.55, yaw: Math.PI, taxi: true, moving: -1 }),
+        sedan(scene, { x: -22, z: 21.35, yaw: 0, color: 0x1a2438, moving: 1 }),
     ];
+
+    const puddleMat = new THREE.MeshStandardMaterial({
+        color: 0x1a2838, metalness: 0.88, roughness: 0.16, transparent: true, opacity: 0.38,
+    });
+    for (const [x, z, s] of [[-8, 16.4, 1.8], [6.5, 17.1, 1.3], [-22, 22.8, 2.1], [18, 16.6, 1.5], [0.4, -20.5, 1.2]]) {
+        const puddle = new THREE.Mesh(new THREE.CircleGeometry(s, 14), puddleMat);
+        puddle.rotation.x = -Math.PI / 2;
+        puddle.position.set(x, 0.025, z);
+        root.add(puddle);
+    }
 
     const peds = [];
     const paths = [
@@ -458,10 +470,10 @@ export function buildCity(scene) {
         { z: 29.15, x0: -42, x1: 42, speed: 1.05 },
         { z: 29.55, x0: 40, x1: -40, speed: 0.88 },
     ];
-    for (let i = 0; i < 18; i++) {
+    for (let i = 0; i < 26; i++) {
         const path = paths[i % paths.length];
         const h = randomPedestrian(0.13 * i + 0.07);
-        const t0 = i / 18;
+        const t0 = i / 26;
         h.userData.path = path;
         h.userData.t = t0;
         const x = path.x0 + (path.x1 - path.x0) * t0;
@@ -495,6 +507,19 @@ export function buildCity(scene) {
         lampLights,
         dinerLight,
         hotelLight,
+        marquee,
+        setMarquee(line1, line2) {
+            const tex = marqueeCanvas(String(line1 || "VIBE CHECK").slice(0, 14), String(line2 || "TONIGHT").slice(0, 22));
+            const old = marquee.material.map;
+            marquee.material.map = tex;
+            if (old && old !== tex) old.dispose();
+        },
+        setRivoli(line) {
+            const tex = neonCanvas(String(line || "NOW SHOWING").slice(0, 28), "#FFE7A8", 1024, 160, "#100808");
+            const old = titlePlane.material.map;
+            titlePlane.material.map = tex;
+            if (old && old !== tex) old.dispose();
+        },
     };
 }
 

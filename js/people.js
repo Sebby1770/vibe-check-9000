@@ -202,8 +202,14 @@ export const NPCS = [
                 choices: [
                     { text: "I'm going in.", next: null },
                     { text: "Anyone I should meet?", next: "meet" },
+                    { text: "Put me on the list.", next: "list", action: "guest" },
                     { text: "What's the year again?", next: "year" },
                 ],
+            },
+            list: {
+                say: "You were never not on it. I just needed you to ask. The visor is the stamp.",
+                action: "guest",
+                choices: [{ text: "I'll behave. Probably.", next: null }],
             },
             meet: {
                 say: "REXA runs the booth. ION pours colors. PIXEL will make you dance. Upstairs, VELMA sings like the war just ended. Outside, DOTTIE has pie and opinions.",
@@ -670,6 +676,8 @@ export const PROPS = [
     { id: "gazette", x: -11.8, z: 14.9, y: 0, r: 1.6, prompt: "[E] READ THE MIDTOWN GAZETTE", action: "paper" },
     { id: "juke", x: 11.15, z: -9.35, y: 4.4, r: 1.7, prompt: "[E] FEED THE JUKEBOX", action: "juke" },
     { id: "cabdoor", x: 14.4, z: 17.55, y: 0, r: 2.2, prompt: "[E] HAIL THE CHECKER", action: "hail-cab" },
+    { id: "booth", x: -8.2, z: 10.45, y: 0, r: 1.7, prompt: "[E] PHOTO BOOTH — STAMP THE NIGHT", action: "booth" },
+    { id: "coat", x: 8.15, z: 10.4, y: 0, r: 1.6, prompt: "[E] COAT CHECK (A RUMOR)", action: "coat" },
 ];
 
 export const SIT_SPOTS = [
@@ -678,6 +686,10 @@ export const SIT_SPOTS = [
     { id: "chaise", x: 10.6, z: 7.55, y: 4.4, eye: 1.12, lookX: 10.6, lookZ: 3.2, r: 1.7, prompt: "[E] STRETCH OUT ON THE CHAISE" },
     { id: "chair-e", x: 11.85, z: 2.6, y: 4.4, eye: 1.14, lookX: 8.2, lookZ: 1.8, r: 1.5, prompt: "[E] SINK INTO THE CLUB CHAIR" },
     { id: "chair-w", x: 11.9, z: 1.1, y: 4.4, eye: 1.14, lookX: 8.4, lookZ: 2.2, r: 1.5, prompt: "[E] TAKE THE CLUB CHAIR" },
+    { id: "bar-end", x: -13.55, z: -8.35, y: 0, eye: 1.22, lookX: -16.2, lookZ: -8.35, r: 1.45, prompt: "[E] TAKE THE END STOOL" },
+    { id: "diner-counter", x: -28.6, z: 1.55, y: 0, eye: 1.2, lookX: -25.5, lookZ: 3.5, r: 1.55, prompt: "[E] SIT THE COUNTER" },
+    { id: "diner-booth", x: -33.05, z: -8.0, y: 0, eye: 1.14, lookX: -34.6, lookZ: -8.0, r: 1.5, prompt: "[E] SLIDE INTO THE BOOTH" },
+    { id: "hotel-lobby", x: 25.2, z: 3.85, y: 0, eye: 1.16, lookX: 25.2, lookZ: 5.9, r: 1.55, prompt: "[E] SIT IN THE LOBBY" },
 ];
 
 export const GAZETTE = {
@@ -699,6 +711,9 @@ export const PHONE_LINES = [
     "An operator: 'What year are you calling from, please?' You hang up out of respect.",
     "Static, then: 'The cube by the bar is not a metaphor. Stop treating it like one.'",
     "A kid shouting extras: 'Gazette! Club forgets the decade!' You are on the phone with the newspaper.",
+    "A man, whispering: 'Tell Marco table six is a rumor. Table six knows.' Click.",
+    "Busy signal in 3/4 time. You almost clap. You do not clap.",
+    "ION, somehow: 'If this is about last call, the answer is still last call.'",
 ];
 
 export function nearestNpc(x, z, y = 0, max = 2.2) {

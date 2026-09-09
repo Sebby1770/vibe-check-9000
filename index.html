@@ -62,11 +62,12 @@
         <div class="visor-reticle" aria-hidden="true"></div>
 
         <section id="boot" class="overlay boot" aria-label="Doors">
-            <p class="boot-tag">v16.0.0 // TONIGHT'S BILL // <span id="bootSet">HOUSE SYSTEM</span></p>
+            <p class="boot-tag">v17.0.0 // TONIGHT'S BILL // <span id="bootSet">HOUSE SYSTEM</span></p>
             <h1>VIBE CHECK <span>9000</span></h1>
             <p class="boot-sub" id="bootSub">THE SUN IS STILL IN THE STREET</p>
             <p class="boot-headline" id="bootHeadline"></p>
             <p class="boot-bill" id="bootBill">the visor remembers who walked in</p>
+            <p class="boot-dare" id="bootDare"></p>
             <div class="boot-actions">
                 <button type="button" class="cta" id="enterBtn">ENTER THE NIGHT</button>
             </div>
@@ -75,7 +76,7 @@
                 <li>WASD move · mouse look · SPACE dance</li>
                 <li>E talk · front door 47th · back door alley · stairs lounge</li>
                 <li>Hail a Checker · sit the lounge · pet the cat</li>
-                <li>ESC: deck, visor looks, night stamp, tip the till</li>
+                <li>ESC: deck, visor looks, night stamp, recap, tip the till</li>
                 <li class="mobile-only">Mobile: tap look + on-screen stick</li>
             </ul>
         </section>
@@ -96,11 +97,13 @@
                 <p class="dim" id="pauseBill">Pointer lock off. The night is still going.</p>
                 <p class="bill-line" id="pauseClock">10:00 PM</p>
                 <p class="dim" id="pauseLook">STOCK VISOR</p>
+                <p class="boot-dare" id="pauseDare"></p>
                 <div class="result-actions">
                     <button type="button" class="btn-primary" id="resumeBtn">BACK IN</button>
                     <button type="button" class="btn-secondary" id="pauseDeckBtn">DECK</button>
                     <button type="button" class="btn-secondary" id="pauseLookBtn">VISOR</button>
                     <button type="button" class="btn-secondary" id="pauseShareBtn">STAMP</button>
+                    <button type="button" class="btn-secondary" id="pauseRecapBtn">RECAP</button>
                 </div>
                 <p class="tip-line">ION's till is a hat.
                     <a href="https://github.com/sponsors/Sebby1770" target="_blank" rel="noreferrer">[KEEP THE LIGHTS ON]</a>
@@ -161,6 +164,24 @@
                 <label class="check"><input id="tipsyToggle" type="checkbox"> DRUNK — the room won't sit still</label>
                 <button type="button" class="btn-secondary" id="settingsLookBtn">VISOR LOOKS</button>
                 <button type="button" class="btn-primary" id="settingsClose">CLOSE</button>
+            </div>
+        </section>
+
+        <section id="recap" class="overlay panel-wrap hidden" aria-label="Night recap">
+            <div class="panel">
+                <h2>THE VISOR REMEMBERS</h2>
+                <p class="bill-line" id="recapClock">10:00 PM</p>
+                <p class="dim" id="recapSet"></p>
+                <p class="boot-dare" id="recapDare"></p>
+                <p class="bill-line" id="recapStreak"></p>
+                <ul class="recap-bits" id="recapBits"></ul>
+                <div class="result-actions">
+                    <button type="button" class="btn-primary" id="recapClose">BACK IN</button>
+                    <button type="button" class="btn-secondary" id="pauseShareBtn2">STAMP</button>
+                </div>
+                <p class="tip-line">ION's till is a hat.
+                    <a href="https://github.com/sponsors/Sebby1770" target="_blank" rel="noreferrer">[KEEP THE LIGHTS ON]</a>
+                </p>
             </div>
         </section>
 

@@ -173,7 +173,10 @@ export function createWorld(canvas) {
             for (const l of club.lasers) l.mat.color.setHSL(Math.random(), 1, 0.55);
         },
         setVibeColor,
-        setLedMessage(title, sub) { club.setLed(title, sub); },
+        setLedMessage(title, sub) {
+            club.setLed(title, sub);
+            city.setMarquee?.(title, sub);
+        },
         enableXR() { renderer.xr.enabled = true; },
 
         update(dt, t, ctx) {
@@ -244,10 +247,16 @@ export function createWorld(canvas) {
             club.secretCube.position.y = 0.42 + Math.sin(t * 2.2) * 0.06;
 
             for (const person of club.namedPeople) {
+                const talking = ctx.talkId === person.id;
+                if (talking && person.npc.kind !== "cat") {
+                    const dx = p.x - person.obj.position.x;
+                    const dz = p.z - person.obj.position.z;
+                    person.obj.rotation.y = Math.atan2(dx, dz);
+                }
                 animateHuman(person.obj, t, {
                     mode: person.npc.anim || "idle",
                     bpm,
-                    talking: ctx.talkId === person.id,
+                    talking,
                 });
             }
             if (crowdOn) {
@@ -257,9 +266,21 @@ export function createWorld(canvas) {
                 for (const ped of city.peds) if (ped.visible) animateHuman(ped, t, { mode: "walk", bpm: 96 });
             }
 
-            const handBob = Math.sin(t * 7) * 0.025;
-            leftHand.position.y = -0.22 + handBob;
-            rightHand.position.y = -0.22 - handBob;
+            const dancing = !!ctx.dancing;
+            const beat = t * ((bpm || 128) / 60) * Math.PI * 2;
+            if (dancing && !reduced) {
+                const pump = Math.sin(beat);
+                leftHand.position.set(-0.32, -0.12 + Math.abs(pump) * 0.08, -0.38);
+                rightHand.position.set(0.32, -0.14 + Math.abs(-pump) * 0.08, -0.38);
+                leftHand.rotation.set(-1.05 + pump * 0.35, 0.12, 0.35);
+                rightHand.rotation.set(-1.0 - pump * 0.35, -0.12, -0.35);
+            } else {
+                const handBob = Math.sin(t * 7) * 0.025;
+                leftHand.position.set(-0.28, -0.22 + handBob, -0.42);
+                rightHand.position.set(0.28, -0.22 - handBob, -0.42);
+                leftHand.rotation.set(-0.35, -0.18, -0.12);
+                rightHand.rotation.set(-0.35, 0.18, 0.12);
+            }
 
             const laserSpeed = reduced ? 0.25 : 1;
             for (let i = 0; i < club.lasers.length; i++) {

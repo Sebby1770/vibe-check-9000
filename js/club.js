@@ -283,14 +283,23 @@ export function buildClub(scene, env) {
     }
     scene.add(glasses);
     const stoolGeo = new THREE.CylinderGeometry(0.2, 0.17, 0.07, 10);
-    for (let i = 0; i < 6; i++) {
-        const z = -6 + i * 2.2;
+    for (let i = 0; i < 7; i++) {
+        const z = i === 6 ? -8.35 : -6 + i * 2.2;
         addBox(world, unitBox, metalDark, -14.15, 0.34, z, 0.08, 0.68, 0.08);
         const s = new THREE.Mesh(stoolGeo, metal);
         s.position.set(-14.15, 0.7, z);
         scene.add(s);
         addBox(world, unitBox, metalDark, -14.15, 0.92, z + 0.14, 0.22, 0.32, 0.06);
     }
+
+    // Photo booth + coat rumor
+    addBox(world, unitBox, metalDark, -8.2, 1.15, 10.55, 1.35, 2.3, 1.1);
+    addBox(world, unitBox, emissiveMag, -8.2, 1.35, 10.02, 1.05, 1.4, 0.04);
+    addBox(world, unitBox, emissiveCyan, -8.2, 2.15, 10.02, 0.7, 0.12, 0.04);
+    addBox(world, unitBox, wood, 8.15, 0.95, 10.45, 1.2, 1.9, 0.35);
+    addBox(world, unitBox, metal, 8.15, 1.85, 10.45, 1.15, 0.06, 0.08);
+    addBox(world, unitBox, metalDark, 7.7, 1.35, 10.55, 0.08, 0.7, 0.08);
+    addBox(world, unitBox, metalDark, 8.6, 1.35, 10.55, 0.08, 0.7, 0.08);
 
     // Ground-floor VIP couches
     for (const [x, z, rot] of [[13.6, -4.2, -0.4], [13.6, 1.8, 0.25], [13.2, 6.6, 0.15]]) {
@@ -552,13 +561,13 @@ export function buildClub(scene, env) {
             const x = Math.cos(ang) * rad;
             const z = Math.sin(ang) * rad * 0.92;
             if (taken(x, z, 0, 1.35)) continue;
-            dancers.push(placePerson(randomRaver(0.17 * di + 0.11), x, z, 0, ang + Math.PI, "dance", { danceStyle: di % 5 }));
+            dancers.push(placePerson(randomRaver(0.17 * di + 0.11), x, z, 0, ang + Math.PI, "dance", { danceStyle: di % 7 }));
             di += 1;
         }
     }
     for (const [x, z, yaw] of [[8.6, 2.2, -1.2], [8.2, -2.8, 2.1], [-8.4, 4.1, 0.6], [-7.8, -6.2, 2.8], [9.4, 5.5, -0.4], [-9.1, 1.2, 1.4]]) {
         if (taken(x, z, 0)) continue;
-        dancers.push(placePerson(randomRaver(0.4 + Math.abs(x) * 0.07), x, z, 0, yaw, "dance", { danceStyle: (di++) % 5 }));
+        dancers.push(placePerson(randomRaver(0.4 + Math.abs(x) * 0.07), x, z, 0, yaw, "dance", { danceStyle: (di++) % 7 }));
     }
 
     const barCrowd = [];

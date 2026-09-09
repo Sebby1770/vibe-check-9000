@@ -1,6 +1,6 @@
 import { getNode, PHONE_LINES } from "./people.js";
 import { LOOKS, getLook } from "./progress.js";
-import { NPC_PHASE_LINES, PHASE_COPY } from "./night.js";
+import { NPC_PHASE_LINES, PHASE_COPY, memoryLine } from "./night.js";
 import { drawNightCard, downloadCard } from "./share.js";
 
 const $ = (id) => document.getElementById(id);
@@ -27,6 +27,11 @@ export function createHud(hooks) {
         unlocked: ["stock"],
         look: "stock",
         gazette: null,
+        dare: null,
+        flags: {},
+        recap: null,
+        streak: 0,
+        dareDone: false,
     };
 
     function toast(msg, color) {
@@ -38,8 +43,8 @@ export function createHud(hooks) {
     }
 
     function setPhase(p) {
-        if (p === "settings" || p === "deck" || p === "paper" || p === "wardrobe") {
-            if (run.phase !== "settings" && run.phase !== "deck" && run.phase !== "paper" && run.phase !== "wardrobe") {
+        if (p === "settings" || p === "deck" || p === "paper" || p === "wardrobe" || p === "recap") {
+            if (run.phase !== "settings" && run.phase !== "deck" && run.phase !== "paper" && run.phase !== "wardrobe" && run.phase !== "recap") {
                 run.prevPhase = run.phase === "talk" ? "explore" : run.phase;
             }
         }
@@ -51,6 +56,7 @@ export function createHud(hooks) {
         $("settings").classList.toggle("hidden", p !== "settings");
         $("paper").classList.toggle("hidden", p !== "paper");
         $("wardrobe").classList.toggle("hidden", p !== "wardrobe");
+        if ($("recap")) $("recap").classList.toggle("hidden", p !== "recap");
         $("crosshair").classList.toggle("hidden", p !== "explore");
         document.body.dataset.phase = p;
         const overlay = p !== "explore" && p !== "boot";
@@ -71,7 +77,8 @@ export function createHud(hooks) {
         const flavor = NPC_PHASE_LINES[npc.id] && npc.nodes.start === node
             ? NPC_PHASE_LINES[npc.id][run.phaseNight]
             : null;
-        $("talkLine").textContent = flavor || node.say;
+        const mem = npc.nodes.start === node ? memoryLine(npc.id, run.flags) : null;
+        $("talkLine").textContent = mem || flavor || node.say;
         const box = $("talkChoices");
         box.innerHTML = "";
         (node.choices || []).forEach((choice, i) => {
@@ -176,6 +183,8 @@ export function createHud(hooks) {
             headline: run.gazette?.headline || "",
             date: run.gazette?.date || "NIGHT OF NOVEMBER 12, 1954",
             tag: run.bill?.tag || "",
+            dare: run.dare?.text || "",
+            dareDone: run.dareDone,
         });
         await downloadCard(canvas);
         toast("NIGHT STAMP SAVED", look.visor);
@@ -205,10 +214,16 @@ export function createHud(hooks) {
         });
         $("settingsClose").addEventListener("click", leaveOverlay);
         $("paperClose").addEventListener("click", leaveOverlay);
+        $("recapClose")?.addEventListener("click", leaveOverlay);
+        $("pauseRecapBtn")?.addEventListener("click", () => {
+            hooks.onUnlockLook?.();
+            openRecap();
+        });
         $("pauseLookBtn").addEventListener("click", openWardrobe);
         $("settingsLookBtn").addEventListener("click", openWardrobe);
         $("wardrobeClose").addEventListener("click", leaveOverlay);
         $("pauseShareBtn").addEventListener("click", () => { stampCard(); });
+        $("pauseShareBtn2")?.addEventListener("click", () => { stampCard(); });
         $("lookList")?.addEventListener("click", (e) => {
             const li = e.target.closest("li[data-look]");
             if (!li) return;
@@ -301,7 +316,7 @@ export function createHud(hooks) {
             }
             if (e.key === "Escape") {
                 $("modalBg").classList.remove("active");
-                if (run.phase === "settings" || run.phase === "deck" || run.phase === "talk" || run.phase === "paper" || run.phase === "wardrobe") {
+                if (run.phase === "settings" || run.phase === "deck" || run.phase === "talk" || run.phase === "paper" || run.phase === "wardrobe" || run.phase === "recap") {
                     leaveOverlay();
                     return;
                 }
@@ -340,9 +355,30 @@ export function createHud(hooks) {
             <p><strong>VIBE CHECK 9000™</strong> is a first-person night in Midtown, November 12, 1954. The visor is from later. The street is not.</p>
             <p>WASD to move. SPACE on the tiles to dance. E to talk. Upstairs, E sits you on the banquette, chaise, or club chairs.</p>
             <p>Drop MP3 / WAV / FLAC on the DECK. Hail a Checker. Pet the cat. Read the Gazette. ION will get you drunk if you ask.</p>
-            <p>The night moves from doors to last call. Earn visor looks. ESC → STAMP saves a night card. Tips keep the lights on.</p>
+            <p>The night moves from doors to last call. Earn visor looks. Each calendar day has a dare. ESC → STAMP saves a night card. Tips keep the lights on.</p>
         `,
     };
+
+    function fillDare(el, extra) {
+        if (!el) return;
+        const d = run.dare;
+        if (!d) { el.textContent = ""; return; }
+        el.textContent = `${run.dareDone ? "DARE DONE" : "TONIGHT'S DARE"} — ${d.text}${extra || ""}`;
+    }
+
+    function openRecap() {
+        const r = run.recap || {};
+        if ($("recapClock")) $("recapClock").textContent = r.clock || run.clock;
+        if ($("recapSet")) $("recapSet").textContent = r.set || run.bill?.set?.name || "";
+        if ($("recapBits")) {
+            $("recapBits").innerHTML = (r.bits || []).length
+                ? (r.bits || []).map((b) => `<li>${b}</li>`).join("")
+                : "<li>you showed up. the visor noticed.</li>";
+        }
+        if ($("recapStreak")) $("recapStreak").textContent = r.streak ? `STREAK ${r.streak}` : "";
+        fillDare($("recapDare"));
+        setPhase("recap");
+    }
 
     return {
         run,
@@ -431,6 +467,11 @@ export function createHud(hooks) {
             if ($("bootBill") && bill?.tag) $("bootBill").textContent = bill.tag;
             if ($("bootSub") && bill?.set) $("bootSub").textContent = bill.set.name;
             if ($("bootHeadline") && bill?.gazette) $("bootHeadline").textContent = bill.gazette.headline;
+            if (bill?.dare) {
+                run.dare = bill.dare;
+                fillDare($("bootDare"));
+                fillDare($("pauseDare"));
+            }
         },
         setNight({ clock, phase, copy }) {
             run.clock = clock;
@@ -443,14 +484,30 @@ export function createHud(hooks) {
                 $("pauseBill").textContent = `${run.bill.set.name} — ${run.bill.tag}. ${copy?.status || ""}.`;
             }
             if ($("pauseLook")) $("pauseLook").textContent = getLook(run.look).name;
+            fillDare($("pauseDare"));
         },
-        setProgress({ unlocked, look }) {
+        setProgress({ unlocked, look, flags, streak, dareDone }) {
             if (unlocked) run.unlocked = unlocked;
             if (look) {
                 run.look = look;
                 applyLookCss(look);
             }
+            if (flags) run.flags = flags;
+            if (streak != null) run.streak = streak;
+            if (dareDone != null) run.dareDone = dareDone;
+            fillDare($("bootDare"));
+            fillDare($("pauseDare"));
             renderLooks();
+        },
+        setRecap(recap) {
+            run.recap = recap;
+        },
+        openRecap,
+        dareDoneToast() {
+            run.dareDone = true;
+            fillDare($("bootDare"));
+            fillDare($("pauseDare"));
+            toast("DARE DONE — the visor keeps score", "#39ff14");
         },
         unlockToast(id) {
             const look = getLook(id);

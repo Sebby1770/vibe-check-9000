@@ -227,8 +227,13 @@ export function createControls(camera, domElement, colliders) {
             const moving = mag > 0.04 || keys.w || keys.a || keys.s || keys.d;
             let bob = 0;
             if ((moving || dance) && !reduced) {
-                bobPhase += dt * (bpm / 60) * Math.PI * 2 * (dance ? 1.35 : 1);
-                bob = Math.sin(bobPhase) * (dance ? 0.07 : 0.035);
+                bobPhase += dt * (bpm / 60) * Math.PI * 2 * (dance ? 1.55 : 1);
+                bob = Math.sin(bobPhase) * (dance ? 0.1 : 0.035);
+                if (dance) {
+                    _euler.setFromQuaternion(camera.quaternion);
+                    _euler.z = Math.sin(bobPhase * 0.5) * 0.045;
+                    camera.quaternion.setFromEuler(_euler);
+                }
             } else if (tipsy && !reduced) {
                 bob = Math.sin(swayT * 1.7) * 0.045 + Math.sin(swayT * 2.8) * 0.02;
             } else if (!moving && !dance) bobPhase = 0;
@@ -242,6 +247,12 @@ export function createControls(camera, domElement, colliders) {
                 _euler.x += Math.sin(swayT * 0.9) * 0.012;
                 _euler.x = Math.max(PI_2 - plc.maxPolarAngle, Math.min(PI_2 - plc.minPolarAngle, _euler.x));
                 camera.quaternion.setFromEuler(_euler);
+            } else if (!dance) {
+                _euler.setFromQuaternion(camera.quaternion);
+                if (Math.abs(_euler.z) > 0.001) {
+                    _euler.z *= 0.72;
+                    camera.quaternion.setFromEuler(_euler);
+                }
             }
 
             camera.getWorldDirection(_fwd);

@@ -188,10 +188,52 @@ export function phaseFromElapsed(elapsedGame) {
     return id;
 }
 
+export const DARES = [
+    { id: "talk3", text: "Talk to three people before the night forgets you." },
+    { id: "lounge", text: "Sit upstairs like you pay rent." },
+    { id: "socks", text: "The alley cat is union. Pay her in scratches." },
+    { id: "street", text: "Walk 47th until the visor learns dusk." },
+    { id: "cube", text: "Touch the yellow cube. Geometry is a guest." },
+    { id: "energy", text: "Hit ENERGY 80 on the tiles." },
+    { id: "paper", text: "Read tonight's Gazette. Scotty wrote it with his mouth." },
+    { id: "cab", text: "Hail a Checker. Hold onto the visor." },
+    { id: "pie", text: "Cherry pie at Dottie's. Civic duty." },
+    { id: "jazz", text: "Ask Velma for something slow." },
+    { id: "guest", text: "Tell Nova you're on the list." },
+    { id: "drop", text: "Be on the floor when midnight hits." },
+];
+
+export function dareFor(hash) {
+    return pickDaily(DARES, hash);
+}
+
+export function dareComplete(progress, dare) {
+    if (!dare) return false;
+    const flags = progress.flags || {};
+    const night = progress.night || {};
+    const zones = progress.zones || [];
+    switch (dare.id) {
+        case "talk3": return (night.talks || 0) >= 3;
+        case "lounge": return !!flags.sat;
+        case "socks": return !!flags.cat;
+        case "street": return zones.includes("street");
+        case "cube": return !!flags.cube;
+        case "energy": return (progress.energyPeak || 0) >= 80 || (night.energy || 0) >= 80;
+        case "paper": return !!flags.paper;
+        case "cab": return !!flags.cab;
+        case "pie": return !!flags.pie;
+        case "jazz": return !!flags.jazz;
+        case "guest": return !!flags.guest;
+        case "drop": return !!flags.peakFloor;
+        default: return false;
+    }
+}
+
 export function tonightBill(hash, weekday = new Date().getDay()) {
     const set = HOUSE_SETS[weekday % HOUSE_SETS.length];
     const paper = pickDaily(GAZETTES, hash);
     const day = WEEKDAYS[weekday % 7];
+    const dare = dareFor(hash);
     return {
         set,
         gazette: {
@@ -203,6 +245,7 @@ export function tonightBill(hash, weekday = new Date().getDay()) {
         },
         tag: set.tag,
         weekday: day,
+        dare,
     };
 }
 
@@ -295,13 +338,25 @@ export const NPC_PHASE_LINES = {
 
 export function nightSay(npc, node, phase) {
     if (!npc || !node) return node;
-    if (node !== npc.nodes.start && node !== npc.nodes[Object.keys(npc.nodes)[0]]) {
-        /* flavor only on start, handled by caller */
-    }
     const table = NPC_PHASE_LINES[npc.id];
     if (!table || !table[phase]) return node;
     if (node.say && npc.nodes.start && node === npc.nodes.start) {
         return { ...node, say: table[phase] };
     }
     return node;
+}
+
+export function memoryLine(npcId, flags = {}) {
+    if (!npcId) return null;
+    if (npcId === "nova" && flags.guest) return "You're on the list. Don't make me regret the handwriting.";
+    if (npcId === "ion" && flags.drunk) return "You already took the sermon. Water's still a lie. Sit if you have to.";
+    if (npcId === "rexa" && flags.peakFloor) return "You were there for the drop. I noticed. Don't make it a personality.";
+    if (npcId === "velma" && flags.jazz) return "You already got the slow one. The trio remembers. I remember louder.";
+    if (npcId === "dottie" && flags.pie) return "You already had pie. Seconds is a character flaw I respect.";
+    if (npcId === "socks" && flags.cat) return "mrrrow. (that's a union yes.)";
+    if (npcId === "cabby" && flags.cab) return "You already rode. Meter's still honest. I'm still not.";
+    if (npcId === "marco" && flags.sat) return "You sat. The chair filed a report. Complimentary.";
+    if (npcId === "scotty" && flags.paper) return "You bought the extra. Don't fold it on the crossword.";
+    if (npcId === "muldoon" && flags.cat) return "You pet the cat. That's the only good decision I've seen all shift.";
+    return null;
 }

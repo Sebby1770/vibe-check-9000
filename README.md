@@ -2,7 +2,7 @@
 
 **Play it in the browser:** [sebby1770.github.io/vibe-check-9000](https://sebby1770.github.io/vibe-check-9000/)
 
-The night runs from doors to last call. Earn visor looks. ESC → **STAMP** saves a card of the evening. The till is on the pause screen if you want the lights to stay on.
+The night runs from doors to last call. Each calendar day has a dare. Earn visor looks. ESC → **STAMP** saves a card of the evening; **RECAP** is what the visor kept. The till is on the pause screen if you want the lights to stay on.
 
 A first-person dusk in Midtown. November 12, 1954. The visor is from later. The sun is still in the street — until it isn't.
 
@@ -36,6 +36,10 @@ Earned, not bought. The visor keeps them.
 | CUBE CHROME | Touch the yellow cube |
 | PEAK RAVE | Hit ENERGY 80 on the floor |
 | LAST CALL RED | Still here at last call |
+| VELMA GOLD | Ask Velma for a number |
+| CHERRY PIE | Pie at Dottie's |
+| CHECKER YELLOW | Hail a Checker |
+| 2AM INDIGO | Still here when the street is the room |
 
 ## People
 

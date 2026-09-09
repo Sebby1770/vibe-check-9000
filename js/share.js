@@ -33,6 +33,8 @@ export function drawNightCard({
     headline = "",
     date = "NIGHT OF NOVEMBER 12, 1954",
     tag = "",
+    dare = "",
+    dareDone = false,
 } = {}) {
     const w = 960;
     const h = 540;
@@ -76,6 +78,11 @@ export function drawNightCard({
         g.fillStyle = "#ffe7a8";
         g.font = "700 18px Georgia, serif";
         wrapLine(g, headline, 56, 332, 620, 24);
+    }
+    if (dare) {
+        g.fillStyle = dareDone ? "#39ff14" : "rgba(255,255,255,0.7)";
+        g.font = "600 15px Georgia, serif";
+        g.fillText(`${dareDone ? "DARE DONE" : "TONIGHT'S DARE"}  ·  ${dare}`.slice(0, 72), 56, 378);
     }
     const e = Math.max(0, Math.min(100, Number(energy) || 0));
     g.fillStyle = "rgba(255,255,255,0.18)";

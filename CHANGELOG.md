@@ -4,6 +4,26 @@ All notable changes to VIBE CHECK 9000™ are documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
+## [17.0.0] - 2026-09-09
+
+The visor remembers. Come back tomorrow.
+
+### Added
+
+- Tonight's dare, seeded by the date. Finish it and the visor keeps score.
+- Return streak and a night recap (ESC → RECAP, or automatically at 2am).
+- Guest list (tell Nova), photo booth stamp, coat-check rumor.
+- Four more visor looks: Velma gold, cherry pie, Checker yellow, 2am indigo.
+- NPCs remember what you did tonight.
+- Sit the end stool, Dottie's counter, a diner booth, the Astoria lobby.
+- Seven dance styles. Hands go up when you do. Named people face you when you talk.
+- More street life: extra Checkers, puddles, a marquee that shows tonight's set.
+
+### Changed
+
+- House mix hits harder at midnight and thins after last call.
+- Idle crowd has weight. The floor has more bounce.
+
 ## [16.0.0] - 2026-09-09
 
 The night now has a clock. Looks are earned. You can take a stamp home.

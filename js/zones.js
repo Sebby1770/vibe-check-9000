@@ -148,6 +148,8 @@ export function buildColliders() {
     // Interior furniture — ground
     wall(boxes, -5.3, 5.3, -14.35, -10.15, -1, 2.9);
     wall(boxes, -16.4, -13.55, -8.5, 8.5, -1, 2.9);
+    wall(boxes, -8.95, -7.45, 10.0, 11.15, -1, 2.5);
+    wall(boxes, 7.45, 8.85, 10.15, 10.75, -1, 2.2);
     wall(boxes, -32.6, -18.4, 2.4, 5.1, -1, 1.8);
     wall(boxes, 21.4, 28.6, 4.6, 7.4, -1, 1.6);
 

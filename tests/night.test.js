@@ -15,6 +15,10 @@ import {
     PHASES,
     NPC_PHASE_LINES,
     WEEKDAYS,
+    DARES,
+    dareFor,
+    dareComplete,
+    memoryLine,
 } from "../js/night.js";
 
 assert.equal(formatClock(NIGHT_START), "10:00 PM");
@@ -56,6 +60,13 @@ assert.equal(phaseLook("nope").sunY, PHASE_LOOK.doors.sunY);
 assert.ok(NPC_PHASE_LINES.nova.peak);
 assert.ok(NPC_PHASE_LINES.scotty.close);
 assert.ok(NPC_PHASE_LINES.ion.lastcall);
+assert.ok(DARES.length >= 8);
+assert.equal(dareFor(0).id, DARES[0].id);
+assert.equal(dareComplete({ night: { talks: 3 } }, DARES.find((d) => d.id === "talk3")), true);
+assert.equal(dareComplete({ flags: {} }, DARES.find((d) => d.id === "pie")), false);
+assert.ok(bill.dare.text.length > 8);
+assert.ok(memoryLine("nova", { guest: true }).includes("list"));
+assert.equal(memoryLine("ion", {}), null);
 
 const clock = createClock(0);
 clock.tick(1);

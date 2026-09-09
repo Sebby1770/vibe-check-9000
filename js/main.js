@@ -6,8 +6,8 @@ import { createControls } from "./controls.js";
 import { createHud } from "./hud.js";
 import { nearestNpc, nearestProp, nearestSit, onDanceFloor, applyChoice, NPCS } from "./people.js";
 import { getZone, zoneLabel } from "./zones.js";
-import { createClock, dayKey, dayHash, tonightBill, PHASE_COPY } from "./night.js";
-import { loadProgress, saveProgress, evaluateUnlocks, stampNight, setLook, getLook } from "./progress.js";
+import { createClock, dayKey, dayHash, tonightBill, PHASE_COPY, dareComplete } from "./night.js";
+import { loadProgress, saveProgress, evaluateUnlocks, stampNight, setLook, getLook, touchVisit, buildRecap } from "./progress.js";
 
 const _dir = new Vector3();
 
@@ -87,11 +87,16 @@ async function boot() {
     let energy = 0;
     let ride = null;
     const clock = createClock();
-    const bill = tonightBill(dayHash(dayKey()));
-    let progress = loadProgress();
+    const today = dayKey();
+    const bill = tonightBill(dayHash(today));
+    let progress = touchVisit(loadProgress(), today);
+    if (bill.dare) progress = { ...progress, dareId: bill.dare.id };
+    saveProgress(progress);
     let lastPhase = "doors";
     let peaked = false;
     let lastZone = "club";
+    let recapShown = false;
+    let dareToasted = !!progress.dareDone;
 
     function wear(look) {
         if (!look) look = getLook(progress.look);
@@ -109,11 +114,32 @@ async function boot() {
             || JSON.stringify(next.flags) !== JSON.stringify(progress.flags);
         progress = next;
         if (!changed) return;
-        saveProgress(progress);
-        if (freshly.length) {
-            hud.setProgress({ unlocked: progress.unlocked, look: progress.look });
-            freshly.forEach((id) => hud.unlockToast(id));
+        const done = dareComplete(progress, bill.dare);
+        if (done && !progress.dareDone) {
+            progress = { ...progress, dareDone: true };
         }
+        saveProgress(progress);
+        hud.setProgress({
+            unlocked: progress.unlocked,
+            look: progress.look,
+            flags: progress.flags,
+            streak: progress.streak,
+            dareDone: progress.dareDone,
+        });
+        if (freshly.length) freshly.forEach((id) => hud.unlockToast(id));
+        if (progress.dareDone && !dareToasted) {
+            dareToasted = true;
+            hud.dareDoneToast();
+        }
+        hud.setRecap(buildRecap(progress, {
+            clock: clock.clock,
+            phase: clock.phase,
+            set: bill.set.name,
+            look: progress.look,
+            energy,
+            dare: bill.dare?.text,
+            dareDone: progress.dareDone,
+        }));
     }
 
     const hud = createHud({
@@ -201,6 +227,8 @@ async function boot() {
                 energy,
                 look: progress.look,
                 set: bill.set.name,
+                dare: bill.dare?.text,
+                dareDone: progress.dareDone,
             });
             saveProgress(progress);
         },
@@ -208,7 +236,17 @@ async function boot() {
 
     hud.wire();
     hud.setBill(bill);
-    hud.setProgress({ unlocked: progress.unlocked, look: progress.look });
+    hud.setProgress({
+        unlocked: progress.unlocked,
+        look: progress.look,
+        flags: progress.flags,
+        streak: progress.streak,
+        dareDone: progress.dareDone,
+    });
+    hud.setRecap(buildRecap(progress, {
+        clock: clock.clock, phase: clock.phase, set: bill.set.name,
+        look: progress.look, energy: progress.energyPeak, dare: bill.dare?.text, dareDone: progress.dareDone,
+    }));
     const scotty = NPCS.find((n) => n.id === "scotty");
     if (scotty && bill.gazette) {
         scotty.nodes.start.say = `MIDTOWN GAZETTE. ${bill.gazette.headline} Five cents, or Harold's copy if you're cheap.`;
@@ -229,6 +267,7 @@ async function boot() {
     controls.setEnabled(hud.phase === "explore");
     world.setLedMessage(bill.set.name, "DOORS OPEN");
     world.setNightPhase(clock.phase);
+    world.city?.setRivoli?.(bill.gazette.headline);
     wear(getLook(progress.look));
 
     if (navigator.xr && navigator.xr.isSessionSupported) {
@@ -270,6 +309,7 @@ async function boot() {
         } else if (action === "tipsy") {
             hud.setTipsy(true);
             hud.toast("DRUNK — the room has a second opinion", "#ffb703");
+            note({ flags: { drunk: true } });
         } else if (action === "drink-lime") {
             world.setVibeColor("#39ff14");
             hud.toast("MYSTERIOUS WATER", "#39ff14");
@@ -280,15 +320,27 @@ async function boot() {
         } else if (action === "jazz") {
             audio.boostJazz();
             hud.toast("VELMA TAKES THE BRIDGE", "#e0b25a");
+            note({ flags: { jazz: true } });
         } else if (action === "juke") {
             audio.boostJazz();
             hud.toast("JUKEBOX — a nickel well spent", "#e0b25a");
+            note({ flags: { jazz: true } });
         } else if (action === "paper") {
             hud.openPaper();
+            note({ flags: { paper: true } });
         } else if (action === "phone") {
             hud.pickPhone();
         } else if (action === "hail-cab") {
             startRide();
+            note({ flags: { cab: true } });
+        } else if (action === "guest") {
+            hud.toast("NOVA WROTE YOU IN — don't make her regret the handwriting", "#c77dff");
+            note({ flags: { guest: true } });
+        } else if (action === "booth") {
+            hud.stampCard();
+            note({ flags: { booth: true } });
+        } else if (action === "coat") {
+            hud.toast("The coat check is a rumor. Your jacket is a theory.", "#e0b25a");
         } else if (action === "pet-cat") {
             hud.toast("SOCKS APPROVES — alley reputation +1", "#d8d0c4");
             energy = Math.min(100, energy + 8);
@@ -300,6 +352,7 @@ async function boot() {
         } else if (action === "pie") {
             hud.toast("CHERRY PIE — 1954 tastes like a win", "#ff6b6b");
             energy = Math.min(100, energy + 16);
+            note({ flags: { pie: true } });
         }
     }
 
@@ -338,8 +391,16 @@ async function boot() {
         const seat = nearestSit(p.x, p.z, fy, 1.85);
         if (seat) {
             controls.sit(seat.spot);
-            hud.toast("THE LOUNGE HAS YOU NOW", "#e0b25a");
-            note({ flags: { sat: true } });
+            if ((seat.spot.y || 0) >= 4) {
+                hud.toast("THE LOUNGE HAS YOU NOW", "#e0b25a");
+                note({ flags: { sat: true } });
+            } else if ((seat.spot.id || "").startsWith("diner")) {
+                hud.toast("COUNTER'S HONEST. YOU'RE NOT.", "#ff6b6b");
+            } else if (seat.spot.id === "hotel-lobby") {
+                hud.toast("THE CARPETS WILL GOSSIP", "#d4c4a8");
+            } else {
+                hud.toast("THE STOOL HAS YOU NOW", "#00fff7");
+            }
             return;
         }
         if (!cubeFound.done && Math.hypot(p.x - world.cube.position.x, p.z - world.cube.position.z) < 1.8 && fy < 2) {
@@ -411,6 +472,14 @@ async function boot() {
                 audio.boostJazz();
             }
             if (phase === "lastcall" || phase === "close") note({ phase, flags: { lastcall: true }, energyPeak: energy });
+            if (phase === "close" && !recapShown) {
+                recapShown = true;
+                note({ phase, flags: { afterhours: true }, energyPeak: energy });
+                hud.openRecap();
+            }
+        }
+        if (phase === "peak" && onFloor && !progress.flags.peakFloor) {
+            note({ flags: { peakFloor: true } });
         }
 
         const zone = getZone(p.x, p.z, fy);
@@ -431,6 +500,7 @@ async function boot() {
             talkId: hud.talkNpc && hud.talkNpc.id,
             clock: clock.clock,
             phase,
+            dancing: move.dancing && onFloor,
         });
         hud.setTelemetry({
             bpm: audio.bpm,

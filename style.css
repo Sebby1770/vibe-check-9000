@@ -915,6 +915,25 @@ body[data-zone="hotel"] .hud-bracket { border-color: rgba(212, 196, 168, 0.75); 
 .look-list strong { display: block; letter-spacing: 1px; }
 .look-list em { color: var(--dim); font-style: normal; font-size: 11px; }
 .look-list li.have:hover { background: rgba(255,255,255,0.08); }
+.boot-dare {
+    margin-top: 12px;
+    color: #ffe7a8;
+    letter-spacing: 2px;
+    font-size: 12px;
+    max-width: 680px;
+    line-height: 1.5;
+}
+.recap-bits {
+    list-style: none;
+    margin: 12px 0 18px;
+}
+.recap-bits li {
+    border-left: 2px solid var(--visor);
+    padding: 6px 12px;
+    margin: 6px 0;
+    letter-spacing: 1px;
+    color: var(--text);
+}
 .boot-headline {
     max-width: 720px;
     margin: 8px auto 0;

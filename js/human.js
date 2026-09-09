@@ -376,47 +376,59 @@ export function animateHuman(obj, t, ctx = {}) {
         const pulse = 0.5 + 0.5 * Math.cos(beat);
         const sway = Math.sin(beat * 0.5 + ph);
         const groove = Math.sin(beat * 0.25 + ph * 0.7);
-        const style = obj.userData.danceStyle || 0;
-        const bounce = (1 - pulse) * 0.08;
-        j.hips.position.y = 0.92 + bounce;
-        j.hips.rotation.set(0, groove * 0.16, sway * 0.07);
-        j.spine.rotation.set(-0.08 - pulse * 0.05, sway * 0.1, 0);
-        j.head.rotation.set(-0.08 + pulse * 0.06, Math.sin(t * 0.7 + ph) * 0.16, 0);
-        j.lThigh.rotation.set(-0.08 - pulse * 0.2, 0, 0.04);
-        j.rThigh.rotation.set(-0.06 - pulse * 0.16, 0, -0.04);
-        j.lShin.rotation.set(pulse * 0.22, 0, 0);
-        j.rShin.rotation.set(pulse * 0.18, 0, 0);
-        const pump = pulse * 0.28;
+        const style = (obj.userData.danceStyle || 0) % 7;
+        const bounce = (1 - pulse) * 0.11;
+        j.hips.position.y = 0.9 + bounce;
+        j.hips.rotation.set(0, groove * 0.22, sway * 0.1);
+        j.spine.rotation.set(-0.12 - pulse * 0.08, sway * 0.14, 0);
+        j.head.rotation.set(-0.1 + pulse * 0.08, Math.sin(t * 0.7 + ph) * 0.2, sway * 0.05);
+        j.lThigh.rotation.set(-0.1 - pulse * 0.26, 0, 0.05);
+        j.rThigh.rotation.set(-0.08 - pulse * 0.22, 0, -0.05);
+        j.lShin.rotation.set(pulse * 0.28, 0, 0);
+        j.rShin.rotation.set(pulse * 0.24, 0, 0);
+        const pump = pulse * 0.38;
         if (style === 0) {
-            j.lUpper.rotation.set(-0.2, 0, 2.25 + pump);
-            j.rUpper.rotation.set(-0.2, 0, -2.25 - pump);
-            j.lFore.rotation.set(-0.35, 0, 0.15);
-            j.rFore.rotation.set(-0.35, 0, -0.15);
+            j.lUpper.rotation.set(-0.25, 0, 2.35 + pump);
+            j.rUpper.rotation.set(-0.25, 0, -2.35 - pump);
+            j.lFore.rotation.set(-0.4, 0, 0.2);
+            j.rFore.rotation.set(-0.4, 0, -0.2);
         } else if (style === 1) {
-            j.lUpper.rotation.set(-0.35 + sway * 0.15, 0, 0.55 + pulse * 0.2);
-            j.rUpper.rotation.set(-0.15, 0, -2.4 - pump);
-            j.lFore.rotation.set(-0.45, 0, 0);
-            j.rFore.rotation.set(-0.25, 0, -0.2);
+            j.lUpper.rotation.set(-0.4 + sway * 0.2, 0, 0.55 + pulse * 0.25);
+            j.rUpper.rotation.set(-0.2, 0, -2.5 - pump);
+            j.lFore.rotation.set(-0.5, 0, 0);
+            j.rFore.rotation.set(-0.3, 0, -0.25);
         } else if (style === 2) {
             const hit = Math.sin(beat);
-            j.lUpper.rotation.set(-1.25 + hit * 0.4, 0, 0.85);
-            j.rUpper.rotation.set(-1.05 - hit * 0.4, 0, -0.8);
-            j.lFore.rotation.set(-0.55, 0, 0);
-            j.rFore.rotation.set(-0.5, 0, 0);
+            j.lUpper.rotation.set(-1.4 + hit * 0.5, 0, 0.95);
+            j.rUpper.rotation.set(-1.2 - hit * 0.5, 0, -0.9);
+            j.lFore.rotation.set(-0.65, 0, 0);
+            j.rFore.rotation.set(-0.6, 0, 0);
         } else if (style === 3) {
-            j.hips.rotation.y = sway * 0.32;
-            j.lUpper.rotation.set(-0.35, 0, 1.55 + sway * 0.25);
-            j.rUpper.rotation.set(-0.35, 0, -1.55 + sway * 0.25);
-            j.lFore.rotation.set(-0.3 - pulse * 0.2, 0, 0.2);
-            j.rFore.rotation.set(-0.3 - pulse * 0.2, 0, -0.2);
-        } else {
+            j.hips.rotation.y = sway * 0.42;
+            j.lUpper.rotation.set(-0.4, 0, 1.7 + sway * 0.32);
+            j.rUpper.rotation.set(-0.4, 0, -1.7 + sway * 0.32);
+            j.lFore.rotation.set(-0.35 - pulse * 0.25, 0, 0.25);
+            j.rFore.rotation.set(-0.35 - pulse * 0.25, 0, -0.25);
+        } else if (style === 4) {
             const clap = Math.abs(Math.sin(beat));
-            j.lUpper.rotation.set(-0.95, 0, 0.85 + clap * 0.25);
-            j.rUpper.rotation.set(-0.95, 0, -0.85 - clap * 0.25);
-            j.lFore.rotation.set(-0.9 - clap * 0.35, 0, 0);
-            j.rFore.rotation.set(-0.9 - clap * 0.35, 0, 0);
+            j.lUpper.rotation.set(-1.05, 0, 0.95 + clap * 0.32);
+            j.rUpper.rotation.set(-1.05, 0, -0.95 - clap * 0.32);
+            j.lFore.rotation.set(-1.0 - clap * 0.4, 0, 0);
+            j.rFore.rotation.set(-1.0 - clap * 0.4, 0, 0);
+        } else if (style === 5) {
+            j.spine.rotation.y = sway * 0.4;
+            j.lUpper.rotation.set(-0.55 + pulse * 0.3, 0, 1.9 + sway * 0.2);
+            j.rUpper.rotation.set(-1.55 + pulse * 0.45, 0, -0.45);
+            j.lFore.rotation.set(-0.45, 0, 0.2);
+            j.rFore.rotation.set(-0.2, 0, -0.15);
+        } else {
+            j.hips.position.y = 0.8 + bounce * 1.35;
+            j.lUpper.rotation.set(-0.85, 0, 1.25 + pump);
+            j.rUpper.rotation.set(-0.85, 0, -1.25 - pump);
+            j.lFore.rotation.set(-0.7 - pulse * 0.2, 0, 0.15);
+            j.rFore.rotation.set(-0.7 - pulse * 0.2, 0, -0.15);
         }
-        if (obj.userData.stick) obj.userData.stick.rotation.z = 0.4 + Math.sin(beat + ph) * 0.55;
+        if (obj.userData.stick) obj.userData.stick.rotation.z = 0.4 + Math.sin(beat + ph) * 0.7;
     } else if (mode === "sit") {
         const sitY = obj.userData.sitHips ?? 0.54;
         const breath = Math.sin(t * 1.15 + ph) * 0.006;
@@ -447,22 +459,25 @@ export function animateHuman(obj, t, ctx = {}) {
         j.lShin.rotation.set(0.12, 0, 0);
         j.rShin.rotation.set(0.04, 0, 0);
     } else {
-        const breath = Math.sin(t * 1.35 + ph) * 0.008;
+        const breath = Math.sin(t * 1.35 + ph) * 0.01;
+        const shift = Math.sin(t * 0.55 + ph) * 0.03;
         j.hips.position.y = 0.95 + breath;
-        j.hips.rotation.set(0, 0, 0);
-        j.spine.rotation.set(0, Math.sin(t * 0.32 + ph) * 0.06, 0);
-        j.head.rotation.set(Math.sin(t * 0.45 + ph) * 0.025, Math.sin(t * 0.23 + ph) * 0.1, 0);
-        j.lUpper.rotation.set(0.04, 0, 0.1);
-        j.rUpper.rotation.set(0.06, 0, -0.1);
-        j.lFore.rotation.set(-0.08, 0, 0);
-        j.rFore.rotation.set(-0.08, 0, 0);
-        j.lThigh.rotation.set(0.03, 0, 0.02);
-        j.rThigh.rotation.set(-0.02, 0, -0.02);
-        j.lShin.rotation.set(0.03, 0, 0);
-        j.rShin.rotation.set(0.02, 0, 0);
+        j.hips.rotation.set(0, shift * 0.4, shift * 0.25);
+        j.spine.rotation.set(0, Math.sin(t * 0.32 + ph) * 0.08, 0);
+        j.head.rotation.set(Math.sin(t * 0.45 + ph) * 0.03, Math.sin(t * 0.23 + ph) * 0.12, 0);
+        j.lUpper.rotation.set(0.04, 0, 0.12 + shift);
+        j.rUpper.rotation.set(0.06, 0, -0.12 - shift);
+        j.lFore.rotation.set(-0.1, 0, 0);
+        j.rFore.rotation.set(-0.1, 0, 0);
+        j.lThigh.rotation.set(0.04 + shift * 0.4, 0, 0.03);
+        j.rThigh.rotation.set(-0.03 - shift * 0.4, 0, -0.03);
+        j.lShin.rotation.set(0.04, 0, 0);
+        j.rShin.rotation.set(0.03, 0, 0);
         if (ctx.talking) {
-            j.rFore.rotation.x = -0.35 + Math.sin(t * 5) * 0.12;
-            j.rUpper.rotation.x = -0.28;
+            j.head.rotation.y = Math.sin(t * 2.2) * 0.08;
+            j.rFore.rotation.x = -0.4 + Math.sin(t * 5.5) * 0.16;
+            j.rUpper.rotation.x = -0.32;
+            j.spine.rotation.x = 0.06;
         }
     }
 }

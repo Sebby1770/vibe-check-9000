@@ -361,12 +361,15 @@ export function createAudio() {
             const s = step % 8;
             const barStep = step % 32;
             if (!usingDeck) {
-                if (s % 2 === 0) kick(t);
+                const peak = nightPhase === "peak";
+                const late = nightPhase === "lastcall" || nightPhase === "close";
+                if (s % 2 === 0 && (!late || s === 0 || s === 4)) kick(t);
                 if (s % 2 === 1) hat(t, false);
                 if (s === 3 || s === 7) hat(t, true);
-                if (s === 2 || s === 6) clap(t);
+                if (s === 2 || s === 6 || (peak && s === 0)) clap(t);
                 bassNote(t, A_MIN_BASS[s]);
-                if (barStep === 0) stab(t);
+                if (barStep === 0 || (peak && s === 0)) stab(t);
+                if (peak && s === 4) hat(t, true);
             }
             const js = step % 8;
             if (js % 2 === 0) jazzWalk(t, WALK_BASS[js]);

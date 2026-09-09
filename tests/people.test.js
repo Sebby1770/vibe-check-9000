@@ -49,12 +49,15 @@ assert.equal(pet.action, "pet-cat");
 const dottie = NPCS.find((n) => n.id === "dottie");
 assert.ok(dottie.z < 2.4, "dottie stands on the customer side of the counter");
 
-assert.ok(PROPS.length >= 4);
+assert.ok(PROPS.length >= 6);
 assert.ok(nearestProp(7.15, 14.85, 0, 1.8).prop.id === "phone");
-assert.ok(SIT_SPOTS.length >= 4);
-assert.ok(SIT_SPOTS.every((s) => s.lookX != null && s.y === 4.4 && s.prompt));
+assert.ok(SIT_SPOTS.length >= 8);
+assert.ok(SIT_SPOTS.every((s) => s.lookX != null && s.prompt));
+assert.ok(SIT_SPOTS.some((s) => s.y === 4.4));
+assert.ok(SIT_SPOTS.some((s) => s.y === 0 && s.id === "bar-end"));
 assert.equal(nearestSit(-13.55, 3.3, 4.4, 1.2).spot.id, "banq-n");
 assert.equal(nearestSit(-13.55, 3.3, 0, 1.2), null, "ground cannot sit on the lounge");
+assert.equal(nearestSit(-13.55, -8.35, 0, 1.4).spot.id, "bar-end");
 assert.ok(GAZETTE.headline.includes("LED"));
 assert.ok(PHONE_LINES.length >= 4);
 

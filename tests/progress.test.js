@@ -7,6 +7,8 @@ import {
     setLook,
     stampNight,
     getLook,
+    touchVisit,
+    buildRecap,
 } from "../js/progress.js";
 
 const mem = {
@@ -18,7 +20,7 @@ const mem = {
 const empty = loadProgress(mem);
 assert.deepEqual(empty.unlocked, ["stock"]);
 assert.equal(empty.look, "stock");
-assert.equal(LOOKS.length, 8);
+assert.equal(LOOKS.length, 12);
 
 let p = empty;
 p = evaluateUnlocks(p, { talkId: "rexa" }).progress;
@@ -35,6 +37,26 @@ p = evaluateUnlocks(p, { energyPeak: 80 }).progress;
 assert.ok(p.unlocked.includes("rave"));
 p = evaluateUnlocks(p, { phase: "lastcall" }).progress;
 assert.ok(p.unlocked.includes("lastcall"));
+p = evaluateUnlocks(p, { flags: { jazz: true } }).progress;
+assert.ok(p.unlocked.includes("jazz"));
+p = evaluateUnlocks(p, { flags: { pie: true } }).progress;
+assert.ok(p.unlocked.includes("pie"));
+p = evaluateUnlocks(p, { flags: { cab: true } }).progress;
+assert.ok(p.unlocked.includes("cab"));
+p = evaluateUnlocks(p, { phase: "close" }).progress;
+assert.ok(p.unlocked.includes("afterhours"));
+
+const day1 = touchVisit(empty, "2026-09-09");
+assert.equal(day1.streak, 1);
+const day2 = touchVisit(day1, "2026-09-10");
+assert.equal(day2.streak, 2);
+const gap = touchVisit(day2, "2026-09-12");
+assert.equal(gap.streak, 1);
+assert.equal(touchVisit(day2, "2026-09-10").streak, 2);
+
+const recap = buildRecap(p, { clock: "2:00 AM", set: "FRIDAY DROP", dare: "pie", dareDone: true });
+assert.ok(recap.bits.length >= 3);
+assert.equal(recap.dareDone, true);
 
 const worn = setLook(p, "gold");
 assert.equal(worn.look, "gold");
