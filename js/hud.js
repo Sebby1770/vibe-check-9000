@@ -1,4 +1,7 @@
-import { getNode, GAZETTE, PHONE_LINES } from "./people.js";
+import { getNode, PHONE_LINES } from "./people.js";
+import { LOOKS, getLook } from "./progress.js";
+import { NPC_PHASE_LINES, PHASE_COPY } from "./night.js";
+import { drawNightCard, downloadCard } from "./share.js";
 
 const $ = (id) => document.getElementById(id);
 
@@ -18,6 +21,12 @@ export function createHud(hooks) {
         energy: 0,
         zone: "club",
         seen: new Set(),
+        phaseNight: "doors",
+        clock: "10:00 PM",
+        bill: null,
+        unlocked: ["stock"],
+        look: "stock",
+        gazette: null,
     };
 
     function toast(msg, color) {
@@ -29,8 +38,8 @@ export function createHud(hooks) {
     }
 
     function setPhase(p) {
-        if (p === "settings" || p === "deck" || p === "paper") {
-            if (run.phase !== "settings" && run.phase !== "deck" && run.phase !== "paper") {
+        if (p === "settings" || p === "deck" || p === "paper" || p === "wardrobe") {
+            if (run.phase !== "settings" && run.phase !== "deck" && run.phase !== "paper" && run.phase !== "wardrobe") {
                 run.prevPhase = run.phase === "talk" ? "explore" : run.phase;
             }
         }
@@ -41,6 +50,7 @@ export function createHud(hooks) {
         $("deck").classList.toggle("hidden", p !== "deck");
         $("settings").classList.toggle("hidden", p !== "settings");
         $("paper").classList.toggle("hidden", p !== "paper");
+        $("wardrobe").classList.toggle("hidden", p !== "wardrobe");
         $("crosshair").classList.toggle("hidden", p !== "explore");
         document.body.dataset.phase = p;
         const overlay = p !== "explore" && p !== "boot";
@@ -58,7 +68,10 @@ export function createHud(hooks) {
         }
         $("talkName").textContent = npc.name;
         $("talkRole").textContent = npc.role;
-        $("talkLine").textContent = node.say;
+        const flavor = NPC_PHASE_LINES[npc.id] && npc.nodes.start === node
+            ? NPC_PHASE_LINES[npc.id][run.phaseNight]
+            : null;
+        $("talkLine").textContent = flavor || node.say;
         const box = $("talkChoices");
         box.innerHTML = "";
         (node.choices || []).forEach((choice, i) => {
@@ -108,14 +121,65 @@ export function createHud(hooks) {
         if (run.phase === "explore") hooks.onResume?.();
     }
 
+    function applyLookCss(id) {
+        const look = getLook(id);
+        const root = document.documentElement.style;
+        root.setProperty("--visor", look.visor);
+        root.setProperty("--visor-left", look.left);
+        root.setProperty("--visor-right", look.right);
+        document.body.dataset.look = look.id;
+        if ($("pauseLook")) $("pauseLook").textContent = look.name;
+    }
+
+    function renderLooks() {
+        const el = $("lookList");
+        if (!el) return;
+        el.innerHTML = LOOKS.map((look) => {
+            const on = run.unlocked.includes(look.id);
+            const eq = run.look === look.id;
+            return `<li class="${on ? "have" : "locked"} ${eq ? "eq" : ""}" data-look="${look.id}">
+                <span class="swatch" style="background:${look.visor}"></span>
+                <span><strong>${look.name}</strong><em>${on ? (eq ? "ON" : "TAP TO WEAR") : look.how}</em></span>
+            </li>`;
+        }).join("");
+    }
+
+    function openWardrobe() {
+        renderLooks();
+        hooks.onUnlockLook?.();
+        setPhase("wardrobe");
+    }
+
     function openPaper() {
-        $("paperTitle").textContent = GAZETTE.title;
-        $("paperDate").textContent = GAZETTE.date;
-        $("paperHeadline").textContent = GAZETTE.headline;
-        $("paperLede").textContent = GAZETTE.lede;
-        $("paperCols").innerHTML = GAZETTE.columns.map((c) => `<p>${c}</p>`).join("");
+        const g = run.gazette || {
+            title: "MIDTOWN GAZETTE", date: "", headline: "", lede: "", columns: [],
+        };
+        $("paperTitle").textContent = g.title;
+        $("paperDate").textContent = g.date;
+        $("paperHeadline").textContent = g.headline;
+        $("paperLede").textContent = g.lede;
+        $("paperCols").innerHTML = (g.columns || []).map((c) => `<p>${c}</p>`).join("");
         hooks.onUnlockLook?.();
         setPhase("paper");
+    }
+
+    async function stampCard() {
+        const look = getLook(run.look);
+        const canvas = drawNightCard({
+            clock: run.clock,
+            phase: (PHASE_COPY[run.phaseNight] && PHASE_COPY[run.phaseNight].status) || (run.phaseNight || "doors").toUpperCase(),
+            zone: $("hudZone") ? $("hudZone").textContent : "THE FLOOR",
+            setName: run.bill?.set?.name || "HOUSE SYSTEM",
+            lookName: look.name,
+            energy: run.energy,
+            visor: look.visor,
+            headline: run.gazette?.headline || "",
+            date: run.gazette?.date || "NIGHT OF NOVEMBER 12, 1954",
+            tag: run.bill?.tag || "",
+        });
+        await downloadCard(canvas);
+        toast("NIGHT STAMP SAVED", look.visor);
+        hooks.onStamp?.();
     }
 
     function wire() {
@@ -141,12 +205,29 @@ export function createHud(hooks) {
         });
         $("settingsClose").addEventListener("click", leaveOverlay);
         $("paperClose").addEventListener("click", leaveOverlay);
+        $("pauseLookBtn").addEventListener("click", openWardrobe);
+        $("settingsLookBtn").addEventListener("click", openWardrobe);
+        $("wardrobeClose").addEventListener("click", leaveOverlay);
+        $("pauseShareBtn").addEventListener("click", () => { stampCard(); });
+        $("lookList")?.addEventListener("click", (e) => {
+            const li = e.target.closest("li[data-look]");
+            if (!li) return;
+            const id = li.dataset.look;
+            if (!run.unlocked.includes(id)) {
+                toast(`LOCKED — ${getLook(id).how}`, "#ffb703");
+                return;
+            }
+            run.look = id;
+            applyLookCss(id);
+            renderLooks();
+            toast(`VISOR: ${getLook(id).name}`, getLook(id).visor);
+            hooks.onLook?.(getLook(id));
+        });
         $("muteBtn").addEventListener("click", () => {
             run.muted = hooks.onMute?.() ?? !run.muted;
             $("muteBtn").textContent = run.muted ? "UNMUTE" : "MUTE";
             $("muteToggle").checked = run.muted;
         });
-        $("pauseMuteBtn").addEventListener("click", () => $("muteBtn").click());
         $("audioFiles").addEventListener("change", (e) => hooks.onFiles?.(e.target.files));
         const drop = $("dropAudio");
         drop.addEventListener("dragover", (e) => { e.preventDefault(); drop.classList.add("hot"); });
@@ -220,7 +301,7 @@ export function createHud(hooks) {
             }
             if (e.key === "Escape") {
                 $("modalBg").classList.remove("active");
-                if (run.phase === "settings" || run.phase === "deck" || run.phase === "talk" || run.phase === "paper") {
+                if (run.phase === "settings" || run.phase === "deck" || run.phase === "talk" || run.phase === "paper" || run.phase === "wardrobe") {
                     leaveOverlay();
                     return;
                 }
@@ -259,6 +340,7 @@ export function createHud(hooks) {
             <p><strong>VIBE CHECK 9000™</strong> is a first-person night in Midtown, November 12, 1954. The visor is from later. The street is not.</p>
             <p>WASD to move. SPACE on the tiles to dance. E to talk. Upstairs, E sits you on the banquette, chaise, or club chairs.</p>
             <p>Drop MP3 / WAV / FLAC on the DECK. Hail a Checker. Pet the cat. Read the Gazette. ION will get you drunk if you ask.</p>
+            <p>The night moves from doors to last call. Earn visor looks. ESC → STAMP saves a night card. Tips keep the lights on.</p>
         `,
     };
 
@@ -323,12 +405,13 @@ export function createHud(hooks) {
                 $("hudZone").textContent = label;
             }
         },
-        setTelemetry({ bpm, track, energy, bass, x, z }) {
+        setTelemetry({ bpm, track, energy, bass, clock }) {
             if ($("hudBpm")) $("hudBpm").textContent = String(Math.round(bpm || 128));
             if ($("hudTrack")) $("hudTrack").textContent = String(track || "HOUSE SYSTEM").slice(0, 22);
             if ($("hudEnergy")) $("hudEnergy").textContent = String(Math.round(energy || 0));
             if ($("hudBass")) $("hudBass").textContent = `${Math.round((bass || 0) * 100)}%`;
-            if ($("hudPos") && x != null) $("hudPos").textContent = `${x.toFixed(1)} ${z.toFixed(1)}`;
+            if (clock && $("hudClock")) $("hudClock").textContent = clock;
+            run.energy = energy || 0;
         },
         flashStrobe() {
             if (run.reducedFx) return;
@@ -341,5 +424,39 @@ export function createHud(hooks) {
         setRide(on) {
             $("ride").classList.toggle("hidden", !on);
         },
+        setBill(bill) {
+            run.bill = bill;
+            if (bill?.gazette) run.gazette = bill.gazette;
+            if ($("bootSet") && bill?.set) $("bootSet").textContent = bill.set.name;
+            if ($("bootBill") && bill?.tag) $("bootBill").textContent = bill.tag;
+            if ($("bootSub") && bill?.set) $("bootSub").textContent = bill.set.name;
+            if ($("bootHeadline") && bill?.gazette) $("bootHeadline").textContent = bill.gazette.headline;
+        },
+        setNight({ clock, phase, copy }) {
+            run.clock = clock;
+            run.phaseNight = phase;
+            document.body.dataset.night = phase || "doors";
+            if ($("hudClock")) $("hudClock").textContent = clock;
+            if ($("hudPhase")) $("hudPhase").textContent = (copy && copy.status) || phase;
+            if ($("pauseClock")) $("pauseClock").textContent = `${clock}  ·  ${(copy && copy.status) || phase}`;
+            if ($("pauseBill") && run.bill?.set) {
+                $("pauseBill").textContent = `${run.bill.set.name} — ${run.bill.tag}. ${copy?.status || ""}.`;
+            }
+            if ($("pauseLook")) $("pauseLook").textContent = getLook(run.look).name;
+        },
+        setProgress({ unlocked, look }) {
+            if (unlocked) run.unlocked = unlocked;
+            if (look) {
+                run.look = look;
+                applyLookCss(look);
+            }
+            renderLooks();
+        },
+        unlockToast(id) {
+            const look = getLook(id);
+            toast(`UNLOCKED ${look.name}`, look.visor);
+        },
+        stampCard,
+        openWardrobe,
     };
 }

@@ -4,6 +4,25 @@ All notable changes to VIBE CHECK 9000™ are documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
+## [16.0.0] - 2026-09-09
+
+The night now has a clock. Looks are earned. You can take a stamp home.
+
+### Added
+
+- In-game clock from 10:00 PM to after hours (doors → heat → midnight drop → last call → 2am street).
+- Tonight's house set rotates with the weekday; Gazette headline rotates with the date (seven editions).
+- The sky, fog, lamps, lasers, floor, and crowd follow the clock — dusk at doors, night at midnight, thin and wet after last call.
+- Eight visor looks, unlocked by playing (REXA, lounge sit, Socks, 47th, cube, energy 80, last call). The visor chrome tints to match.
+- Night stamp PNG (ESC → STAMP) with clock, phase, headline, energy.
+- Tip jar on the pause screen (GitHub Sponsors + star).
+- Phase-aware lines for NOVA, REXA, ION, VELMA, DOTTIE, PIXEL, MARCO, CABBY, SCOTTY, MULDOON.
+- Dottie's coffee sobers the visor.
+
+### Fixed
+
+- Pause screen no longer crashes looking for a mute button that was never there.
+
 ## [15.2.0] - 2026-09-09
 
 ### Added

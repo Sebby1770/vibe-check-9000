@@ -103,7 +103,7 @@ export function makeDuskSky(radius = 260) {
     );
     const sun = new THREE.Mesh(
         new THREE.SphereGeometry(8.5, 20, 16),
-        new THREE.MeshBasicMaterial({ color: 0xffd090, fog: false, depthWrite: false }),
+        new THREE.MeshBasicMaterial({ color: 0xffd090, fog: false, depthWrite: false, transparent: true, opacity: 1 }),
     );
     sun.position.set(18, 16, 210);
     const glow = new THREE.Mesh(
@@ -115,5 +115,16 @@ export function makeDuskSky(radius = 260) {
     glow.position.copy(sun.position);
     const sunLight = new THREE.DirectionalLight(0xffc090, 1.15);
     sunLight.position.set(20, 22, 80);
-    return { sky, sun, glow, sunLight };
+    return { sky, sun, glow, sunLight, canvas: c, tex };
+}
+
+export function paintSky(dusk, stops) {
+    if (!dusk?.canvas || !stops?.length) return;
+    const g = dusk.canvas.getContext("2d");
+    const h = dusk.canvas.height;
+    const grd = g.createLinearGradient(0, 0, 0, h);
+    for (const [at, color] of stops) grd.addColorStop(at, color);
+    g.fillStyle = grd;
+    g.fillRect(0, 0, dusk.canvas.width, h);
+    if (dusk.tex) dusk.tex.needsUpdate = true;
 }

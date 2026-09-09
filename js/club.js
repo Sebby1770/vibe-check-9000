@@ -163,7 +163,9 @@ export function buildClub(scene, env) {
     let ledSub = "NOV 12 1954";
     let ledDirty = true;
 
-    function drawLed(t, bass) {
+    let ledFooter = "47TH STREET  ·  10:00 PM";
+
+    function drawLed(t, bass, clock) {
         const g = ledCtx;
         g.fillStyle = "#050014";
         g.fillRect(0, 0, 512, 256);
@@ -187,7 +189,8 @@ export function buildClub(scene, env) {
         g.fillStyle = "#00fff7";
         g.fillText(ledSub, 256, 108);
         g.fillStyle = "#817e9f";
-        g.fillText("47TH STREET  ·  DOORS OPEN", 256, 150);
+        const foot = clock ? `47TH STREET  ·  ${clock}` : ledFooter;
+        g.fillText(foot, 256, 150);
         ledTex.needsUpdate = true;
     }
 

@@ -63,7 +63,9 @@ export function createAudio() {
     let rainGain = null;
     let rainSrc = null;
     let zone = "club";
+    let nightPhase = "doors";
     let jazzOn = false;
+    let houseName = "HOUSE SYSTEM";
 
     const state = {
         bpm: 128,
@@ -461,9 +463,16 @@ export function createAudio() {
                 street: [0.1, 0.05, 0.45],
                 alley: [0.28, 0.04, 0.35],
             }[zone] || [1, 0, 0];
-            clubGain.gain.setTargetAtTime(mix[0], t, 0.4);
-            jazzGain.gain.setTargetAtTime(mix[1], t, 0.4);
-            rainGain.gain.setTargetAtTime(mix[2], t, 0.45);
+            const night = {
+                doors: [1, 1, 0.85],
+                heat: [1, 1, 1],
+                peak: [1.1, 0.9, 0.9],
+                lastcall: [0.72, 1.12, 1.2],
+                close: [0.32, 0.65, 1.45],
+            }[nightPhase] || [1, 1, 1];
+            clubGain.gain.setTargetAtTime(mix[0] * night[0], t, 0.4);
+            jazzGain.gain.setTargetAtTime(mix[1] * night[1], t, 0.4);
+            rainGain.gain.setTargetAtTime(mix[2] * night[2], t, 0.45);
         },
 
         consumeKick() {
@@ -509,10 +518,23 @@ export function createAudio() {
         },
         get usingDeck() { return usingDeck; },
         get trackName() {
+            if (usingDeck && trackIndex >= 0 && playlist[trackIndex]) return playlist[trackIndex].name;
             if (zone === "lounge") return "VELMA'S TRIO";
             if (zone === "street" || zone === "alley") return "RAIN ON 47TH";
             if (zone === "diner") return "COUNTER RADIO";
-            return trackIndex >= 0 && playlist[trackIndex] ? playlist[trackIndex].name : "HOUSE SYSTEM";
+            return houseName;
+        },
+        setHouseSet(set) {
+            if (!set) return;
+            state.bpm = set.bpm || 128;
+            houseName = set.name || "HOUSE SYSTEM";
+            if (delay && ctx) delay.delayTime.setTargetAtTime(60 / state.bpm / 2, ctx.currentTime, 0.25);
+        },
+        setNightPhase(phase) {
+            nightPhase = phase || "doors";
+            const map = { doors: 0.7, heat: 0.95, peak: 1.18, lastcall: 0.8, close: 0.4 };
+            this.setIntensity(map[nightPhase] ?? 1);
+            this.setZone(zone);
         },
         get playlist() { return playlist.slice(); },
         get trackIndex() { return trackIndex; },

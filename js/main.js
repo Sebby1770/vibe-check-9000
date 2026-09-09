@@ -4,8 +4,10 @@ import { createWorld } from "./world.js";
 import { createAudio } from "./audio.js";
 import { createControls } from "./controls.js";
 import { createHud } from "./hud.js";
-import { nearestNpc, nearestProp, nearestSit, onDanceFloor, applyChoice } from "./people.js";
+import { nearestNpc, nearestProp, nearestSit, onDanceFloor, applyChoice, NPCS } from "./people.js";
 import { getZone, zoneLabel } from "./zones.js";
+import { createClock, dayKey, dayHash, tonightBill, PHASE_COPY } from "./night.js";
+import { loadProgress, saveProgress, evaluateUnlocks, stampNight, setLook, getLook } from "./progress.js";
 
 const _dir = new Vector3();
 
@@ -84,6 +86,35 @@ async function boot() {
     const cubeFound = { done: false };
     let energy = 0;
     let ride = null;
+    const clock = createClock();
+    const bill = tonightBill(dayHash(dayKey()));
+    let progress = loadProgress();
+    let lastPhase = "doors";
+    let peaked = false;
+    let lastZone = "club";
+
+    function wear(look) {
+        if (!look) look = getLook(progress.look);
+        world?.setCuffs(look.left, look.right);
+        world?.setVibeColor(look.visor);
+        document.documentElement.style.setProperty("--visor", look.visor);
+    }
+
+    function note(events = {}) {
+        const { progress: next, freshly } = evaluateUnlocks(progress, events);
+        const changed = freshly.length
+            || next.talked.length !== progress.talked.length
+            || next.zones.length !== progress.zones.length
+            || next.energyPeak !== progress.energyPeak
+            || JSON.stringify(next.flags) !== JSON.stringify(progress.flags);
+        progress = next;
+        if (!changed) return;
+        saveProgress(progress);
+        if (freshly.length) {
+            hud.setProgress({ unlocked: progress.unlocked, look: progress.look });
+            freshly.forEach((id) => hud.unlockToast(id));
+        }
+    }
 
     const hud = createHud({
         onEnter: async () => {
@@ -152,15 +183,40 @@ async function boot() {
         },
         onHouse: () => {
             audio.houseSystem();
+            audio.setHouseSet(bill.set);
             hud.renderTracks(audio.playlist, audio.trackIndex, false);
-            world?.setLedMessage("VIBE CHECK 9000", "HOUSE SYSTEM");
-            hud.toast("HOUSE SYSTEM BACK ONLINE", "#39ff14");
+            world?.setLedMessage(bill.set.name, "HOUSE SYSTEM");
+            hud.toast(`${bill.set.name} BACK ONLINE`, "#39ff14");
+        },
+        onLook: (look) => {
+            progress = setLook(progress, look.id);
+            saveProgress(progress);
+            wear(look);
+        },
+        onStamp: () => {
+            progress = stampNight(progress, {
+                clock: clock.clock,
+                phase: clock.phase,
+                zone: hud.run.zone,
+                energy,
+                look: progress.look,
+                set: bill.set.name,
+            });
+            saveProgress(progress);
         },
     });
 
     hud.wire();
+    hud.setBill(bill);
+    hud.setProgress({ unlocked: progress.unlocked, look: progress.look });
+    const scotty = NPCS.find((n) => n.id === "scotty");
+    if (scotty && bill.gazette) {
+        scotty.nodes.start.say = `MIDTOWN GAZETTE. ${bill.gazette.headline} Five cents, or Harold's copy if you're cheap.`;
+        scotty.nodes.head.say = `${bill.gazette.headline} I shouted it first.`;
+    }
     audio.setReduced(hud.reducedFx);
     if (hud.reducedFx) audio.setMuted(true);
+    audio.setHouseSet(bill.set);
 
     if (!hasWebGL()) {
         hud.showFallback();
@@ -171,7 +227,9 @@ async function boot() {
     controls = createControls(world.camera, canvas, world.colliders);
     controls.setReduced(hud.reducedFx);
     controls.setEnabled(hud.phase === "explore");
-    world.setLedMessage("VIBE CHECK 9000", "NOV 12 1954");
+    world.setLedMessage(bill.set.name, "DOORS OPEN");
+    world.setNightPhase(clock.phase);
+    wear(getLook(progress.look));
 
     if (navigator.xr && navigator.xr.isSessionSupported) {
         navigator.xr.isSessionSupported("immersive-vr").then((ok) => {
@@ -234,7 +292,9 @@ async function boot() {
         } else if (action === "pet-cat") {
             hud.toast("SOCKS APPROVES — alley reputation +1", "#d8d0c4");
             energy = Math.min(100, energy + 8);
+            note({ flags: { cat: true } });
         } else if (action === "coffee") {
+            hud.setTipsy(false);
             hud.toast("DOTTIE'S COFFEE — the visor focuses", "#c45c28");
             energy = Math.min(100, energy + 12);
         } else if (action === "pie") {
@@ -267,6 +327,7 @@ async function boot() {
         const hit = nearestNpc(p.x, p.z, fy, 2.3);
         if (hit) {
             hud.openTalk(hit.npc);
+            note({ talkId: hit.npc.id });
             return;
         }
         const prop = nearestProp(p.x, p.z, fy, 2.4);
@@ -278,6 +339,7 @@ async function boot() {
         if (seat) {
             controls.sit(seat.spot);
             hud.toast("THE LOUNGE HAS YOU NOW", "#e0b25a");
+            note({ flags: { sat: true } });
             return;
         }
         if (!cubeFound.done && Math.hypot(p.x - world.cube.position.x, p.z - world.cube.position.z) < 1.8 && fy < 2) {
@@ -285,6 +347,7 @@ async function boot() {
             hud.toast("FORBIDDEN GEOMETRY — the floor likes you more now", "#fff700");
             world.flashFloor();
             energy = Math.min(100, energy + 25);
+            note({ flags: { cube: true }, energyPeak: energy });
         }
     }
 
@@ -331,23 +394,50 @@ async function boot() {
         if (move.dancing && onFloor) energy = Math.min(100, energy + dt * 22);
         else energy = Math.max(0, energy - dt * 7);
 
+        clock.tick(hud.phase === "explore" ? dt : dt * 0.25);
+        const phase = clock.phase;
+        if (phase !== lastPhase) {
+            lastPhase = phase;
+            const copy = PHASE_COPY[phase];
+            audio.setNightPhase(phase);
+            world.setNightPhase(phase);
+            world.setLedMessage(bill.set.name, copy.led);
+            hud.toast(copy.toast, phase === "peak" ? "#ff00ff" : "#ffb703");
+            if (phase === "peak" && !peaked) {
+                peaked = true;
+                world.flashFloor();
+                world.shiftLasers();
+                audio.cheer();
+                audio.boostJazz();
+            }
+            if (phase === "lastcall" || phase === "close") note({ phase, flags: { lastcall: true }, energyPeak: energy });
+        }
+
         const zone = getZone(p.x, p.z, fy);
         audio.setZone(zone);
         hud.setZone(zone, zoneLabel(zone));
+        hud.setNight({ clock: clock.clock, phase, copy: PHASE_COPY[phase] });
+        if (zone !== lastZone) {
+            lastZone = zone;
+            note({ zone, energyPeak: energy });
+        } else if (energy > (progress.energyPeak || 0) + 4) {
+            note({ energyPeak: energy });
+        }
 
         world.camera.getWorldDirection(_dir);
         audio.setListener(p.x, p.y, p.z, _dir.x, _dir.y, _dir.z);
         world.update(dt, t, {
             bass, mid, bpm: audio.bpm, reduced: hud.reducedFx, energy,
             talkId: hud.talkNpc && hud.talkNpc.id,
+            clock: clock.clock,
+            phase,
         });
         hud.setTelemetry({
             bpm: audio.bpm,
             track: audio.trackName,
             energy,
             bass,
-            x: p.x,
-            z: p.z,
+            clock: clock.clock,
         });
 
         if (hud.phase === "explore" && !ride) {

@@ -7,7 +7,8 @@ import { buildClub } from "./club.js";
 import { buildCity, updateCity } from "./city.js";
 import { animateHuman } from "./human.js";
 import { buildColliders, getFloorY, getZone, isOutside } from "./zones.js";
-import { makeCubeEnv, makeDuskSky } from "./kit.js";
+import { makeCubeEnv, makeDuskSky, paintSky } from "./kit.js";
+import { phaseLook } from "./night.js";
 
 const _color = new THREE.Color();
 const _vibe = new THREE.Color("#ff00ff");
@@ -85,6 +86,30 @@ export function createWorld(canvas) {
     let vibeHex = "#ff00ff";
     let ledTick = 0;
     let drunk = false;
+    let nightPhase = "doors";
+
+    function applyCrowd() {
+        const close = nightPhase === "close";
+        const thin = nightPhase === "lastcall" || close;
+        club.dancers.forEach((d, i) => { d.visible = crowdOn && !close && (!thin || i % 2 === 1); });
+        (club.barCrowd || []).forEach((p, i) => { p.visible = crowdOn && (!close || i % 2 === 0); });
+        (club.loungeCrowd || []).forEach((p, i) => { p.visible = crowdOn && (!close || i % 3 !== 0); });
+        (city.peds || []).forEach((p, i) => { p.visible = crowdOn && (!close || i % 2 === 0); });
+    }
+
+    function applySky() {
+        const look = phaseLook(nightPhase);
+        paintSky(dusk, look.stops);
+        dusk.sun.position.set(18, look.sunY, 210);
+        dusk.glow.position.copy(dusk.sun.position);
+        dusk.sun.material.opacity = look.sunOp;
+        dusk.glow.material.opacity = look.glowOp;
+        dusk.sun.visible = look.sunOp > 0.05;
+        dusk.glow.visible = look.glowOp > 0.04;
+        dusk.sunLight.color.setHex(look.sunColor);
+        dusk.sunLight.intensity = look.sunInt;
+        renderer.setClearColor(look.clear, 1);
+    }
 
     function setVibeColor(hex) {
         vibeHex = hex || "#ff00ff";
@@ -118,10 +143,7 @@ export function createWorld(canvas) {
 
         setCrowdVisible(v) {
             crowdOn = !!v;
-            for (const d of club.dancers) d.visible = crowdOn;
-            for (const p of club.barCrowd || []) p.visible = crowdOn;
-            for (const p of club.loungeCrowd || []) p.visible = crowdOn;
-            for (const p of city.peds) p.visible = crowdOn;
+            applyCrowd();
         },
         setFov(fov) {
             baseFov = fov;
@@ -133,6 +155,17 @@ export function createWorld(canvas) {
             drunk = !!v;
             scene.fog.density = v ? 0.02 : 0.012;
             renderer.toneMappingExposure = v ? 1.28 : 1.08;
+        },
+        setCuffs(left, right) {
+            const lc = leftHand.children[1]?.material;
+            const rc = rightHand.children[1]?.material;
+            if (lc && left) { lc.emissive.set(left); lc.emissiveIntensity = 0.55; }
+            if (rc && right) { rc.emissive.set(right); rc.emissiveIntensity = 0.55; }
+        },
+        setNightPhase(phase) {
+            nightPhase = phase || "doors";
+            applyCrowd();
+            applySky();
         },
         flashFloor() { floorFlash = 0.22; bloomKick = 0.18; },
         pulseKick() { bloomKick = 0.12; },
@@ -153,46 +186,53 @@ export function createWorld(canvas) {
             const zone = getZone(p.x, p.z, p.y - 1.7);
             const outside = isOutside(p.x, p.z);
 
+            const look = phaseLook(nightPhase);
             dusk.sky.visible = true;
-            dusk.sun.visible = outside;
-            dusk.glow.visible = outside;
+            dusk.sun.visible = outside && look.sunOp > 0.05;
+            dusk.glow.visible = outside && look.glowOp > 0.04;
             if (outside) {
-                scene.fog.color.set(0xc47862);
-                scene.fog.density = reduced ? 0.006 : 0.0085;
-                hemi.color.set(0xffc090);
-                hemi.groundColor.set(0x4a3048);
-                hemi.intensity = 1.35;
-                dusk.sunLight.intensity = 1.2;
-                renderer.setClearColor(0xc47858, 1);
-                renderer.toneMappingExposure = reduced ? 1.0 : 1.12;
+                scene.fog.color.setHex(look.fogOut);
+                scene.fog.density = reduced ? 0.006 : look.fogOutD;
+                hemi.color.setHex(look.hemi);
+                hemi.groundColor.setHex(look.hemiGround);
+                hemi.intensity = look.hemiOut;
+                dusk.sunLight.intensity = look.sunInt;
+                renderer.setClearColor(look.clear, 1);
+                renderer.toneMappingExposure = reduced ? 1.0 : look.exposeOut;
             } else if (zone === "lounge") {
                 scene.fog.color.set(0x3a2018);
                 scene.fog.density = 0.016;
                 hemi.color.set(0xffd0a0);
                 hemi.groundColor.set(0x2a1018);
-                hemi.intensity = 1.15;
-                dusk.sunLight.intensity = 0.25;
+                hemi.intensity = 1.15 * (nightPhase === "close" ? 0.75 : 1);
+                dusk.sunLight.intensity = 0.25 * look.sunInt;
                 renderer.toneMappingExposure = 1.05;
             } else if (zone === "diner" || zone === "hotel") {
                 scene.fog.color.set(0x2a1810);
                 scene.fog.density = 0.018;
                 hemi.intensity = 1.1;
-                dusk.sunLight.intensity = 0.15;
+                dusk.sunLight.intensity = 0.15 * look.sunInt;
+                renderer.toneMappingExposure = 1.0;
             } else {
                 scene.fog.color.copy(_vibe).multiplyScalar(0.12);
-                scene.fog.density = 0.026;
+                scene.fog.density = 0.026 * (nightPhase === "close" ? 1.35 : 1);
                 hemi.color.set(0x8877cc);
                 hemi.groundColor.set(0x180010);
                 hemi.intensity = 1.15;
                 dusk.sunLight.intensity = 0.05;
+                renderer.toneMappingExposure = nightPhase === "peak" ? 1.12 : 1.0;
+            }
+            if (drunk && !reduced) {
+                scene.fog.density *= 1.45;
+                renderer.toneMappingExposure += 0.16;
             }
 
-            const dim = 1;
-            club.lights.spot.intensity = (380 + bass * 160) * dim;
-            club.lights.booth.intensity = 55 * (0.6 + bass);
-            club.lights.bar.intensity = 70;
-            club.lights.lounge.intensity = 48 + Math.sin(t * 1.5) * 8;
-            if (club.lights.loungeWarm) club.lights.loungeWarm.intensity = 32 + Math.sin(t * 1.1) * 5;
+            const nightMul = look.clubMul;
+            club.lights.spot.intensity = (380 + bass * 160) * nightMul;
+            club.lights.booth.intensity = 55 * (0.6 + bass) * nightMul;
+            club.lights.bar.intensity = 70 * (nightPhase === "close" ? 0.55 : 1);
+            club.lights.lounge.intensity = (48 + Math.sin(t * 1.5) * 8) * (nightPhase === "close" ? 0.62 : 1);
+            if (club.lights.loungeWarm) club.lights.loungeWarm.intensity = (32 + Math.sin(t * 1.1) * 5) * (nightPhase === "close" ? 0.7 : 1);
             if (club.lights.windowDusk) club.lights.windowDusk.intensity = 18 + Math.sin(t * 0.4) * 4;
             const sweep = t * 0.25;
             club.lights.spotTarget.position.set(Math.sin(sweep) * 5.5, 0, Math.cos(sweep * 0.7) * 4);
@@ -211,10 +251,10 @@ export function createWorld(canvas) {
                 });
             }
             if (crowdOn) {
-                for (const d of club.dancers) animateHuman(d, t, { mode: d.userData.mode || "dance", bpm });
-                for (const p of club.barCrowd || []) animateHuman(p, t, { mode: p.userData.mode || "idle", bpm });
-                for (const p of club.loungeCrowd || []) animateHuman(p, t, { mode: p.userData.mode || "idle", bpm: 96 });
-                for (const ped of city.peds) animateHuman(ped, t, { mode: "walk", bpm: 96 });
+                for (const d of club.dancers) if (d.visible) animateHuman(d, t, { mode: d.userData.mode || "dance", bpm });
+                for (const p of club.barCrowd || []) if (p.visible) animateHuman(p, t, { mode: p.userData.mode || "idle", bpm });
+                for (const p of club.loungeCrowd || []) if (p.visible) animateHuman(p, t, { mode: p.userData.mode || "idle", bpm: 96 });
+                for (const ped of city.peds) if (ped.visible) animateHuman(ped, t, { mode: "walk", bpm: 96 });
             }
 
             const handBob = Math.sin(t * 7) * 0.025;
@@ -226,10 +266,10 @@ export function createWorld(canvas) {
                 const L = club.lasers[i];
                 L.pivot.rotation.z = Math.sin(t * 0.7 * laserSpeed + L.phase) * 0.85;
                 L.pivot.rotation.x = Math.cos(t * 0.55 * laserSpeed + L.phase * 1.3) * 0.7;
-                L.mat.opacity = outside ? 0.08 : 0.22 + bass * 0.28;
+                L.mat.opacity = outside ? 0.08 : (0.22 + bass * 0.28) * look.laser;
             }
             for (let i = 0; i < club.washes.length; i++) {
-                club.washes[i].opacity = outside ? 0.08 : 0.28 + bass * 0.45 + Math.sin(t * 6 + i) * 0.12;
+                club.washes[i].opacity = outside ? 0.08 : (0.28 + bass * 0.45 + Math.sin(t * 6 + i) * 0.12) * look.laser;
                 club.washes[i].color.copy(i % 2 ? _vibe : _color.set(0x00fff7));
             }
             for (let i = 0; i < club.hangLeds.length; i++) {
@@ -248,7 +288,7 @@ export function createWorld(canvas) {
                 const dist = (snakeHead - snakeIdx + FLOOR_COUNT) % FLOOR_COUNT;
                 const snake = dist < 10 ? 1 - dist / 10 : 0;
                 const checker = (col + row) % 2;
-                let pulse = 0.1 + bass * 0.55 + snake * 0.85 + checker * 0.04 + mid * 0.12;
+                let pulse = (0.1 + bass * 0.55 + snake * 0.85 + checker * 0.04 + mid * 0.12) * look.floor;
                 if (floorFlash > 0) pulse = 1.2;
                 _color.copy(_vibe);
                 _color.multiplyScalar(0.35 + pulse * 0.9);
@@ -282,11 +322,11 @@ export function createWorld(canvas) {
 
             ledTick += dt;
             if (ledTick > 0.1) {
-                club.drawLed(t, bass);
+                club.drawLed(t, bass, ctx.clock);
                 ledTick = 0;
             }
 
-            updateCity(city, dt, t, { outside, reduced });
+            updateCity(city, dt, t, { outside, reduced, lampMul: look.lamp });
 
             club.particles.visible = zone === "club" || zone === "lounge";
         },

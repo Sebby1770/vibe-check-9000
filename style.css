@@ -2,6 +2,9 @@
     --bg: #07020d;
     --magenta: #ff00ff;
     --cyan: #00fff7;
+    --visor: #00fff7;
+    --visor-left: #ff00aa;
+    --visor-right: #00fff7;
     --green: #39ff14;
     --yellow: #fff700;
     --red: #ff2e63;
@@ -52,8 +55,8 @@ html, body {
     inset: 0;
     border-radius: 9% / 13%;
     box-shadow:
-        inset 10px 0 28px rgba(255, 0, 80, 0.22),
-        inset -10px 0 28px rgba(0, 255, 247, 0.22);
+        inset 10px 0 28px color-mix(in srgb, var(--visor-left) 35%, transparent),
+        inset -10px 0 28px color-mix(in srgb, var(--visor-right) 35%, transparent);
     pointer-events: none;
     mix-blend-mode: screen;
 }
@@ -106,8 +109,9 @@ html.reduced-fx body.tipsy #gl {
     position: absolute;
     width: 52px;
     height: 52px;
-    border: 2px solid rgba(0, 255, 247, 0.75);
+    border: 2px solid var(--visor);
     pointer-events: none;
+    opacity: 0.85;
 }
 .hud-bracket.tl { top: 14px; left: 16px; border-right: 0; border-bottom: 0; }
 .hud-bracket.tr { top: 14px; right: 16px; border-left: 0; border-bottom: 0; }
@@ -127,9 +131,9 @@ html.reduced-fx body.tipsy #gl {
     top: 50%;
     left: 50%;
     transform: translate(-50%, -50%);
-    color: rgba(0, 255, 247, 0.55);
+    color: color-mix(in srgb, var(--visor) 70%, white);
     font-size: 22px;
-    text-shadow: 0 0 8px #00fff7;
+    text-shadow: 0 0 8px var(--visor);
 }
 
 .interact {
@@ -137,9 +141,9 @@ html.reduced-fx body.tipsy #gl {
     top: 58%;
     left: 50%;
     transform: translateX(-50%);
-    border: 1px solid var(--cyan);
+    border: 1px solid var(--visor);
     background: rgba(0, 0, 0, 0.45);
-    color: var(--cyan);
+    color: var(--visor);
     letter-spacing: 3px;
     font-family: "Orbitron", sans-serif;
     font-size: 12px;
@@ -194,8 +198,8 @@ html.reduced-fx body.tipsy #gl {
 .logo {
     font-family: "Orbitron", sans-serif;
     font-weight: 900;
-    color: var(--cyan);
-    text-shadow: 0 0 12px var(--cyan);
+    color: var(--visor);
+    text-shadow: 0 0 12px var(--visor);
 }
 .logo em { color: var(--green); font-style: normal; }
 .status { color: var(--dim); display: flex; gap: 8px; align-items: center; }
@@ -250,8 +254,9 @@ html.reduced-fx body.tipsy #gl {
     font-family: "Orbitron", sans-serif;
     font-size: 10px;
     letter-spacing: 2px;
-    color: rgba(0, 255, 247, 0.78);
-    text-shadow: 0 0 10px rgba(0, 255, 247, 0.45);
+    flex-wrap: wrap;
+    color: color-mix(in srgb, var(--visor) 78%, white);
+    text-shadow: 0 0 10px color-mix(in srgb, var(--visor) 45%, transparent);
 }
 .visor-telemetry em {
     font-style: normal;
@@ -870,3 +875,57 @@ body[data-zone="hotel"] .hud-bracket { border-color: rgba(212, 196, 168, 0.75); 
 }
 
 .talk-panel h2 { font-family: "Limelight", "Orbitron", serif; }
+
+.boot-bill {
+    margin-top: 10px;
+    color: var(--visor);
+    letter-spacing: 3px;
+    font-size: 12px;
+}
+.bill-line {
+    color: var(--green);
+    letter-spacing: 3px;
+    font-size: 13px;
+    margin-bottom: 16px;
+}
+.tip-line {
+    margin: 8px 0 4px;
+    color: var(--dim);
+    font-size: 12px;
+    line-height: 1.7;
+}
+.tip-line a { color: var(--visor); text-decoration: none; margin-left: 8px; }
+.look-list { list-style: none; display: grid; gap: 8px; margin: 12px 0 18px; }
+.look-list li {
+    display: flex;
+    gap: 12px;
+    align-items: center;
+    border: 1px solid rgba(255,255,255,0.12);
+    padding: 10px 12px;
+    cursor: pointer;
+}
+.look-list li.have { border-color: var(--visor); }
+.look-list li.eq { background: rgba(255,255,255,0.06); }
+.look-list li.locked { opacity: 0.45; cursor: default; }
+.look-list .swatch {
+    width: 22px; height: 22px; border-radius: 50%;
+    box-shadow: 0 0 10px currentColor;
+    flex: 0 0 22px;
+}
+.look-list strong { display: block; letter-spacing: 1px; }
+.look-list em { color: var(--dim); font-style: normal; font-size: 11px; }
+.look-list li.have:hover { background: rgba(255,255,255,0.08); }
+.boot-headline {
+    max-width: 720px;
+    margin: 8px auto 0;
+    font-family: "Limelight", Georgia, serif;
+    font-size: clamp(14px, 2.2vw, 22px);
+    color: #ffe7a8;
+    letter-spacing: 1px;
+    line-height: 1.35;
+    text-shadow: 0 0 18px rgba(224, 178, 90, 0.45);
+}
+body[data-night="peak"] .status-dot { background: #ff00ff; box-shadow: 0 0 10px #ff00ff; }
+body[data-night="lastcall"] .status-dot { background: #ff2e63; box-shadow: 0 0 10px #ff2e63; }
+body[data-night="close"] .status-dot { background: #817e9f; animation: none; box-shadow: none; }
+body[data-night="heat"] .status-dot { background: #ffb25a; box-shadow: 0 0 10px #ffb25a; }

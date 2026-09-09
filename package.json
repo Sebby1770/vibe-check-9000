@@ -1,11 +1,11 @@
 {
   "name": "vibe-check-9000",
-  "version": "15.2.0",
+  "version": "16.0.0",
   "private": true,
   "type": "module",
-  "description": "First-person 1954 Midtown dusk: packed club, supper-club lounge, a wall of towers.",
+  "description": "First-person 1954 Midtown dusk: a night that moves, visor looks, a stamp of the evening.",
   "scripts": {
-    "test": "node tests/people.test.js && node tests/engine.test.js && node tests/zones.test.js",
+    "test": "node tests/people.test.js && node tests/engine.test.js && node tests/zones.test.js && node tests/night.test.js && node tests/progress.test.js",
     "start": "python3 -m http.server 8000"
   }
 }

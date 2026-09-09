@@ -341,6 +341,7 @@ export function buildCity(scene) {
         addBox(root, unitBox, neonAmber, x, 4.35, 16.95, 0.35, 0.22, 0.35);
         const pl = new THREE.PointLight(0xffc078, 18, 11, 2);
         pl.position.set(x, 4.2, 16.9);
+        pl.userData.base = 18;
         scene.add(pl);
         lampLights.push(pl);
     }
@@ -349,6 +350,7 @@ export function buildCity(scene) {
         addBox(root, unitBox, neonAmber, x, 4.35, 28.4, 0.35, 0.22, 0.35);
         const pl = new THREE.PointLight(0xffb070, 16, 10, 2);
         pl.position.set(x, 4.2, 28.2);
+        pl.userData.base = 16;
         scene.add(pl);
         lampLights.push(pl);
     }
@@ -496,7 +498,7 @@ export function buildCity(scene) {
     };
 }
 
-export function updateCity(city, dt, t, { outside, reduced }) {
+export function updateCity(city, dt, t, { outside, reduced, lampMul = 1 }) {
     const rainArr = city.rainGeo.attributes.position.array;
     city.rain.visible = !!outside && !reduced;
     if (!reduced) {
@@ -550,4 +552,10 @@ export function updateCity(city, dt, t, { outside, reduced }) {
             city.bulbs[i].color.set(on || i % 3 === Math.floor(t * 6) % 3 ? 0xffe7a8 : 0x3a2a10);
         }
     }
+
+    const mul = Number.isFinite(lampMul) ? lampMul : 1;
+    for (const l of city.lampLights || []) {
+        l.intensity = (l.userData.base || 16) * mul;
+    }
+    if (city.alleyLight) city.alleyLight.intensity = 28 * Math.max(1, mul * 0.85);
 }
