@@ -204,6 +204,8 @@ export const DARES = [
     { id: "shop", text: "Cross 47th and go inside a shop with a cash register." },
     { id: "vinyl", text: "Buy a record at Rex's. The visor needs a B-side." },
     { id: "haircut", text: "Sit in Tony's chair. Midnight is not a hairstyle." },
+    { id: "subway", text: "Take the stairs under 47th. The 12:04 keeps its own hours." },
+    { id: "ice", text: "Find Frank's ice. The plot twist is plumbing." },
 ];
 
 export function dareFor(hash) {
@@ -231,6 +233,8 @@ export function dareComplete(progress, dare) {
         case "shop": return ["records", "pharmacy", "florist", "rivoli", "liquor", "barber"].some((z) => zones.includes(z));
         case "vinyl": return !!flags.vinyl;
         case "haircut": return !!flags.haircut;
+        case "subway": return !!flags.subway || !!flags.token || (progress.zones || []).includes("subway");
+        case "ice": return !!flags.ice;
         default: return false;
     }
 }
@@ -398,5 +402,8 @@ export function memoryLine(npcId, flags = {}) {
     if (npcId === "walter" && flags.ticket) return "You have a stub. That's the whole relationship. Enjoy the dark.";
     if (npcId === "lily" && flags.rose) return "The rose is still not a visor accessory. I said what I said.";
     if (npcId === "rosie" && flags.gin) return "You took the century. Don't open it where Muldoon can smell ambition.";
+    if (npcId === "frank" && flags.ice) return "You found the ice. I have been a fool in a good jacket. That's also the American century.";
+    if (npcId === "eleanor" && flags.ice) return "Nellie told you about the machine. I will have a word with Nellie. A quiet word.";
+    if (npcId === "miles" && flags.token) return "You're already in. The tunnel doesn't do refunds. Neither do I.";
     return null;
 }

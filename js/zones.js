@@ -15,6 +15,18 @@ export const FIRE_ESC = {
     zBottom: -24.05, zTop: -16.32,
 };
 
+export const SUBWAY_Y = -5.2;
+export const SUB_STAIRS = {
+    minX: -23.55, maxX: -21.25, minZ: 26.85, maxZ: 29.55,
+    zStreet: 26.85, zPlat: 29.55,
+};
+export const PLATFORM = { minX: -36.5, maxX: 6.5, minZ: 27.15, maxZ: 31.05 };
+
+export const HOTEL_STAIRS = {
+    minX: 35.65, maxX: 38.3, minZ: 1.35, maxZ: 9.55,
+    zBottom: 9.55, zTop: 1.35,
+};
+
 export const BOUNDS = { minX: -52.5, maxX: 52.5, minZ: -29.4, maxZ: 40.15 };
 
 export const SHOPS = [
@@ -36,6 +48,18 @@ export function inClubStairs(x, z) {
 
 export function inFireEscape(x, z) {
     return x >= FIRE_ESC.minX && x <= FIRE_ESC.maxX && z >= FIRE_ESC.minZ && z <= FIRE_ESC.maxZ;
+}
+
+export function inSubStairs(x, z) {
+    return x >= SUB_STAIRS.minX && x <= SUB_STAIRS.maxX && z >= SUB_STAIRS.minZ && z <= SUB_STAIRS.maxZ;
+}
+
+export function inPlatform(x, z) {
+    return inRect(x, z, PLATFORM);
+}
+
+export function inHotelStairs(x, z) {
+    return x >= HOTEL_STAIRS.minX && x <= HOTEL_STAIRS.maxX && z >= HOTEL_STAIRS.minZ && z <= HOTEL_STAIRS.maxZ;
 }
 
 export function inAtrium(x, z) {
@@ -61,7 +85,9 @@ export function shopAt(x, z) {
     return null;
 }
 
-export function isOutside(x, z) {
+export function isOutside(x, z, y = 0) {
+    if (y < -1.2) return false;
+    if (inSubStairs(x, z) && y < 0.5) return false;
     return !inClubFootprint(x, z) && !inDiner(x, z) && !inHotel(x, z) && !shopAt(x, z);
 }
 
@@ -74,6 +100,16 @@ export function getFloorY(x, z, yHint = 0) {
         const t = (z - FIRE_ESC.zBottom) / (FIRE_ESC.zTop - FIRE_ESC.zBottom);
         return Math.max(0, Math.min(1, t)) * SECOND_Y;
     }
+    if (inHotelStairs(x, z)) {
+        const t = (HOTEL_STAIRS.zBottom - z) / (HOTEL_STAIRS.zBottom - HOTEL_STAIRS.zTop);
+        return Math.max(0, Math.min(1, t)) * SECOND_Y;
+    }
+    if (inSubStairs(x, z)) {
+        const t = (z - SUB_STAIRS.zStreet) / (SUB_STAIRS.zPlat - SUB_STAIRS.zStreet);
+        return Math.max(0, Math.min(1, t)) * SUBWAY_Y;
+    }
+    if (inPlatform(x, z) && yHint < -1.8) return SUBWAY_Y;
+    if (inHotel(x, z) && !inHotelStairs(x, z) && yHint > SECOND_Y * 0.42) return SECOND_Y;
     if (inClubFootprint(x, z) && !inAtrium(x, z) && !inClubStairs(x, z)) {
         if (yHint > SECOND_Y * 0.42) return SECOND_Y;
     }
@@ -83,8 +119,10 @@ export function getFloorY(x, z, yHint = 0) {
 export function getZone(x, z, y = 0) {
     if (inFireEscape(x, z)) return y > 2.2 ? "lounge" : "alley";
     if (inClubStairs(x, z)) return y > 2.2 ? "lounge" : "club";
+    if (inSubStairs(x, z) || (inPlatform(x, z) && y < -1.8)) return "subway";
+    if (inHotelStairs(x, z)) return y > 2.2 ? "suite" : "hotel";
     if (inDiner(x, z)) return "diner";
-    if (inHotel(x, z)) return "hotel";
+    if (inHotel(x, z)) return y > 2.2 ? "suite" : "hotel";
     const shop = shopAt(x, z);
     if (shop) return shop.id;
     if (inClubFootprint(x, z)) {
@@ -113,6 +151,8 @@ export function zoneLabel(zone) {
         case "rivoli": return "THE RIVOLI";
         case "liquor": return "MIDTOWN GIN";
         case "barber": return "TONY'S BARBER";
+        case "subway": return "THE 12:04";
+        case "suite": return "ASTORIA 2F";
         default: return "MIDTOWN";
     }
 }
@@ -131,6 +171,8 @@ export function zoneTint(zone) {
         case "rivoli": return "#ffe7a8";
         case "liquor": return "#e0b25a";
         case "barber": return "#ff3355";
+        case "subway": return "#39ff14";
+        case "suite": return "#d4c4a8";
         default: return "#00fff7";
     }
 }
@@ -261,10 +303,28 @@ export function buildColliders() {
     wall(boxes, -34.2, -30.2, 26.05, 27.65, -1, 1.4);
     wall(boxes, 6.2, 10.2, 26.05, 27.65, -1, 1.4);
 
-    // Newsstand + phone booth + subway kiosk
+    // Newsstand + phone booth
     wall(boxes, -13.3, -10.4, 15.35, 16.85, -1, 2.2);
     wall(boxes, 6.45, 7.85, 15.55, 16.95, -1, 2.4);
-    wall(boxes, -24.2, -20.6, 27.4, 29.8, -1, 2.8);
+
+    // Subway kiosk shell — south open for the stairs
+    wall(boxes, -24.15, -23.55, 26.85, 29.7, -1, 2.8);
+    wall(boxes, -21.25, -20.65, 26.85, 29.7, -1, 2.8);
+    wall(boxes, -24.15, -20.65, 29.55, 30.15, -1, 2.8);
+    wall(boxes, -24.15, -20.65, 26.85, 29.7, 2.55, 3.2);
+
+    // Platform walls + track pit (below street)
+    wall(boxes, PLATFORM.minX - 0.2, PLATFORM.maxX + 0.2, PLATFORM.minZ - 0.2, PLATFORM.minZ + 0.15, -7.2, -1.2);
+    wall(boxes, PLATFORM.minX - 0.2, PLATFORM.maxX + 0.2, PLATFORM.maxZ - 0.15, PLATFORM.maxZ + 0.2, -7.2, -1.2);
+    wall(boxes, PLATFORM.minX - 0.2, PLATFORM.minX + 0.15, PLATFORM.minZ, PLATFORM.maxZ, -7.2, -1.2);
+    wall(boxes, PLATFORM.maxX - 0.15, PLATFORM.maxX + 0.2, PLATFORM.minZ, PLATFORM.maxZ, -7.2, -1.2);
+    wall(boxes, PLATFORM.minX, PLATFORM.maxX, 29.85, 31.1, -4.35, -1.4); // don't walk the tracks
+
+    // Hotel stair rails + 2F
+    wall(boxes, 35.5, 35.78, 1.5, 9.4, -1, 6.4);
+    wall(boxes, 38.18, 38.45, 1.5, 9.4, -1, 6.4);
+    wall(boxes, 30.55, 33.45, -9.45, -7.55, 4.2, 5.55);
+    wall(boxes, 18.15, 24.15, 6.35, 8.25, 4.2, 5.45);
 
     return { bounds: BOUNDS, boxes, getFloorY };
 }

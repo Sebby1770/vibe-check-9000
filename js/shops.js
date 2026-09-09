@@ -17,6 +17,9 @@ function facade(root, mats, s, color) {
     addBox(root, unitBox, mats.black, (s.minX + s.maxX) / 2, 2.55, z + 0.02, s.maxX - s.minX - 0.4, 0.08, 0.18);
     addBox(root, unitBox, color, (s.minX + s.maxX) / 2, 3.55, z + 0.16, Math.min(8.4, s.maxX - s.minX - 1.2), 0.12, 1.8);
     addBox(root, unitBox, mats.black, s.doorX, 1.25, z + 0.06, 2.55, 2.5, 0.08);
+    addBox(root, unitBox, color, s.doorX - 1.32, 1.25, z - 0.12, 0.08, 2.5, 0.1);
+    addBox(root, unitBox, color, s.doorX + 1.32, 1.25, z - 0.12, 0.08, 2.5, 0.1);
+    addBox(root, unitBox, color, s.doorX, 2.52, z - 0.12, 2.72, 0.08, 0.1);
 }
 
 function sign(root, text, color, x, y, z, w = 6.4, h = 1.15) {
@@ -129,10 +132,42 @@ export function buildShops(root, scene, mats) {
         addBox(root, unitBox, velvet, x, 0.42, 34.4, 1.8, 0.18, 0.7);
         addBox(root, unitBox, velvet, x, 0.72, 34.7, 1.8, 0.48, 0.16);
     }
-    for (const x of [-4, 2, 10, 16]) {
+    for (const x of [-4, 16]) {
         addBox(root, unitBox, black, x, 1.7, 39.55, 1.6, 2.2, 0.06);
         addBox(root, unitBox, mats.neonAmber, x, 1.7, 39.5, 1.4, 2.0, 0.04);
     }
+    const filmCanvas = document.createElement("canvas");
+    filmCanvas.width = 512;
+    filmCanvas.height = 256;
+    const filmTex = new THREE.CanvasTexture(filmCanvas);
+    filmTex.colorSpace = THREE.SRGBColorSpace;
+    const film = new THREE.Mesh(
+        new THREE.PlaneGeometry(9.2, 3.6),
+        new THREE.MeshBasicMaterial({ map: filmTex }),
+    );
+    film.position.set(6.0, 2.15, 39.62);
+    root.add(film);
+    const titles = ["NEON IN THE RAIN", "THE MIDNIGHT VISOR", "ALLEY CATS OF 47TH"];
+    film.userData.draw = (t) => {
+        const g = filmCanvas.getContext("2d");
+        g.fillStyle = "#120810";
+        g.fillRect(0, 0, 512, 256);
+        const flick = 0.55 + Math.sin(t * 17) * 0.12 + Math.random() * 0.08;
+        g.fillStyle = `rgba(255, 200, 140, ${flick * 0.35})`;
+        g.fillRect(24, 18, 464, 220);
+        for (let i = 0; i < 40; i++) {
+            g.fillStyle = `rgba(255,255,255,${Math.random() * 0.2})`;
+            g.fillRect(Math.random() * 512, Math.random() * 256, 2, 2);
+        }
+        g.fillStyle = "#ffe7a8";
+        g.font = "700 28px Georgia, serif";
+        g.textAlign = "center";
+        g.fillText(titles[Math.floor(t / 8) % titles.length], 256, 130);
+        g.font = "16px Georgia, serif";
+        g.fillStyle = "rgba(255,231,168,0.7)";
+        g.fillText("A PICTURE THAT REFUSES THE DECADE", 256, 168);
+        filmTex.needsUpdate = true;
+    };
     addBox(root, unitBox, chrome, 6.0, 3.6, 36.0, 0.08, 0.5, 0.08);
     addBox(root, unitBox, mats.neonAmber, 6.0, 3.25, 36.0, 1.4, 0.12, 1.4);
     sign(root, "RIVOLI", "#FFE7A8", 6.0, 5.15, rv.minZ - 0.24, 11.5, 1.5);
@@ -198,5 +233,5 @@ export function buildShops(root, scene, mats) {
 
     crowds.forEach((h) => scene.add(h));
 
-    return { crowds, pole, lights };
+    return { crowds, pole, lights, film };
 }

@@ -353,7 +353,7 @@ export function createHud(hooks) {
     const MODAL = {
         about: `
             <p><strong>VIBE CHECK 9000™</strong> is a first-person night in Midtown, November 12, 1954. The visor is from later. The street is not.</p>
-            <p>WASD to move. SPACE on the tiles to dance. E to talk. Upstairs, E sits you on the banquette, chaise, or club chairs. Cross 47th for shops.</p>
+            <p>WASD to move. SPACE on the tiles to dance. E to talk. Upstairs, E sits you. Cross 47th for shops. Subway kiosk for the 12:04. Astoria east stairs for 2F.</p>
             <p>Drop MP3 / WAV / FLAC on the DECK. Hail a Checker. Pet the cat. Read the Gazette. ION will get you drunk if you ask.</p>
             <p>The night moves from doors to last call. Earn visor looks. Each calendar day has a dare. ESC → STAMP saves a night card. Tips keep the lights on.</p>
         `,

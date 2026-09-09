@@ -3,6 +3,8 @@ import { addBox, unitBox, neonCanvas, marqueeCanvas } from "./kit.js";
 import { brickTex, darkBrickTex, asphaltTex, sidewalkTex, plasterTex, woodTex, checkerTex, gazetteTex } from "./textures.js";
 import { randomPedestrian } from "./human.js";
 import { buildShops } from "./shops.js";
+import { buildSubway, updateSubway } from "./under.js";
+import { SECOND_Y, HOTEL_STAIRS } from "./zones.js";
 
 const RAIN_N = 900;
 const STEAM_N = 80;
@@ -163,7 +165,32 @@ export function buildCity(scene) {
     addBox(root, unitBox, brickBrown, 38.72, 7.2, -2, 0.28, 14.5, 29);
     addBox(root, unitBox, brickBrown, 27.65, 7.2, -16.58, 22.2, 14.5, 0.28);
     addBox(root, unitBox, brickBrown, 27.65, 14.4, -2, 22.2, 0.4, 29);
-    addBox(root, unitBox, cream, 27.65, 4.35, -2, 21.6, 0.2, 28.6);
+    const fy = SECOND_Y;
+    addBox(root, unitBox, cream, 26.1, fy - 0.05, -2, 18.7, 0.12, 28.6);
+    addBox(root, unitBox, cream, 38.5, fy - 0.05, -2, 0.55, 0.12, 28.6);
+    addBox(root, unitBox, cream, 36.95, fy - 0.05, -7.6, 2.7, 0.12, 17.9);
+    addBox(root, unitBox, cream, 36.95, fy - 0.05, 11.0, 2.7, 0.12, 2.9);
+    const hs = HOTEL_STAIRS;
+    const hSteps = 12;
+    for (let i = 0; i < hSteps; i++) {
+        const t = i / (hSteps - 1);
+        const z = hs.zBottom - t * (hs.zBottom - hs.zTop);
+        const y = t * fy;
+        addBox(root, unitBox, wood, 36.95, y + 0.04, z, 2.4, 0.08, 0.62);
+        addBox(root, unitBox, cream, 36.95, y + 0.09, z, 2.4, 0.02, 0.08);
+    }
+    addBox(root, unitBox, wood, 32.0, fy + 0.22, -8.4, 2.6, 0.12, 1.8);
+    addBox(root, unitBox, cream, 32.0, fy + 0.48, -9.1, 2.6, 0.4, 0.18);
+    addBox(root, unitBox, chrome, 32.0, fy + 0.7, -8.5, 1.1, 0.9, 0.7);
+    addBox(root, unitBox, cream, 32.0, fy + 1.05, -8.5, 0.9, 0.08, 0.55);
+    addBox(root, unitBox, new THREE.MeshBasicMaterial({ color: 0x88ccee }), 32.0, fy + 1.18, -8.5, 0.7, 0.16, 0.5);
+    addBox(root, unitBox, wood, 21.2, fy + 0.22, 7.3, 2.8, 0.14, 1.6);
+    addBox(root, unitBox, cream, 21.2, fy + 0.48, 7.9, 2.8, 0.38, 0.22);
+    addBox(root, unitBox, new THREE.MeshBasicMaterial({ color: 0xffc078, transparent: true, opacity: 0.35 }), 21.2, fy + 1.55, 12.35, 2.4, 1.5, 0.04);
+    const fourb = new THREE.Mesh(new THREE.PlaneGeometry(0.7, 0.4), new THREE.MeshBasicMaterial({ map: neonCanvas("4B", "#E0B25A", 256, 128, "#120c08") }));
+    fourb.position.set(30.2, fy + 1.55, -2.2);
+    fourb.rotation.y = Math.PI / 2;
+    root.add(fourb);
     addBox(root, unitBox, black, 27.65, 0.02, -2, 21.8, 0.04, 28.4);
     addBox(root, unitBox, wood, 25.2, 0.55, 5.9, 7.4, 1.1, 2.6);
     addBox(root, unitBox, cream, 25.2, 1.2, 5.9, 7.2, 0.08, 2.4);
@@ -398,16 +425,7 @@ export function buildCity(scene) {
     addBox(root, unitBox, glass, 7.15, 1.35, 16.72, 0.7, 1.4, 0.05);
     addBox(root, unitBox, neonRed, 7.15, 2.5, 16.25, 0.95, 0.12, 0.95);
 
-    // Subway entrance kiosk
-    addBox(root, unitBox, greenMat(), -22.4, 1.3, 28.6, 3.4, 2.6, 2.2);
-    const subway = new THREE.Mesh(new THREE.PlaneGeometry(3, 0.6), new THREE.MeshBasicMaterial({ map: neonCanvas("SUBWAY", "#39FF14", 512, 128, "#051005") }));
-    subway.position.set(-22.4, 2.4, 29.75);
-    root.add(subway);
-    addBox(root, unitBox, black, -22.4, 0.02, 27.4, 1.6, 0.05, 1.8);
-
-    function greenMat() {
-        return new THREE.MeshStandardMaterial({ color: 0x1a4a32, roughness: 0.6, metalness: 0.2 });
-    }
+    const under = buildSubway(root, scene, { wood, cream, black, chrome, neonAmber });
 
     const titles = ["NEON IN THE RAIN", "THE MIDNIGHT VISOR", "ALLEY CATS OF 47TH", "A PIE TO REMEMBER"];
     const titlePlane = new THREE.Mesh(new THREE.PlaneGeometry(10, 1.1), new THREE.MeshBasicMaterial({ map: neonCanvas(titles[0], "#FFE7A8", 1024, 160, "#100808") }));
@@ -489,9 +507,11 @@ export function buildCity(scene) {
         { z: 15.95, x0: 46, x1: -46, speed: 0.95 },
         { z: 29.15, x0: -42, x1: 42, speed: 1.05 },
         { z: 29.55, x0: 40, x1: -40, speed: 0.88 },
+        { z: 22.8, x0: 0.2, x1: 0.2, speed: 0.7, cross: true, z0: 16.2, z1: 30.4 },
+        { z: 22.8, x0: -27, x1: -27, speed: 0.65, cross: true, z0: 30.2, z1: 16.4 },
     ];
     for (let i = 0; i < 26; i++) {
-        const path = paths[i % paths.length];
+        const path = paths[i % 4];
         const h = randomPedestrian(0.13 * i + 0.07);
         const t0 = i / 26;
         h.userData.path = path;
@@ -502,6 +522,15 @@ export function buildCity(scene) {
         scene.add(h);
         peds.push(h);
     }
+    for (let i = 0; i < 4; i++) {
+        const path = paths[4 + (i % 2)];
+        const h = randomPedestrian(0.61 * i + 0.2);
+        h.userData.path = path;
+        h.userData.t = i / 4;
+        h.position.set(path.x0, 0, path.z0 + (path.z1 - path.z0) * (i / 4));
+        scene.add(h);
+        peds.push(h);
+    }
 
     const dinerLight = new THREE.PointLight(0xff6655, 35, 12, 2);
     dinerLight.position.set(-27.6, 3.2, 10);
@@ -509,6 +538,9 @@ export function buildCity(scene) {
     const hotelLight = new THREE.PointLight(0xe0b25a, 28, 12, 2);
     hotelLight.position.set(25, 3.2, 10);
     scene.add(hotelLight);
+    const hotelUp = new THREE.PointLight(0xffd0a0, 22, 14, 2);
+    hotelUp.position.set(27, fy + 2.2, -2);
+    scene.add(hotelUp);
 
     return {
         root,
@@ -530,7 +562,10 @@ export function buildCity(scene) {
         marquee,
         shopCrowd: shops.crowds,
         barberPole: shops.pole,
+        film: shops.film,
         signal,
+        under,
+        subwayCrowd: under.crowds,
         setMarquee(line1, line2) {
             const tex = marqueeCanvas(String(line1 || "VIBE CHECK").slice(0, 14), String(line2 || "TONIGHT").slice(0, 22));
             const old = marquee.material.map;
@@ -586,12 +621,19 @@ export function updateCity(city, dt, t, { outside, reduced, lampMul = 1 }) {
 
     for (const ped of city.peds) {
         const path = ped.userData.path;
-        const span = path.x1 - path.x0;
-        ped.userData.t = (ped.userData.t + (dt * path.speed) / Math.abs(span)) % 1;
-        const x = path.x0 + span * ped.userData.t;
-        ped.position.x = x;
-        ped.position.z = path.z;
-        ped.rotation.y = span > 0 ? Math.PI / 2 : -Math.PI / 2;
+        if (path.cross) {
+            const span = path.z1 - path.z0;
+            ped.userData.t = (ped.userData.t + (dt * path.speed) / Math.abs(span)) % 1;
+            ped.position.x = path.x0;
+            ped.position.z = path.z0 + span * ped.userData.t;
+            ped.rotation.y = span > 0 ? 0 : Math.PI;
+        } else {
+            const span = path.x1 - path.x0;
+            ped.userData.t = (ped.userData.t + (dt * path.speed) / Math.abs(span)) % 1;
+            ped.position.x = path.x0 + span * ped.userData.t;
+            ped.position.z = path.z;
+            ped.rotation.y = span > 0 ? Math.PI / 2 : -Math.PI / 2;
+        }
     }
 
     if (city.bulbs.length) {
@@ -607,6 +649,8 @@ export function updateCity(city, dt, t, { outside, reduced, lampMul = 1 }) {
     }
     if (city.alleyLight) city.alleyLight.intensity = 28 * Math.max(1, mul * 0.85);
     if (city.barberPole) city.barberPole.rotation.y += dt * 2.4;
+    updateSubway(city.under, dt);
+    if (city.film?.userData.draw) city.film.userData.draw(t);
     if (city.signal?.userData.lamps) {
         const phase = Math.floor(t / 3.2) % 3;
         const L = city.signal.userData.lamps;

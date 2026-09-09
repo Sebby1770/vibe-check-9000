@@ -347,6 +347,7 @@ export const NPCS = [
                 choices: [
                     { text: "Try the diner.", next: "diner" },
                     { text: "What are you selling?", next: "sell" },
+                    { text: "Astoria 2F. There's an ice machine.", next: "iceup" },
                 ],
             },
             diner: {
@@ -356,6 +357,10 @@ export const NPCS = [
             sell: {
                 say: "Adding machines. Very modern. Very loud. The club downstairs would eat them for breakfast.",
                 choices: [{ text: "Keep the receipt.", next: null }],
+            },
+            iceup: {
+                say: "2F, 4B, east stairs in the lobby. If that's true I have been a fool in a good jacket.",
+                choices: [{ text: "I'll bring you a cube.", next: null }],
             },
         },
     },
@@ -657,6 +662,7 @@ export const NPCS = [
                 choices: [
                     { text: "Just browsing the century.", next: "browse" },
                     { text: "Is the lounge through there?", next: "lounge" },
+                    { text: "Where's 4B?", next: "fourb" },
                 ],
             },
             browse: {
@@ -666,6 +672,10 @@ export const NPCS = [
             lounge: {
                 say: "Next door, upstairs. Or the wet fire escape if you enjoy narrative. I pretend I don't see the fire escape.",
                 choices: [{ text: "Your secret's safe.", next: null }],
+            },
+            fourb: {
+                say: "East stairs, 2F, left. Frank left the key in the ice bucket, which would be funny if the ice existed.",
+                choices: [{ text: "I'll find the plot twist.", next: null }],
             },
         },
     },
@@ -939,6 +949,74 @@ export const NPCS = [
             },
         },
     },
+    {
+        id: "miles",
+        name: "MILES",
+        role: "TOKENS",
+        x: -8.4,
+        z: 28.55,
+        y: -5.2,
+        facing: Math.PI,
+        color: "#39ff14",
+        outfit: "clerk",
+        skin: 0x8d5524,
+        hair: 0x1a1208,
+        hairStyle: "short",
+        anim: "idle",
+        greeting: "Tokens, rumors, and a train that keeps its own hours.",
+        nodes: {
+            start: {
+                say: "The 12:04 is a train. The floor upstairs is a rumor that stole the timetable. Token's a nickel. The ride is whatever the tunnel believes.",
+                choices: [
+                    { text: "One token.", next: "token", action: "token" },
+                    { text: "When's the next one?", next: "when" },
+                ],
+            },
+            token: {
+                say: "You're in. Don't stand in the yellow. The yellow is a suggestion the train ignores.",
+                action: "token",
+                choices: [{ text: "I'll behave in the dark.", next: null }],
+            },
+            when: {
+                say: "Soon. Always soon. That's the deal the tunnel made with 1954.",
+                choices: [{ text: "I'll wait like a civilian.", next: null }],
+            },
+        },
+    },
+    {
+        id: "nellie",
+        name: "NELLIE",
+        role: "HOUSEKEEPING",
+        x: 27.2,
+        z: 0.8,
+        y: 4.4,
+        facing: -0.4,
+        color: "#d4c4a8",
+        outfit: "waitress",
+        skin: 0xe0ac69,
+        hair: 0x3b2219,
+        hairStyle: "updo",
+        anim: "idle",
+        greeting: "Turn-down service for people who never sleep.",
+        nodes: {
+            start: {
+                say: "2F. 4B's ice machine finally works, which Frank will never believe. Vacant's the room with the window on 47th. Don't tell Eleanor I said vacant. She prefers 'between guests.'",
+                choices: [
+                    { text: "I'll take the ice.", next: "ice", action: "ice" },
+                    { text: "The window.", next: "window" },
+                ],
+            },
+            ice: {
+                say: "Machine's in 4B. Tell Frank the plot twist was plumbing. He'll still look in the lounge.",
+                action: "ice",
+                choices: [{ text: "I'll be the messenger.", next: null }],
+            },
+            window: {
+                say: "You can see the kick in the visors from here. I don't go downstairs. The carpets gossip enough.",
+                choices: [{ text: "I'll look anyway.", next: null }],
+            },
+        },
+    },
 ];
 
 export const PROPS = [
@@ -948,7 +1026,14 @@ export const PROPS = [
     { id: "cabdoor", x: 14.4, z: 17.55, y: 0, r: 2.2, prompt: "[E] HAIL THE CHECKER", action: "hail-cab" },
     { id: "booth", x: -8.2, z: 10.45, y: 0, r: 1.7, prompt: "[E] PHOTO BOOTH — STAMP THE NIGHT", action: "booth" },
     { id: "coat", x: 8.15, z: 10.4, y: 0, r: 1.6, prompt: "[E] COAT CHECK (A RUMOR)", action: "coat" },
-    { id: "subway", x: -22.4, z: 27.2, y: 0, r: 1.8, prompt: "[E] THE 12:04 IS A RUMOR", action: "subway" },
+    { id: "subway", x: -22.4, z: 26.7, y: 0, r: 1.9, prompt: "[E] DOWNTOWN — THE 12:04", action: "subway" },
+    { id: "ice", x: 32.0, z: -8.5, y: 4.4, r: 1.6, prompt: "[E] ICE MACHINE — FRANK'S PLOT TWIST", action: "ice" },
+    { id: "door-records", x: -33.2, z: 31.45, y: 0, r: 1.7, prompt: "[E] ENTER REX'S RECORDS", action: "enter-records" },
+    { id: "door-pharmacy", x: -21.8, z: 31.45, y: 0, r: 1.7, prompt: "[E] ENTER 47TH PHARMACY", action: "enter-pharmacy" },
+    { id: "door-florist", x: -12.2, z: 31.45, y: 0, r: 1.6, prompt: "[E] ENTER LILY'S", action: "enter-florist" },
+    { id: "door-rivoli", x: 6.0, z: 31.45, y: 0, r: 1.8, prompt: "[E] ENTER THE RIVOLI", action: "enter-rivoli" },
+    { id: "door-liquor", x: 24.6, z: 31.45, y: 0, r: 1.7, prompt: "[E] ENTER MIDTOWN GIN", action: "enter-liquor" },
+    { id: "door-barber", x: 35.8, z: 31.45, y: 0, r: 1.7, prompt: "[E] ENTER TONY'S", action: "enter-barber" },
     { id: "vinyl-bin", x: -36.5, z: 33.8, y: 0, r: 1.5, prompt: "[E] FLIP THROUGH THE BINS", action: "vinyl" },
     { id: "tonic-tap", x: -24.2, z: 33.6, y: 0, r: 1.45, prompt: "[E] SODA FOUNTAIN", action: "tonic" },
 ];
@@ -966,6 +1051,8 @@ export const SIT_SPOTS = [
     { id: "rivoli-bench", x: 11.2, z: 34.2, y: 0, eye: 1.14, lookX: 6.0, lookZ: 37.4, r: 1.5, prompt: "[E] SIT THE RIVOLI" },
     { id: "barber-chair", x: 34.15, z: 35.55, y: 0, eye: 1.16, lookX: 35.9, lookZ: 37.2, r: 1.4, prompt: "[E] SIT FOR TONY" },
     { id: "listen-booth", x: -30.15, z: 33.85, y: 0, eye: 1.14, lookX: -33.2, lookZ: 35.2, r: 1.4, prompt: "[E] CROUCH THE BINS" },
+    { id: "suite-bed", x: 21.2, z: 7.15, y: 4.4, eye: 1.12, lookX: 21.2, lookZ: 12.2, r: 1.55, prompt: "[E] THE VACANT ROOM" },
+    { id: "subway-bench", x: -14.2, z: 27.55, y: -5.2, eye: 1.14, lookX: -8.4, lookZ: 28.2, r: 1.5, prompt: "[E] WAIT FOR THE 12:04" },
 ];
 
 export const GAZETTE = {

@@ -1,9 +1,9 @@
 {
   "name": "vibe-check-9000",
-  "version": "18.0.0",
+  "version": "19.0.0",
   "private": true,
   "type": "module",
-  "description": "First-person 1954 Midtown dusk: shops across 47th, a night that moves, a visor that keeps score.",
+  "description": "First-person 1954 Midtown: subway under 47th, a hotel floor, a picture that refuses the decade.",
   "scripts": {
     "test": "node tests/people.test.js && node tests/engine.test.js && node tests/zones.test.js && node tests/night.test.js && node tests/progress.test.js",
     "start": "python3 -m http.server 8000"

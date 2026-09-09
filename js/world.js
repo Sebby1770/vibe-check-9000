@@ -96,6 +96,7 @@ export function createWorld(canvas) {
         (club.loungeCrowd || []).forEach((p, i) => { p.visible = crowdOn && (!close || i % 3 !== 0); });
         (city.peds || []).forEach((p, i) => { p.visible = crowdOn && (!close || i % 2 === 0); });
         (city.shopCrowd || []).forEach((p, i) => { p.visible = crowdOn && (!close || i % 2 === 0); });
+        (city.subwayCrowd || []).forEach((p, i) => { p.visible = crowdOn && (!close || i % 2 === 0); });
     }
 
     function applySky() {
@@ -188,7 +189,7 @@ export function createWorld(canvas) {
             const energy = ctx.energy || 0;
             const p = camera.position;
             const zone = getZone(p.x, p.z, p.y - 1.7);
-            const outside = isOutside(p.x, p.z);
+            const outside = isOutside(p.x, p.z, p.y);
 
             const look = phaseLook(nightPhase);
             dusk.sky.visible = true;
@@ -211,6 +212,24 @@ export function createWorld(canvas) {
                 hemi.intensity = 1.15 * (nightPhase === "close" ? 0.75 : 1);
                 dusk.sunLight.intensity = 0.25 * look.sunInt;
                 renderer.toneMappingExposure = 1.05;
+            } else if (zone === "subway") {
+                scene.fog.color.set(0x14120c);
+                scene.fog.density = 0.045;
+                hemi.color.set(0xffc090);
+                hemi.groundColor.set(0x1a140c);
+                hemi.intensity = 0.7;
+                dusk.sunLight.intensity = 0;
+                dusk.sun.visible = false;
+                dusk.glow.visible = false;
+                renderer.toneMappingExposure = 0.82;
+                renderer.setClearColor(0x0c0a08, 1);
+            } else if (zone === "suite") {
+                scene.fog.color.set(0x2a2018);
+                scene.fog.density = 0.02;
+                hemi.color.set(0xffd0a0);
+                hemi.intensity = 1.05;
+                dusk.sunLight.intensity = 0.2 * look.sunInt;
+                renderer.toneMappingExposure = 1.0;
             } else if (zone === "diner" || zone === "hotel") {
                 scene.fog.color.set(0x2a1810);
                 scene.fog.density = 0.018;
@@ -279,6 +298,9 @@ export function createWorld(canvas) {
                 for (const ped of city.peds) if (ped.visible) animateHuman(ped, t, { mode: "walk", bpm: 96 });
                 for (const p of city.shopCrowd || []) {
                     if (p.visible) animateHuman(p, t, { mode: p.userData.mode || "idle", bpm: 96 });
+                }
+                for (const p of city.subwayCrowd || []) {
+                    if (p.visible) animateHuman(p, t, { mode: p.userData.mode || "idle", bpm: 88 });
                 }
             }
 

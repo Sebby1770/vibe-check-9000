@@ -817,6 +817,9 @@ body[data-zone="florist"] .hud-bracket { border-color: rgba(255, 107, 154, 0.85)
 body[data-zone="rivoli"] .hud-bracket { border-color: rgba(255, 231, 168, 0.85); }
 body[data-zone="liquor"] .hud-bracket { border-color: rgba(224, 178, 90, 0.85); }
 body[data-zone="barber"] .hud-bracket { border-color: rgba(255, 51, 85, 0.85); }
+body[data-zone="subway"] .hud-bracket { border-color: rgba(57, 255, 20, 0.85); }
+body[data-zone="subway"] .logo { color: #39ff14; text-shadow: 0 0 12px #39ff14; }
+body[data-zone="suite"] .hud-bracket { border-color: rgba(212, 196, 168, 0.85); }
 
 .boot h1 {
     font-family: "Limelight", "Orbitron", serif;

@@ -17,7 +17,7 @@ The clock starts at 10:00 PM and runs to after hours. Doors, heat, midnight drop
 1. Click **ENTER THE NIGHT** (pointer lock + house system).
 2. **WASD** to move, mouse to look, **SPACE** on the LED floor to dance.
 3. Walk up to a named person and press **E** to talk. What they say depends on the hour.
-4. **Front doors** open onto 47th Street — rain, Checkers, Dottie's, Hotel Astoria. Cross the street for records, tonic, flowers, the Rivoli, gin, a haircut.
+4. **Front doors** open onto 47th Street — rain, Checkers, Dottie's, Hotel Astoria. Cross the street for records, tonic, flowers, the Rivoli, gin, a haircut. Subway kiosk for the 12:04. Astoria east stairs for 2F and Frank's ice.
 5. **Back doors** dump you in the alley — Vinnie, Muldoon, Socks the cat, fire escape.
 6. **Stairs** on the east wall (and the wet fire escape) go up to Velma's lounge.
 7. **ESC** — deck, visor looks, night stamp, tip the till. Drop MP3 / WAV / FLAC / OGG.
@@ -43,6 +43,9 @@ Earned, not bought. The visor keeps them.
 | B-SIDE VIOLET | Buy a record at Rex's |
 | PHARMACY MINT | Tonic at the pharmacy |
 | TONY'S CLIP | Sit in Tony's chair |
+| TOKEN GREEN | Take the 12:04 |
+| 4B ICE | Find Frank's ice |
+| SILVER SCREEN | A Rivoli stub |
 
 ## People
 
@@ -50,7 +53,8 @@ Earned, not bought. The visor keeps them.
 **The lounge** — VELMA, MARCO, RUBY, FRANK  
 **The alley** — VINNIE, MULDOON, SOCKS  
 **47th Street** — DOTTIE, LOU, CABBY, SCOTTY, CLARA, HAROLD, ELEANOR, OTIS  
-**Across 47th** — SID, IRIS, LILY, WALTER, ROSIE, TONY
+**Across 47th** — SID, IRIS, LILY, WALTER, ROSIE, TONY  
+**Under / up** — MILES (subway), NELLIE (Astoria 2F)
 
 ## Run locally
 

@@ -12,6 +12,9 @@ import {
     buildColliders,
     shopAt,
     SHOPS,
+    SUBWAY_Y,
+    inSubStairs,
+    inHotelStairs,
 } from "../js/zones.js";
 
 assert.equal(getFloorY(0, 0, 0), 0);
@@ -26,6 +29,15 @@ assert.equal(isOutside(-33.2, 36), false);
 assert.equal(isOutside(0, 20), true);
 assert.ok(SHOPS.length >= 5);
 assert.equal(shopAt(-12.2, 36).id, "florist");
+assert.ok(inSubStairs(-22.4, 28.2));
+assert.ok(Math.abs(getFloorY(-22.4, 26.85, 0)) < 0.05);
+assert.ok(Math.abs(getFloorY(-22.4, 29.55, -3) - SUBWAY_Y) < 0.08);
+assert.equal(getZone(-10, 28.5, -5), "subway");
+assert.equal(getZone(-10, 28.5, 0), "street");
+assert.ok(inHotelStairs(36.9, 5));
+assert.ok(getFloorY(36.9, 1.35, 3) > SECOND_Y * 0.8);
+assert.equal(getZone(27, 0, 4.4), "suite");
+assert.equal(isOutside(-10, 28.5, -5), false);
 assert.equal(getZone(0, -22, 0), "alley");
 assert.equal(getZone(-30, 3, 0), "diner");
 assert.equal(getZone(24, 8, 0), "hotel");

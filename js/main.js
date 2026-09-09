@@ -362,7 +362,28 @@ async function boot() {
             hud.toast("TONY FIXED THE DECADE", "#ff3355");
             note({ flags: { haircut: true } });
         } else if (action === "subway") {
-            hud.toast("THE 12:04 WAS A TRAIN. THE FLOOR DISAGREES.", "#39ff14");
+            controls.place(-22.4, 27.15, -22.4, 29.4);
+            hud.toast("DOWNTOWN — hold the rail", "#39ff14");
+            note({ flags: { subway: true } });
+        } else if (action === "token") {
+            hud.toast("TOKEN ACCEPTED — the tunnel keeps its hours", "#39ff14");
+            note({ flags: { token: true } });
+        } else if (action === "ice") {
+            hud.toast("ICE — tell Frank the plot twist was plumbing", "#88ccee");
+            note({ flags: { ice: true } });
+        } else if (action && action.startsWith("enter-")) {
+            const dest = {
+                "enter-records": [-33.2, 33.5, 37.2],
+                "enter-pharmacy": [-21.8, 33.5, 37.2],
+                "enter-florist": [-12.2, 33.5, 37.1],
+                "enter-rivoli": [6.0, 33.6, 37.4],
+                "enter-liquor": [24.6, 33.5, 37.1],
+                "enter-barber": [35.8, 33.5, 36.9],
+            }[action];
+            if (dest) {
+                controls.place(dest[0], dest[1], dest[0], dest[2]);
+                hud.toast("YOU'RE IN", "#ffe7a8");
+            }
         } else if (action === "pet-cat") {
             hud.toast("SOCKS APPROVES — alley reputation +1", "#d8d0c4");
             energy = Math.min(100, energy + 8);
@@ -424,6 +445,10 @@ async function boot() {
                 hud.toast("MIDNIGHT IS NOT A HAIRSTYLE", "#ff3355");
             } else if (seat.spot.id === "rivoli-bench") {
                 hud.toast("DON'T CLAP ON ONE", "#ffe7a8");
+            } else if (seat.spot.id === "suite-bed") {
+                hud.toast("BETWEEN GUESTS", "#d4c4a8");
+            } else if (seat.spot.id === "subway-bench") {
+                hud.toast("SOON. ALWAYS SOON.", "#39ff14");
             } else {
                 hud.toast("THE STOOL HAS YOU NOW", "#00fff7");
             }

@@ -18,6 +18,9 @@ export const LOOKS = [
     { id: "vinyl", name: "B-SIDE VIOLET", visor: "#c77dff", left: "#c77dff", right: "#ff00aa", how: "buy a record at REX'S" },
     { id: "tonic", name: "PHARMACY MINT", visor: "#66ffe0", left: "#66ffe0", right: "#39ff14", how: "tonic at the pharmacy" },
     { id: "clipper", name: "TONY'S CLIP", visor: "#ff3355", left: "#ff3355", right: "#ffe7a8", how: "sit in Tony's chair" },
+    { id: "token", name: "TOKEN GREEN", visor: "#39ff14", left: "#39ff14", right: "#66ffe0", how: "take the 12:04" },
+    { id: "ice", name: "4B ICE", visor: "#88ccee", left: "#88ccee", right: "#e8e7ff", how: "find Frank's ice" },
+    { id: "stub", name: "SILVER SCREEN", visor: "#ffe7a8", left: "#ffe7a8", right: "#e0b25a", how: "a Rivoli stub" },
 ];
 
 function emptyNight() {
@@ -151,6 +154,9 @@ export function evaluateUnlocks(progress, events = {}) {
     if (flags.vinyl) unlock("vinyl");
     if (flags.tonic) unlock("tonic");
     if (flags.haircut) unlock("clipper");
+    if (flags.token || flags.subway || zones.has("subway")) unlock("token");
+    if (flags.ice) unlock("ice");
+    if (flags.ticket) unlock("stub");
 
     const next = {
         ...progress,

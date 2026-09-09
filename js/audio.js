@@ -62,6 +62,7 @@ export function createAudio() {
     let jazzGain = null;
     let rainGain = null;
     let rainSrc = null;
+    let rumbleGain = null;
     let zone = "club";
     let nightPhase = "doors";
     let jazzOn = false;
@@ -94,6 +95,17 @@ export function createAudio() {
         jazzGain.gain.value = 0;
         rainGain = ctx.createGain();
         rainGain.gain.value = 0;
+        rumbleGain = ctx.createGain();
+        rumbleGain.gain.value = 0;
+        const rumbleOsc = ctx.createOscillator();
+        rumbleOsc.type = "sawtooth";
+        rumbleOsc.frequency.value = 38;
+        const rumbleLp = ctx.createBiquadFilter();
+        rumbleLp.type = "lowpass";
+        rumbleLp.frequency.value = 85;
+        rumbleOsc.connect(rumbleLp);
+        rumbleLp.connect(rumbleGain);
+        rumbleOsc.start();
 
         muteGain = ctx.createGain();
         muteGain.gain.value = muted ? 0 : 1;
@@ -150,6 +162,7 @@ export function createAudio() {
         clubGain.connect(master);
         jazzGain.connect(master);
         rainGain.connect(master);
+        rumbleGain.connect(master);
 
         master.connect(compressor);
         compressor.connect(dry);
@@ -471,6 +484,8 @@ export function createAudio() {
                 barber: [0.05, 0.14, 0.08],
                 street: [0.1, 0.05, 0.45],
                 alley: [0.28, 0.04, 0.35],
+                subway: [0.04, 0.04, 0.12],
+                suite: [0.05, 0.16, 0.05],
             }[zone] || [1, 0, 0];
             const night = {
                 doors: [1, 1, 0.85],
@@ -482,6 +497,7 @@ export function createAudio() {
             clubGain.gain.setTargetAtTime(mix[0] * night[0], t, 0.4);
             jazzGain.gain.setTargetAtTime(mix[1] * night[1], t, 0.4);
             rainGain.gain.setTargetAtTime(mix[2] * night[2], t, 0.45);
+            if (rumbleGain) rumbleGain.gain.setTargetAtTime(zone === "subway" ? 0.22 : 0, t, 0.35);
         },
 
         consumeKick() {
@@ -538,6 +554,8 @@ export function createAudio() {
             if (zone === "liquor") return "BOTTLE ROOM";
             if (zone === "barber") return "OPEN LATE";
             if (zone === "hotel") return "LOBBY CARPET";
+            if (zone === "suite") return "4B CARPET";
+            if (zone === "subway") return "THE 12:04";
             return houseName;
         },
         setHouseSet(set) {

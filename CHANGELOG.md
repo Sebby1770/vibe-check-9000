@@ -4,6 +4,18 @@ All notable changes to VIBE CHECK 9000™ are documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
+## [19.0.0] - 2026-09-09
+
+The 12:04 is a train. 4B has ice. The Rivoli is showing something.
+
+### Added
+
+- Walkable subway under 47th: stairs, tiles, a token booth, a train that keeps its hours.
+- Hotel Astoria 2F: east stairs, corridor, 4B ice machine, a vacant room with a window on the street.
+- Rivoli silver screen (a picture that refuses the decade). Glowing shop doorways you can enter.
+- Crosswalk traffic. MILES downstairs, NELLIE upstairs. Frank's ice is a real errand.
+- Looks: token green, 4B ice, silver screen.
+
 ## [18.0.0] - 2026-09-09
 
 47th Street grew a far sidewalk that isn't a wall.
