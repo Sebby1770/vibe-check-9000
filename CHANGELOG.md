@@ -4,6 +4,19 @@ All notable changes to VIBE CHECK 9000™ are documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
+## [15.1.0] - 2026-09-09
+
+### Fixed
+
+- Cars face down 47th instead of sliding sideways. Parked Checkers sit on the curb; traffic stays in its lanes.
+- Dance is a smooth weight-shift on the beat instead of a twitch.
+- Bar and lounge sitting: thighs forward, shins down, hips on the seat, facing the bar or table.
+- Lounge floor is a complete ring around the atrium (no missing panels). Stair well is trimmed in marble.
+
+### Added
+
+- Gold-and-marble atrium balustrade with newel posts, a sloped stair handrail, coffered ceiling, sconces, velvet banquettes, marble tables.
+
 ## [15.0.0] - 2026-09-09
 
 Dusk on 47th. The club fills up. The lounge becomes a supper club. The other side of the street is a wall of towers.

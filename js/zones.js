@@ -150,14 +150,18 @@ export function buildColliders() {
     wall(boxes, -32.6, -18.4, 2.4, 5.1, -1, 1.8);
     wall(boxes, 21.4, 28.6, 4.6, 7.4, -1, 1.6);
 
-    // Atrium railings (second floor)
-    wall(boxes, -7.55, 7.55, 5.25, 5.62, 4.2, 5.55);
-    wall(boxes, -7.55, 7.55, -7.85, -7.45, 4.2, 5.55);
-    wall(boxes, -7.55, -7.15, -7.6, 5.4, 4.2, 5.55);
-    wall(boxes, 7.15, 7.55, -7.6, 2.15, 4.2, 5.55);
+    // Atrium railings (second floor) — full rectangle
+    wall(boxes, -7.7, 7.7, 5.28, 5.78, 4.2, 5.75);
+    wall(boxes, -7.7, 7.7, -7.98, -7.48, 4.2, 5.75);
+    wall(boxes, -7.75, -7.18, -7.6, 5.4, 4.2, 5.75);
+    wall(boxes, 7.18, 7.75, -7.6, 5.4, 4.2, 5.75);
 
-    // Stair rails (gaps at top + bottom so you can step on)
-    wall(boxes, 13.05, 13.22, 2.9, 9.5, -1, 6.2);
+    // Stair rails
+    wall(boxes, 13.08, 13.36, 2.9, 9.5, -1, 6.4);
+    wall(boxes, 16.12, 16.42, 2.9, 9.5, -1, 6.4);
+
+    // West banquettes
+    wall(boxes, -15.7, -13.9, -4.0, 5.2, 4.2, 5.6);
 
     // Lounge stage + jukebox + tables + lounge bar
     wall(boxes, -3.6, 3.6, -14.7, -12.2, 4.2, 5.6);
@@ -187,11 +191,13 @@ export function buildColliders() {
     // Far buildings across the street
     wall(boxes, -90, 90, 32.05, 90, -1, 120);
 
-    // Parked cars
-    wall(boxes, -22.4, -17.8, 18.7, 20.7, -1, 1.4);
-    wall(boxes, -8.6, -4.2, 18.7, 20.7, -1, 1.4);
-    wall(boxes, 12.2, 16.6, 18.7, 20.7, -1, 1.4);
-    wall(boxes, 27.2, 31.6, 18.7, 20.7, -1, 1.4);
+    // Parked cars — parallel to the curb, out of the driving lanes
+    wall(boxes, -22.1, -18.1, 18.05, 19.65, -1, 1.4);
+    wall(boxes, -8.4, -4.4, 18.05, 19.65, -1, 1.4);
+    wall(boxes, 12.4, 16.4, 18.05, 19.65, -1, 1.4);
+    wall(boxes, 27.4, 31.4, 18.05, 19.65, -1, 1.4);
+    wall(boxes, -34.2, -30.2, 26.05, 27.65, -1, 1.4);
+    wall(boxes, 6.2, 10.2, 26.05, 27.65, -1, 1.4);
 
     // Newsstand + phone booth + subway kiosk
     wall(boxes, -13.3, -10.4, 15.35, 16.85, -1, 2.2);

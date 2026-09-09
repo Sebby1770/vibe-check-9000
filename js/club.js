@@ -29,7 +29,10 @@ export function buildClub(scene, env) {
     const plaster = new THREE.MeshStandardMaterial({ map: plasterMap, roughness: 0.85, color: 0xb8a078 });
     const loungeCarpet = new THREE.MeshStandardMaterial({ map: carpetTex(), roughness: 0.88, color: 0x8a3a48 });
     const damask = new THREE.MeshStandardMaterial({ map: damaskTex(), roughness: 0.8, color: 0x7a3040 });
-    const brass = new THREE.MeshStandardMaterial({ color: 0xc9a227, roughness: 0.35, metalness: 0.85 });
+    const brass = new THREE.MeshStandardMaterial({ color: 0xc9a227, roughness: 0.32, metalness: 0.88, emissive: 0x3a2808, emissiveIntensity: 0.18 });
+    const marble = new THREE.MeshStandardMaterial({ color: 0xe8dcc8, roughness: 0.28, metalness: 0.22 });
+    const gold = new THREE.MeshStandardMaterial({ color: 0xe0b25a, roughness: 0.22, metalness: 0.9, emissive: 0x5a3a10, emissiveIntensity: 0.22 });
+    const velvet = new THREE.MeshStandardMaterial({ color: 0x5a1020, roughness: 0.85 });
     const emissiveCyan = new THREE.MeshBasicMaterial({ color: 0x00fff7 });
     const emissiveMag = new THREE.MeshBasicMaterial({ color: 0xff00aa });
     const emissiveLime = new THREE.MeshBasicMaterial({ color: 0x39ff14 });
@@ -40,15 +43,24 @@ export function buildClub(scene, env) {
     addBox(world, unitBox, concreteDark, 0, -0.05, -2, 33.2, 0.1, 29.2);
     addBox(world, unitBox, concrete, 0, 8.25, -2, 33.2, 0.14, 29.2);
 
-    // Second-floor plates around atrium
+    // Second-floor plates — full coverage except atrium hole + stair well
     const fy = SECOND_Y;
-    addBox(world, unitBox, loungeCarpet, -1.65, fy - 0.04, 8.95, 29.7, 0.08, 7.1); // street side, not over stairs
-    addBox(world, unitBox, loungeCarpet, 14.85, fy - 0.04, 11.32, 3.3, 0.08, 2.35); // east of stair bottom
-    addBox(world, unitBox, loungeCarpet, 0, fy - 0.04, -12.05, 33, 0.08, 9.1); // booth side
-    addBox(world, unitBox, loungeCarpet, -11.9, fy - 0.04, -1.1, 9.4, 0.08, 13.2); // west
-    addBox(world, unitBox, loungeCarpet, 10.25, fy - 0.04, -4.85, 12.2, 0.08, 5.5); // east south of stairs
-    addBox(world, unitBox, loungeCarpet, 10.25, fy - 0.04, 1.05, 5.9, 0.08, 2.3); // east landing
-    addBox(world, unitBox, loungeCarpet, 14.75, fy - 0.04, 1.35, 3.1, 0.08, 1.6); // stair top landing
+    addBox(world, unitBox, loungeCarpet, -1.65, fy - 0.04, 8.95, 29.7, 0.1, 7.1); // north, west of stairs
+    addBox(world, unitBox, loungeCarpet, 14.85, fy - 0.04, 11.325, 3.3, 0.1, 2.35); // north-east of stair bottom
+    addBox(world, unitBox, loungeCarpet, 0, fy - 0.04, -12.05, 33, 0.1, 8.9); // south / stage
+    addBox(world, unitBox, loungeCarpet, -11.9, fy - 0.04, -1.1, 9.4, 0.1, 13.0); // west of atrium
+    addBox(world, unitBox, loungeCarpet, 10.25, fy - 0.04, -1.1, 5.9, 0.1, 13.0); // east of atrium, west of stairs
+    addBox(world, unitBox, loungeCarpet, 14.85, fy - 0.04, -2.725, 3.3, 0.1, 9.75); // east of stairs, south of well
+    addBox(world, unitBox, marble, 0, fy + 0.01, ATRIUM.maxZ + 0.22, 15.2, 0.05, 0.44);
+    addBox(world, unitBox, marble, 0, fy + 0.01, ATRIUM.minZ - 0.22, 15.2, 0.05, 0.44);
+    addBox(world, unitBox, marble, ATRIUM.minX - 0.22, fy + 0.01, -1.1, 0.44, 0.05, 13.4);
+    addBox(world, unitBox, marble, ATRIUM.maxX + 0.22, fy + 0.01, -1.1, 0.44, 0.05, 13.4);
+    addBox(world, unitBox, gold, 0, fy + 0.03, ATRIUM.maxZ, 14.7, 0.03, 0.08);
+    addBox(world, unitBox, gold, 0, fy + 0.03, ATRIUM.minZ, 14.7, 0.03, 0.08);
+    addBox(world, unitBox, gold, ATRIUM.minX, fy + 0.03, -1.1, 0.08, 0.03, 13.0);
+    addBox(world, unitBox, gold, ATRIUM.maxX, fy + 0.03, -1.1, 0.08, 0.03, 13.0);
+    addBox(world, unitBox, marble, 13.2, fy + 0.02, 6.15, 0.22, 0.06, 8.0);
+    addBox(world, unitBox, gold, 13.28, fy + 0.05, 6.15, 0.06, 0.03, 8.0);
 
     // Outer walls (visual; doors cut as gaps)
     addBox(world, unitBox, concrete, -16.58, 4.1, -2, 0.28, 8.3, 29.2);
@@ -262,12 +274,14 @@ export function buildClub(scene, env) {
         glasses.setMatrixAt(i, _dummy.matrix);
     }
     scene.add(glasses);
-    const stoolGeo = new THREE.CylinderGeometry(0.18, 0.16, 0.08, 8);
+    const stoolGeo = new THREE.CylinderGeometry(0.2, 0.17, 0.07, 10);
     for (let i = 0; i < 6; i++) {
+        const z = -6 + i * 2.2;
+        addBox(world, unitBox, metalDark, -14.15, 0.34, z, 0.08, 0.68, 0.08);
         const s = new THREE.Mesh(stoolGeo, metal);
-        s.position.set(-14.15, 0.55, -6 + i * 2.2);
+        s.position.set(-14.15, 0.7, z);
         scene.add(s);
-        addBox(world, unitBox, metalDark, -14.15, 0.25, -6 + i * 2.2, 0.08, 0.5, 0.08);
+        addBox(world, unitBox, metalDark, -14.15, 0.92, z + 0.14, 0.22, 0.32, 0.06);
     }
 
     // Ground-floor VIP couches
@@ -283,27 +297,68 @@ export function buildClub(scene, env) {
     signVc.rotation.y = Math.PI;
     scene.add(signVc);
 
-    // Stairs
+    // Stairs with a continuous gold handrail
     const steps = 14;
     for (let i = 0; i < steps; i++) {
         const t = i / (steps - 1);
         const z = STAIRS.zBottom - t * (STAIRS.zBottom - STAIRS.zTop);
         const y = t * SECOND_Y;
-        addBox(world, unitBox, metalDark, 14.75, y + 0.04, z, 2.9, 0.08, 0.62);
-        addBox(world, unitBox, brass, 13.18, y + 0.55, z, 0.05, 1.05, 0.08);
+        addBox(world, unitBox, marble, 14.75, y + 0.04, z, 2.9, 0.08, 0.62);
+        addBox(world, unitBox, gold, 14.75, y + 0.085, z, 2.9, 0.02, 0.08);
     }
-    addBox(world, unitBox, brass, 13.18, 2.4, 6.15, 0.05, 0.05, 8.1);
+    const dzStair = STAIRS.zBottom - STAIRS.zTop;
+    const stairLen = Math.hypot(dzStair, SECOND_Y);
+    const stairAng = Math.atan2(SECOND_Y, dzStair);
+    const hand = addBox(world, unitBox, brass, 13.22, SECOND_Y / 2 + 0.92, (STAIRS.zBottom + STAIRS.zTop) / 2, 0.08, 0.07, stairLen);
+    hand.rotation.x = -stairAng;
+    const hand2 = addBox(world, unitBox, brass, 16.28, SECOND_Y / 2 + 0.92, (STAIRS.zBottom + STAIRS.zTop) / 2, 0.08, 0.07, stairLen);
+    hand2.rotation.x = -stairAng;
+    for (let i = 0; i <= 10; i++) {
+        const t = i / 10;
+        const z = STAIRS.zBottom - t * dzStair;
+        const y = t * SECOND_Y;
+        addBox(world, unitBox, brass, 13.22, y + 0.5, z, 0.045, 0.85, 0.045);
+        addBox(world, unitBox, brass, 16.28, y + 0.5, z, 0.045, 0.85, 0.045);
+    }
 
-    // Atrium rail
-    const rail = (x, y, z, sx, sy, sz) => addBox(world, unitBox, brass, x, y, z, sx, sy, sz);
-    rail(0, fy + 0.55, ATRIUM.maxZ + 0.08, 14.8, 0.05, 0.05);
-    rail(0, fy + 0.55, ATRIUM.minZ - 0.08, 14.8, 0.05, 0.05);
-    rail(ATRIUM.minX - 0.08, fy + 0.55, -1.1, 0.05, 0.05, 13);
-    rail(ATRIUM.maxX + 0.08, fy + 0.55, -2.7, 0.05, 0.05, 9.4);
-    for (let i = -6; i <= 6; i++) {
-        rail(i * 1.1, fy + 0.28, ATRIUM.maxZ + 0.08, 0.04, 0.55, 0.04);
-        rail(i * 1.1, fy + 0.28, ATRIUM.minZ - 0.08, 0.04, 0.55, 0.04);
+    function luxRailX(z, x0, x1) {
+        const cx = (x0 + x1) / 2;
+        const len = Math.abs(x1 - x0);
+        addBox(world, unitBox, marble, cx, fy + 0.08, z, len, 0.16, 0.3);
+        addBox(world, unitBox, brass, cx, fy + 0.44, z, len, 0.045, 0.07);
+        addBox(world, unitBox, brass, cx, fy + 0.98, z, len + 0.08, 0.08, 0.12);
+        const n = Math.max(2, Math.round(len / 0.3));
+        for (let i = 0; i <= n; i++) {
+            const x = x0 + (i / n) * (x1 - x0);
+            addBox(world, unitBox, brass, x, fy + 0.52, z, 0.04, 0.78, 0.04);
+        }
     }
+    function luxRailZ(x, z0, z1) {
+        const cz = (z0 + z1) / 2;
+        const len = Math.abs(z1 - z0);
+        addBox(world, unitBox, marble, x, fy + 0.08, cz, 0.3, 0.16, len);
+        addBox(world, unitBox, brass, x, fy + 0.44, cz, 0.07, 0.045, len);
+        addBox(world, unitBox, brass, x, fy + 0.98, cz, 0.12, 0.08, len + 0.08);
+        const n = Math.max(2, Math.round(len / 0.3));
+        for (let i = 0; i <= n; i++) {
+            const z = z0 + (i / n) * (z1 - z0);
+            addBox(world, unitBox, brass, x, fy + 0.52, z, 0.04, 0.78, 0.04);
+        }
+    }
+    function newel(x, z) {
+        addBox(world, unitBox, gold, x, fy + 0.55, z, 0.16, 1.1, 0.16);
+        const orb = new THREE.Mesh(new THREE.SphereGeometry(0.11, 10, 8), gold);
+        orb.position.set(x, fy + 1.18, z);
+        world.add(orb);
+    }
+    luxRailX(ATRIUM.maxZ + 0.12, ATRIUM.minX, ATRIUM.maxX);
+    luxRailX(ATRIUM.minZ - 0.12, ATRIUM.minX, ATRIUM.maxX);
+    luxRailZ(ATRIUM.minX - 0.12, ATRIUM.minZ, ATRIUM.maxZ);
+    luxRailZ(ATRIUM.maxX + 0.12, ATRIUM.minZ, ATRIUM.maxZ);
+    newel(ATRIUM.minX - 0.12, ATRIUM.maxZ + 0.12);
+    newel(ATRIUM.maxX + 0.12, ATRIUM.maxZ + 0.12);
+    newel(ATRIUM.minX - 0.12, ATRIUM.minZ - 0.12);
+    newel(ATRIUM.maxX + 0.12, ATRIUM.minZ - 0.12);
 
     // Lounge — supper-club walls, stage, tables, chandelier
     addBox(world, unitBox, wood, -16.38, fy + 0.7, -2, 0.08, 1.4, 28.4);
@@ -327,16 +382,35 @@ export function buildClub(scene, env) {
     addBox(world, unitBox, metal, 0.15, fy + 1.95, -12.4, 0.08, 0.06, 0.12);
 
     function chandelier(x, z) {
-        addBox(world, unitBox, brass, x, fy + 3.55, z, 0.05, 0.7, 0.05);
-        addBox(world, unitBox, brass, x, fy + 3.15, z, 0.7, 0.06, 0.7);
-        for (const [dx, dz] of [[0.28, 0.28], [-0.28, 0.28], [0.28, -0.28], [-0.28, -0.28], [0.38, 0], [-0.38, 0]]) {
-            addBox(world, unitBox, emissiveAmber, x + dx, fy + 3.0, z + dz, 0.1, 0.14, 0.1);
+        addBox(world, unitBox, brass, x, fy + 3.55, z, 0.06, 0.55, 0.06);
+        addBox(world, unitBox, gold, x, fy + 3.22, z, 0.95, 0.07, 0.95);
+        addBox(world, unitBox, brass, x, fy + 3.05, z, 0.55, 0.05, 0.55);
+        for (const [dx, dz] of [[0.34, 0.34], [-0.34, 0.34], [0.34, -0.34], [-0.34, -0.34], [0.46, 0], [-0.46, 0], [0, 0.46], [0, -0.46]]) {
+            addBox(world, unitBox, emissiveAmber, x + dx, fy + 2.95, z + dz, 0.1, 0.16, 0.1);
         }
     }
     chandelier(-11.2, 6.4);
     chandelier(10.6, 6.2);
     chandelier(-10.8, -4.5);
     chandelier(10.4, -5.2);
+    chandelier(-11.0, 1.0);
+    chandelier(10.5, 1.2);
+
+    for (let i = -3; i <= 3; i++) {
+        addBox(world, unitBox, gold, 0, 8.05, i * 3.4, 32, 0.08, 0.16);
+    }
+    for (let i = -4; i <= 4; i++) {
+        addBox(world, unitBox, gold, i * 3.6, 8.05, -2, 0.16, 0.08, 28);
+    }
+
+    for (const [x, z] of [[-16.2, 8], [-16.2, 2], [-16.2, -4], [-16.2, -10], [16.2, 8], [16.2, 2], [16.2, -4], [16.2, -10]]) {
+        addBox(world, unitBox, brass, x, fy + 2.15, z, 0.08, 0.22, 0.22);
+        addBox(world, unitBox, emissiveAmber, x + Math.sign(x) * -0.08, fy + 2.05, z, 0.1, 0.16, 0.16);
+    }
+
+    addBox(world, unitBox, velvet, -14.8, fy + 0.42, 0.6, 1.6, 0.55, 9.0);
+    addBox(world, unitBox, velvet, -14.8, fy + 0.72, 0.6, 0.35, 0.7, 9.0);
+    addBox(world, unitBox, gold, -14.8, fy + 0.16, 0.6, 1.7, 0.05, 9.1);
 
     const loungeTables = [
         [-12.2, 7.0], [-9.4, 6.5], [-12.4, 4.2],
@@ -346,17 +420,20 @@ export function buildClub(scene, env) {
         [-12.0, 1.2],
     ];
     for (const [x, z] of loungeTables) {
-        addBox(world, unitBox, wood, x, fy + 0.38, z, 0.95, 0.08, 0.95);
-        addBox(world, unitBox, brass, x, fy + 0.2, z, 0.08, 0.36, 0.08);
-        addBox(world, unitBox, emissiveAmber, x, fy + 0.52, z, 0.08, 0.16, 0.08);
-        addBox(world, unitBox, wood, x + 0.7, fy + 0.22, z + 0.15, 0.55, 0.1, 0.5);
-        addBox(world, unitBox, metalDark, x + 0.7, fy + 0.42, z + 0.32, 0.55, 0.38, 0.1);
-        addBox(world, unitBox, wood, x - 0.7, fy + 0.22, z - 0.1, 0.55, 0.1, 0.5);
-        addBox(world, unitBox, metalDark, x - 0.7, fy + 0.42, z - 0.28, 0.55, 0.38, 0.1);
+        addBox(world, unitBox, marble, x, fy + 0.4, z, 1.05, 0.07, 1.05);
+        addBox(world, unitBox, brass, x, fy + 0.2, z, 0.09, 0.38, 0.09);
+        addBox(world, unitBox, new THREE.MeshStandardMaterial({ color: 0xf4eee0, roughness: 0.85 }), x, fy + 0.445, z, 1.0, 0.02, 1.0);
+        addBox(world, unitBox, emissiveAmber, x, fy + 0.56, z, 0.07, 0.18, 0.07);
+        addBox(world, unitBox, gold, x, fy + 0.66, z, 0.04, 0.04, 0.04);
+        for (const sx of [-0.72, 0.72]) {
+            addBox(world, unitBox, velvet, x + sx, fy + 0.24, z, 0.5, 0.12, 0.48);
+            addBox(world, unitBox, velvet, x + sx, fy + 0.5, z + (sx > 0 ? 0.16 : -0.16), 0.5, 0.4, 0.12);
+        }
     }
 
-    addBox(world, unitBox, wood, -14.6, fy + 0.55, -8.2, 1.4, 1.1, 4.6);
-    addBox(world, unitBox, brass, -14.6, fy + 1.12, -8.2, 1.3, 0.04, 4.4);
+    addBox(world, unitBox, marble, -14.6, fy + 0.58, -8.2, 1.5, 0.12, 4.8);
+    addBox(world, unitBox, wood, -14.6, fy + 0.28, -8.2, 1.4, 0.55, 4.6);
+    addBox(world, unitBox, gold, -14.6, fy + 0.66, -8.2, 1.45, 0.04, 4.7);
     addBox(world, unitBox, emissiveAmber, -14.6, fy + 0.08, -8.2, 1.2, 0.04, 4.4);
 
     addBox(world, unitBox, metalDark, 11.15, fy + 0.7, -9.35, 0.7, 1.4, 0.45);
@@ -455,36 +532,44 @@ export function buildClub(scene, env) {
     for (let i = 0; i < stoolZ.length; i++) {
         const z = stoolZ[i];
         if (taken(-14.15, z, 0, 1.1)) continue;
-        barCrowd.push(placePerson(randomRaver(0.55 + i * 0.13, { outfit: i % 2 ? "raver" : "host", anim: "sit" }), -14.15, z, 0, -Math.PI / 2, "sit"));
+        const h = placePerson(randomRaver(0.55 + i * 0.13, { outfit: i % 2 ? "raver" : "host", anim: "sit" }), -14.15, z, 0, -Math.PI / 2, "sit");
+        h.userData.sitHips = 0.7;
+        barCrowd.push(h);
     }
-    for (const [x, z, yaw] of [[-13.05, -5.1, -1.4], [-13.1, -2.4, -1.7], [-13.0, 1.7, -1.55], [-13.12, 4.15, -1.2], [-12.85, 6.4, -1.8], [-12.6, -7.2, 3.4]]) {
+    for (const [x, z] of [[-13.05, -5.1], [-13.1, -2.4], [-13.0, 1.7], [-13.12, 4.15], [-12.85, 6.4], [-12.6, -7.2]]) {
         if (taken(x, z, 0, 1.0)) continue;
-        barCrowd.push(placePerson(randomRaver(0.8 + Math.abs(z) * 0.05, { anim: "lean" }), x, z, 0, yaw, "lean"));
+        barCrowd.push(placePerson(randomRaver(0.8 + Math.abs(z) * 0.05, { anim: "lean" }), x, z, 0, -Math.PI / 2, "lean"));
     }
-    for (const [x, z, yaw] of [[13.5, -4.0, 1.2], [13.55, 1.95, -0.3], [13.15, 6.45, 3.0], [12.4, -6.5, 0.4]]) {
-        barCrowd.push(placePerson(randomRaver(1.1 + x * 0.02, { outfit: "host", anim: "sit" }), x, z, 0, yaw, "sit"));
+    for (const [x, z] of [[13.5, -4.0], [13.55, 1.95], [13.15, 6.45]]) {
+        const h = placePerson(randomRaver(1.1 + x * 0.02, { outfit: "host", anim: "sit" }), x, z, 0, -Math.PI / 2, "sit");
+        h.userData.sitHips = 0.48;
+        barCrowd.push(h);
     }
 
     const loungeCrowd = [];
     const seatPairs = [
-        [-12.2, 7.0, 0.2], [-9.4, 6.5, -0.4], [-12.4, 4.2, 0.5],
-        [9.2, 7.1, 3.0], [11.4, 5.4, 2.5],
-        [-11.6, -3.4, 0.1], [-9.2, -5.6, 0.8],
-        [9.6, -4.2, -2.2], [11.5, -6.4, 2.8],
-        [-12.0, 1.2, 0.3],
+        [-12.2, 7.0], [-9.4, 6.5], [-12.4, 4.2],
+        [9.2, 7.1], [11.4, 5.4],
+        [-11.6, -3.4], [-9.2, -5.6],
+        [9.6, -4.2], [11.5, -6.4],
+        [-12.0, 1.2],
     ];
     for (let i = 0; i < seatPairs.length; i++) {
-        const [x, z, yaw] = seatPairs[i];
-        const a = [x + 0.65, z + 0.12];
-        const b = [x - 0.65, z - 0.1];
+        const [x, z] = seatPairs[i];
+        const a = [x + 0.72, z];
+        const b = [x - 0.72, z];
         if (!taken(a[0], a[1], fy, 1.15)) {
-            loungeCrowd.push(placePerson(randomLounge(0.21 * i + 0.04, { anim: "sit" }), a[0], a[1], fy, yaw + 0.4, "sit"));
+            const h = placePerson(randomLounge(0.21 * i + 0.04, { anim: "sit" }), a[0], a[1], fy, -Math.PI / 2, "sit");
+            h.userData.sitHips = 0.46;
+            loungeCrowd.push(h);
         }
         if (!taken(b[0], b[1], fy, 1.15)) {
-            loungeCrowd.push(placePerson(randomLounge(0.33 * i + 0.18, { anim: "sit" }), b[0], b[1], fy, yaw + Math.PI - 0.3, "sit"));
+            const h = placePerson(randomLounge(0.33 * i + 0.18, { anim: "sit" }), b[0], b[1], fy, Math.PI / 2, "sit");
+            h.userData.sitHips = 0.46;
+            loungeCrowd.push(h);
         }
     }
-    for (const [x, z, yaw] of [[-7.85, 4.9, 0], [7.85, 4.6, Math.PI], [-7.85, -6.4, 0.2], [7.85, -6.1, Math.PI], [-7.9, 0.8, 0.1], [8.0, -1.2, Math.PI]]) {
+    for (const [x, z, yaw] of [[-7.95, 4.9, 0], [7.95, 4.6, Math.PI], [-7.95, -6.4, 0], [7.95, -6.1, Math.PI], [-7.95, 0.8, 0], [8.0, -1.2, Math.PI]]) {
         loungeCrowd.push(placePerson(randomLounge(1.4 + x * 0.03, { anim: "lean" }), x, z, fy, yaw, "lean"));
     }
     for (const [x, z, yaw] of [[-4.4, -11.2, 0.2], [4.2, -11.0, -0.15], [-14.2, -6.5, Math.PI / 2], [8.4, 8.6, Math.PI]]) {

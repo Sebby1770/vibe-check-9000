@@ -7,7 +7,7 @@ const RAIN_N = 900;
 const STEAM_N = 80;
 const _dummy = new THREE.Object3D();
 
-function sedan(scene, { x, z, yaw = 0, taxi = false, color = 0x2a2a32 }) {
+function sedan(scene, { x, z, yaw = 0, taxi = false, color = 0x2a2a32, moving = 0 }) {
     const g = new THREE.Group();
     const bodyC = taxi ? 0xf5c518 : color;
     const paint = new THREE.MeshStandardMaterial({ color: bodyC, roughness: 0.35, metalness: 0.45 });
@@ -23,14 +23,16 @@ function sedan(scene, { x, z, yaw = 0, taxi = false, color = 0x2a2a32 }) {
     bumperF.position.set(1.9, 0.38, 0);
     const bumperB = bumperF.clone();
     bumperB.position.x = -1.9;
-    const wheelG = new THREE.CylinderGeometry(0.28, 0.28, 0.22, 10);
+    const wheelGeo = new THREE.CylinderGeometry(0.28, 0.28, 0.22, 10);
     const wheels = [];
     for (const [wx, wz] of [[1.15, 0.72], [1.15, -0.72], [-1.2, 0.72], [-1.2, -0.72]]) {
-        const w = new THREE.Mesh(wheelG, dark);
-        w.rotation.z = Math.PI / 2;
-        w.position.set(wx, 0.28, wz);
-        g.add(w);
-        wheels.push(w);
+        const hub = new THREE.Group();
+        hub.position.set(wx, 0.28, wz);
+        const tire = new THREE.Mesh(wheelGeo, dark);
+        tire.rotation.x = Math.PI / 2;
+        hub.add(tire);
+        g.add(hub);
+        wheels.push(hub);
     }
     g.add(body, cabin, hood, bumperF, bumperB);
     if (taxi) {
@@ -48,6 +50,7 @@ function sedan(scene, { x, z, yaw = 0, taxi = false, color = 0x2a2a32 }) {
     g.position.set(x, 0, z);
     g.rotation.y = yaw;
     g.userData.wheels = wheels;
+    g.userData.moving = moving;
     scene.add(g);
     return g;
 }
@@ -431,17 +434,19 @@ export function buildCity(scene) {
 
     // Cars
     const parked = [
-        sedan(scene, { x: -20.1, z: 19.7, yaw: Math.PI / 2, color: 0x3a1a1a }),
-        sedan(scene, { x: -6.4, z: 19.7, yaw: Math.PI / 2, color: 0x1a2a3a }),
-        sedan(scene, { x: 14.4, z: 19.7, yaw: Math.PI / 2, taxi: true }),
-        sedan(scene, { x: 29.4, z: 19.7, yaw: Math.PI / 2, color: 0x2a3a28 }),
+        sedan(scene, { x: -20.1, z: 18.85, yaw: 0, color: 0x3a1a1a }),
+        sedan(scene, { x: -6.4, z: 18.85, yaw: Math.PI, color: 0x1a2a3a }),
+        sedan(scene, { x: 14.4, z: 18.85, yaw: 0, taxi: true }),
+        sedan(scene, { x: 29.4, z: 18.85, yaw: Math.PI, color: 0x2a3a28 }),
+        sedan(scene, { x: -32.2, z: 26.85, yaw: 0, color: 0x2a2430 }),
+        sedan(scene, { x: 8.2, z: 26.85, yaw: Math.PI, taxi: true }),
     ];
     const traffic = [
-        sedan(scene, { x: -40, z: 21.4, yaw: Math.PI / 2, taxi: true }),
-        sedan(scene, { x: 20, z: 24.6, yaw: -Math.PI / 2, color: 0x2a2030 }),
-        sedan(scene, { x: -10, z: 21.4, yaw: Math.PI / 2, color: 0x3a2a18 }),
-        sedan(scene, { x: 36, z: 21.4, yaw: Math.PI / 2, taxi: true }),
-        sedan(scene, { x: -28, z: 24.6, yaw: -Math.PI / 2, color: 0x4a1a1a }),
+        sedan(scene, { x: -40, z: 21.35, yaw: 0, taxi: true, moving: 1 }),
+        sedan(scene, { x: 20, z: 24.55, yaw: Math.PI, color: 0x2a2030, moving: -1 }),
+        sedan(scene, { x: -10, z: 21.35, yaw: 0, color: 0x3a2a18, moving: 1 }),
+        sedan(scene, { x: 36, z: 21.35, yaw: 0, taxi: true, moving: 1 }),
+        sedan(scene, { x: -28, z: 24.55, yaw: Math.PI, color: 0x4a1a1a, moving: -1 }),
     ];
 
     const peds = [];
@@ -520,14 +525,13 @@ export function updateCity(city, dt, t, { outside, reduced }) {
     }
     city.steamGeo.attributes.position.needsUpdate = true;
 
-    for (let i = 0; i < city.traffic.length; i++) {
-        const car = city.traffic[i];
-        const lane = i % 2 === 0 ? 1 : -1;
-        car.position.x += dt * 7.5 * lane;
-        if (lane > 0 && car.position.x > 48) car.position.x = -48;
-        if (lane < 0 && car.position.x < -48) car.position.x = 48;
-        car.rotation.y = lane > 0 ? Math.PI / 2 : -Math.PI / 2;
-        for (const w of car.userData.wheels || []) w.rotation.x += dt * 8 * lane;
+    for (const car of city.traffic) {
+        const dir = car.userData.moving || 1;
+        car.position.x += dt * 8.2 * dir;
+        if (dir > 0 && car.position.x > 52) car.position.x = -52;
+        if (dir < 0 && car.position.x < -52) car.position.x = 52;
+        car.rotation.y = dir > 0 ? 0 : Math.PI;
+        for (const w of car.userData.wheels || []) w.rotation.z -= dt * 9 * dir;
     }
 
     for (const ped of city.peds) {
