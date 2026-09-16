@@ -94,6 +94,14 @@ export function decorateShops(root, mats) {
     addBox(root, unitBox, wallMat, s.maxX - 0.04, 1.95, 36.05, 0.12, 3.9, 7.95);
     addBox(root, unitBox, wallMat, cx, 1.95, 39.95, w, 3.9, 0.12);
     addBox(root, unitBox, slate, cx, 3.9, 36.05, w, 0.12, 7.95);
+    addBox(root, unitBox, mats.wood, cx, 4.22, 36.05, w - 0.2, 0.1, 7.9);
+    addBox(root, unitBox, wallMat, s.minX + 0.04, 6.15, 36.05, 0.12, 3.8, 7.95);
+    addBox(root, unitBox, wallMat, s.maxX - 0.04, 6.15, 36.05, 0.12, 3.8, 7.95);
+    addBox(root, unitBox, wallMat, cx, 6.15, 39.95, w, 3.8, 0.12);
+    addBox(root, unitBox, slate, cx, 8.1, 36.05, w, 0.12, 7.95);
+    addBox(root, unitBox, mats.wood, cx, 4.58, 38.5, Math.min(4.8, w * 0.55), 0.72, 1.3);
+    addBox(root, unitBox, paper, cx, 4.95, 38.5, Math.min(4.4, w * 0.5), 0.06, 1.1);
+    addBox(root, unitBox, new THREE.MeshBasicMaterial({ color: 0xffe2a8 }), cx, 6.35, 32.18, Math.min(w * 0.42, 4.2), 1.15, 0.04);
     addBox(root, unitBox, mats.wood, cx, 0.16, 39.8, w, 0.3, 0.12);
     for (const [left, right] of [
       [s.minX + 0.2, s.doorX - 1.38],

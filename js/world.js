@@ -13,19 +13,21 @@ import { buildColliders, getFloorY, getZone, isOutside } from "./zones.js";
 import { makeCubeEnv, makeDuskSky, paintSky } from "./kit.js";
 import { phaseLook } from "./night.js";
 import { createShopActivities } from "./shop-activities.js";
+import { detectQuality } from "./quality.js";
 
 const _color = new THREE.Color();
 const _vibe = new THREE.Color("#ff00ff");
 
 export function createWorld(canvas, adConfig) {
+    const quality = detectQuality();
     const renderer = new THREE.WebGLRenderer({
         canvas,
-        antialias: true,
+        antialias: false,
         powerPreference: "high-performance",
         alpha: false,
     });
     renderer.info.autoReset = false;
-    renderer.setPixelRatio(Math.min(window.devicePixelRatio || 1, 2));
+    renderer.setPixelRatio(quality.pixelRatio);
     renderer.setSize(window.innerWidth, window.innerHeight);
     renderer.outputColorSpace = THREE.SRGBColorSpace;
     renderer.toneMapping = THREE.ACESFilmicToneMapping;
@@ -48,9 +50,15 @@ export function createWorld(canvas, adConfig) {
 
     const composer = new EffectComposer(renderer);
     composer.addPass(new RenderPass(scene, camera));
-    const bloom = new UnrealBloomPass(new THREE.Vector2(window.innerWidth, window.innerHeight), 0.38, 0.42, 0.68);
+    const bloom = new UnrealBloomPass(
+        new THREE.Vector2(window.innerWidth * quality.bloomScale, window.innerHeight * quality.bloomScale),
+        0.22,
+        0.4,
+        0.78,
+    );
     composer.addPass(bloom);
     composer.addPass(new OutputPass());
+    composer.setPixelRatio(quality.pixelRatio);
     let bloomKick = 0;
     let baseFov = 82;
 
@@ -135,10 +143,11 @@ export function createWorld(canvas, adConfig) {
         const h = window.innerHeight;
         camera.aspect = w / h;
         camera.updateProjectionMatrix();
-        renderer.setPixelRatio(Math.min(window.devicePixelRatio || 1, 2));
+        renderer.setPixelRatio(quality.pixelRatio);
         renderer.setSize(w, h);
+        composer.setPixelRatio(quality.pixelRatio);
         composer.setSize(w, h);
-        bloom.setSize(w, h);
+        bloom.setSize(w * quality.bloomScale, h * quality.bloomScale);
     }
     window.addEventListener("resize", resize);
 
@@ -312,15 +321,25 @@ export function createWorld(canvas, adConfig) {
                 });
             }
             if (crowdOn) {
-                for (const d of club.dancers) if (d.visible) animateHuman(d, t, { mode: d.userData.mode || "dance", bpm });
-                for (const p of club.barCrowd || []) if (p.visible) animateHuman(p, t, { mode: p.userData.mode || "idle", bpm });
-                for (const p of club.loungeCrowd || []) if (p.visible) animateHuman(p, t, { mode: p.userData.mode || "idle", bpm: 96 });
-                for (const ped of city.peds) if (ped.visible) animateHuman(ped, t, { mode: "walk", bpm: 96 });
-                for (const p of city.shopCrowd || []) {
-                    if (p.visible) animateHuman(p, t, { mode: p.userData.mode || "idle", bpm: 96 });
+                if (!outside) {
+                    for (const d of club.dancers) if (d.visible) animateHuman(d, t, { mode: d.userData.mode || "dance", bpm });
+                    for (const person of club.barCrowd || []) if (person.visible) animateHuman(person, t, { mode: person.userData.mode || "idle", bpm });
+                    for (const person of club.loungeCrowd || []) if (person.visible) animateHuman(person, t, { mode: person.userData.mode || "idle", bpm: 96 });
                 }
-                for (const p of city.subwayCrowd || []) {
-                    if (p.visible) animateHuman(p, t, { mode: p.userData.mode || "idle", bpm: 88 });
+                for (const ped of city.peds) {
+                    if (!ped.visible) continue;
+                    if (Math.hypot(p.x - ped.position.x, p.z - ped.position.z) > 36) continue;
+                    animateHuman(ped, t, { mode: "walk", bpm: 96 });
+                }
+                if (zone === "records" || zone === "pharmacy" || zone === "florist" || zone === "rivoli" || zone === "liquor" || zone === "barber" || (outside && p.z > 28)) {
+                    for (const person of city.shopCrowd || []) {
+                        if (person.visible) animateHuman(person, t, { mode: person.userData.mode || "idle", bpm: 96 });
+                    }
+                }
+                if (zone === "subway") {
+                    for (const person of city.subwayCrowd || []) {
+                        if (person.visible) animateHuman(person, t, { mode: person.userData.mode || "idle", bpm: 88 });
+                    }
                 }
             }
 
@@ -358,29 +377,31 @@ export function createWorld(canvas, adConfig) {
             }
 
             if (floorFlash > 0) floorFlash -= dt;
-            const FLOOR_N = 16;
-            const FLOOR_COUNT = 256;
-            const snakeHead = Math.floor(t * (reduced ? 6 : 14)) % FLOOR_COUNT;
-            for (let i = 0; i < FLOOR_COUNT; i++) {
-                const col = i % FLOOR_N;
-                const row = Math.floor(i / FLOOR_N);
-                const snakeIdx = row % 2 === 0 ? row * FLOOR_N + col : row * FLOOR_N + (FLOOR_N - 1 - col);
-                const dist = (snakeHead - snakeIdx + FLOOR_COUNT) % FLOOR_COUNT;
-                const snake = dist < 10 ? 1 - dist / 10 : 0;
-                const checker = (col + row) % 2;
-                let pulse = (0.1 + bass * 0.55 + snake * 0.85 + checker * 0.04 + mid * 0.12) * look.floor;
-                if (floorFlash > 0) pulse = 1.2;
-                _color.copy(sceneColor);
-                _color.multiplyScalar(0.35 + pulse * 0.9);
-                _color.r += snake * 0.25;
-                _color.b += (1 - snake) * 0.15;
-                club.floor.setColorAt(i, _color);
+            if (zone === "club") {
+                const FLOOR_N = 16;
+                const FLOOR_COUNT = 256;
+                const snakeHead = Math.floor(t * (reduced ? 6 : 14)) % FLOOR_COUNT;
+                for (let i = 0; i < FLOOR_COUNT; i++) {
+                    const col = i % FLOOR_N;
+                    const row = Math.floor(i / FLOOR_N);
+                    const snakeIdx = row % 2 === 0 ? row * FLOOR_N + col : row * FLOOR_N + (FLOOR_N - 1 - col);
+                    const dist = (snakeHead - snakeIdx + FLOOR_COUNT) % FLOOR_COUNT;
+                    const snake = dist < 10 ? 1 - dist / 10 : 0;
+                    const checker = (col + row) % 2;
+                    let pulse = (0.1 + bass * 0.55 + snake * 0.85 + checker * 0.04 + mid * 0.12) * look.floor;
+                    if (floorFlash > 0) pulse = 1.2;
+                    _color.copy(sceneColor);
+                    _color.multiplyScalar(0.35 + pulse * 0.9);
+                    _color.r += snake * 0.25;
+                    _color.b += (1 - snake) * 0.15;
+                    club.floor.setColorAt(i, _color);
+                }
+                club.floor.instanceColor.needsUpdate = true;
             }
-            club.floor.instanceColor.needsUpdate = true;
 
             if (bloomKick > 0) bloomKick -= dt;
             const drunkPulse = drunk && !reduced ? 0.22 + Math.sin(t * 1.3) * 0.08 : 0;
-            bloom.strength = reduced ? 0.06 : (outside ? 0.46 : zone === "club" ? 0.34 : 0.18) + (zone === "club" ? bass * 0.18 + bloomKick : outside ? bloomKick * 0.4 : 0) + drunkPulse;
+            bloom.strength = reduced ? 0.05 : (outside ? 0.2 : zone === "club" ? 0.28 : 0.12) + (zone === "club" ? bass * 0.14 + bloomKick : 0) + drunkPulse;
             const drunkFov = drunk && !reduced ? Math.sin(t * 0.7) * 4 + Math.sin(t * 1.9) * 1.6 : 0;
             const targetFov = baseFov + (reduced ? 0 : bass * 2.4 + bloomKick * 8) + drunkFov;
             if (Math.abs(camera.fov - targetFov) > 0.05) {
@@ -388,17 +409,19 @@ export function createWorld(canvas, adConfig) {
                 camera.updateProjectionMatrix();
             }
 
-            const pos = club.pGeo.attributes.position.array;
-            for (let i = 0; i < pos.length / 3; i++) {
-                pos[i * 3 + 1] += club.pVel[i] * dt * (reduced ? 0.4 : 1);
-                pos[i * 3] += Math.sin(t * 0.4 + i) * dt * 0.08;
-                if (pos[i * 3 + 1] > 4.0) {
-                    pos[i * 3 + 1] = 0.1;
-                    pos[i * 3] = (Math.random() - 0.5) * 30;
-                    pos[i * 3 + 2] = (Math.random() - 0.5) * 24;
+            if (zone === "club" || zone === "lounge") {
+                const pos = club.pGeo.attributes.position.array;
+                for (let i = 0; i < pos.length / 3; i++) {
+                    pos[i * 3 + 1] += club.pVel[i] * dt * (reduced ? 0.4 : 1);
+                    pos[i * 3] += Math.sin(t * 0.4 + i) * dt * 0.08;
+                    if (pos[i * 3 + 1] > 4.0) {
+                        pos[i * 3 + 1] = 0.1;
+                        pos[i * 3] = (Math.random() - 0.5) * 30;
+                        pos[i * 3 + 2] = (Math.random() - 0.5) * 24;
+                    }
                 }
+                club.pGeo.attributes.position.needsUpdate = true;
             }
-            club.pGeo.attributes.position.needsUpdate = true;
 
             ledTick += dt;
             if (ledTick > 0.1) {

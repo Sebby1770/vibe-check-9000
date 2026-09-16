@@ -8,8 +8,8 @@ import { buildShops } from "./shops.js";
 import { buildSubway, updateSubway } from "./under.js";
 import { SECOND_Y, HOTEL_STAIRS } from "./zones.js";
 
-const RAIN_N = 1600;
-const STEAM_N = 80;
+const RAIN_N = 420;
+const STEAM_N = 48;
 const _dummy = new THREE.Object3D();
 
 function sedan(scene, { x, z, yaw = 0, taxi = false, color = 0x2a2a32, moving = 0 }) {
@@ -53,12 +53,13 @@ function sedan(scene, { x, z, yaw = 0, taxi = false, color = 0x2a2a32, moving = 
     lightR.position.z = -0.5;
     g.add(lightL, lightR);
     if (moving) {
-        const beam = new THREE.PointLight(0xfff1c4, 14, 14, 2);
-        beam.position.set(1.95, 0.6, 0);
-        g.add(beam);
+        const beam = new THREE.Mesh(new THREE.BoxGeometry(0.14, 0.1, 0.22), new THREE.MeshBasicMaterial({ color: 0xfff6d0 }));
+        beam.position.set(1.95, 0.6, 0.42);
+        const beam2 = beam.clone();
+        beam2.position.z = -0.42;
         const tail = new THREE.Mesh(new THREE.BoxGeometry(0.08, 0.08, 1.2), new THREE.MeshBasicMaterial({ color: 0xff3355 }));
         tail.position.set(-1.9, 0.58, 0);
-        g.add(tail);
+        g.add(beam, beam2, tail);
     }
     g.position.set(x, 0, z);
     g.rotation.y = yaw;
@@ -167,6 +168,18 @@ export function buildCity(scene, adConfig = mergeAdConfig()) {
     addBox(root, unitBox, chrome, -22.8, 0.7, 6.4, 8.4, 1.4, 1.6);
     addBox(root, unitBox, neonRed, -22.8, 1.15, 6.4, 7.6, 0.06, 1.2);
     addBox(root, unitBox, black, -19.4, 1.35, 6.4, 1.4, 0.35, 1.1);
+    addBox(root, unitBox, black, -36.4, 1.1, -8.2, 3.6, 2.2, 4.4);
+    addBox(root, unitBox, chrome, -36.4, 1.35, -8.2, 3.2, 0.08, 4.0);
+    addBox(root, unitBox, cream, -36.4, 2.35, -8.2, 3.5, 0.12, 4.3);
+    for (const z of [-9.4, -7.2, -5.1]) {
+        addBox(root, unitBox, new THREE.MeshStandardMaterial({ color: 0x3a2a22, roughness: 0.6 }), -37.4, 0.85, z, 0.7, 1.4, 0.7);
+        addBox(root, unitBox, neonAmber, -37.4, 1.6, z, 0.45, 0.08, 0.45);
+    }
+    addBox(root, unitBox, cream, -33.2, 1.4, -12.4, 2.2, 2.6, 0.18);
+    addBox(root, unitBox, wood, -33.2, 0.7, -11.4, 1.8, 1.2, 1.4);
+    addBox(root, unitBox, wood, -18.4, 1.6, -2, 0.12, 3.0, 12);
+    for (const z of [-8, -2, 4]) addBox(root, unitBox, cream, -18.55, 2.2, z, 0.08, 0.7, 1.6);
+    addBox(root, unitBox, neonRed, -27.6, 3.2, -16.35, 8.4, 0.5, 0.04);
 
     // Hotel shell — lobby is walkable
     addBox(root, unitBox, brickBrown, 20.05, 7.2, 12.62, 7.1, 14.5, 0.28);
@@ -204,6 +217,22 @@ export function buildCity(scene, adConfig = mergeAdConfig()) {
     addBox(root, unitBox, black, 27.65, 0.02, -2, 21.8, 0.04, 28.4);
     addBox(root, unitBox, wood, 25.2, 0.55, 5.9, 7.4, 1.1, 2.6);
     addBox(root, unitBox, cream, 25.2, 1.2, 5.9, 7.2, 0.08, 2.4);
+    for (const [x, z] of [[21.8, -6.2], [21.8, 0.4], [21.8, 6.8], [33.4, -12.2], [33.4, -6.4], [33.4, 2.2], [29.2, -10.4], [29.2, 8.6]]) {
+        addBox(root, unitBox, wood, x, 0.42, z, 1.6, 0.12, 1.4);
+        addBox(root, unitBox, cream, x - 0.7, 0.85, z, 0.12, 0.9, 1.4);
+    }
+    addBox(root, unitBox, new THREE.MeshStandardMaterial({ color: 0x4a2030, roughness: 0.85 }), 27.6, 0.03, -2, 10, 0.03, 14);
+    addBox(root, unitBox, wood, 27.6, 0.38, -2, 1.4, 0.08, 1.4);
+    for (const z of [-12, -4, 4, 10]) {
+        addBox(root, unitBox, cream, 17.0, 2.4, z, 0.08, 1.1, 1.4);
+        addBox(root, unitBox, new THREE.MeshBasicMaterial({ color: 0xffe2a8 }), 17.05, 2.4, z, 0.04, 0.35, 0.35);
+    }
+    addBox(root, unitBox, cream, 29.4, fy + 0.02, -2, 8.4, 0.02, 18);
+    addBox(root, unitBox, new THREE.MeshStandardMaterial({ color: 0x5a2030, roughness: 0.85 }), 29.4, fy + 0.03, -2, 1.4, 0.02, 16);
+    for (const z of [-10.4, -4.2, 2.8, 8.4]) {
+        addBox(root, unitBox, wood, 22.4, fy + 0.55, z, 0.7, 0.9, 0.7);
+        addBox(root, unitBox, cream, 22.4, fy + 1.15, z, 0.18, 0.35, 0.18);
+    }
     addBox(root, unitBox, chrome, 21.4, 0.45, 9.4, 1.1, 0.7, 0.7);
     addBox(root, unitBox, cream, 21.4, 0.85, 9.4, 0.9, 0.12, 0.55);
     addBox(root, unitBox, black, 21.4, 0.22, 9.85, 0.18, 0.18, 0.18);
@@ -337,6 +366,21 @@ export function buildCity(scene, adConfig = mergeAdConfig()) {
     ];
     for (const spec of towers) addTower(spec);
 
+    // Mid-rise infill behind the shop row so the skyline is a wall of rooms, not a void
+    addBox(root, unitBox, brickBrown, 1.2, 8.2, 43.15, 82, 16.4, 5.9);
+    addBox(root, unitBox, black, 1.2, 16.5, 43.15, 82.6, 0.4, 6.3);
+    addBox(root, unitBox, brickDark, 1.2, 17.3, 43.4, 40, 1.2, 3.6);
+    addWindows(1.2, 0.4, 40.22, 78, 16, Math.PI, 21);
+    addWindows(1.2, 0.4, 46.08, 78, 16, 0, 22);
+    waterTower(-18, 18.2, 42.8);
+    waterTower(22, 18.2, 43.6);
+
+    // Bookend lots beside diner / hotel — windows so they read as buildings
+    addWindows(-48, 0.4, 12.48, 16, 16, 0, 31);
+    addWindows(-48, 0.4, -16.48, 16, 16, Math.PI, 32);
+    addWindows(48, 0.4, 12.48, 16, 18, 0, 33);
+    addWindows(48, 0.4, -16.48, 16, 18, Math.PI, 34);
+
     const onList = winDummy.filter((w) => w.kind === "on");
     const warmList = winDummy.filter((w) => w.kind === "warm");
     const offList = winDummy.filter((w) => w.kind === "off");
@@ -399,27 +443,20 @@ export function buildCity(scene, adConfig = mergeAdConfig()) {
     alleyLight.position.set(0, 3.7, -22);
     scene.add(alleyLight);
 
-    // Street lamps
+    // Street lamps — poles everywhere, real lights only on a few so the GPU stays alive
     const lampLights = [];
-    for (const x of [-48, -32, -16, 0, 16, 32, 48]) {
-        addBox(root, unitBox, black, x, 2.2, 17.85, 0.12, 4.4, 0.12);
-        addBox(root, unitBox, black, x, 4.45, 17.4, 0.08, 0.08, 0.9);
-        addBox(root, unitBox, neonAmber, x, 4.35, 16.95, 0.35, 0.22, 0.35);
-        const pl = new THREE.PointLight(0xffc078, 18, 11, 2);
-        pl.position.set(x, 4.2, 16.9);
-        pl.userData.base = 18;
+    function lampPost(x, z, lit) {
+        addBox(root, unitBox, black, x, 2.2, z, 0.12, 4.4, 0.12);
+        addBox(root, unitBox, neonAmber, x, 4.35, z + (z < 20 ? -0.9 : 0.5), 0.35, 0.22, 0.35);
+        if (!lit) return;
+        const pl = new THREE.PointLight(0xffc078, 16, 12, 2);
+        pl.position.set(x, 4.2, z + (z < 20 ? -0.9 : 0.5));
+        pl.userData.base = 16;
         scene.add(pl);
         lampLights.push(pl);
     }
-    for (const x of [-40, -24, -8, 8, 24, 40]) {
-        addBox(root, unitBox, black, x, 2.2, 27.9, 0.12, 4.4, 0.12);
-        addBox(root, unitBox, neonAmber, x, 4.35, 28.4, 0.35, 0.22, 0.35);
-        const pl = new THREE.PointLight(0xffb070, 18, 11, 2);
-        pl.position.set(x, 4.2, 28.2);
-        pl.userData.base = 18;
-        scene.add(pl);
-        lampLights.push(pl);
-    }
+    for (const x of [-48, -32, -16, 0, 16, 32, 48]) lampPost(x, 17.85, x === -16 || x === 16);
+    for (const x of [-40, -24, -8, 8, 24, 40]) lampPost(x, 27.9, x === -8 || x === 24);
     const dinerGlow = new THREE.Mesh(
         new THREE.PlaneGeometry(8.8, 1.8),
         new THREE.MeshBasicMaterial({ color: 0xff3355, transparent: true, opacity: 0.16, blending: THREE.AdditiveBlending, depthWrite: false }),
@@ -543,10 +580,10 @@ export function buildCity(scene, adConfig = mergeAdConfig()) {
         { z: 22.8, x0: 0.2, x1: 0.2, speed: 0.7, cross: true, z0: 16.2, z1: 30.4 },
         { z: 22.8, x0: -27, x1: -27, speed: 0.65, cross: true, z0: 30.2, z1: 16.4 },
     ];
-    for (let i = 0; i < 26; i++) {
+    for (let i = 0; i < 16; i++) {
         const path = paths[i % 4];
         const h = randomPedestrian(0.13 * i + 0.07);
-        const t0 = i / 26;
+        const t0 = i / 16;
         h.userData.path = path;
         h.userData.t = t0;
         const x = path.x0 + (path.x1 - path.x0) * t0;
@@ -626,7 +663,7 @@ export function updateCity(city, dt, t, { outside, reduced, lampMul = 1, zone, p
     const rainArr = city.rainGeo.attributes.position.array;
     const n = city.rainN || RAIN_N;
     city.rain.visible = !!outside && !reduced;
-    if (!reduced) {
+    if (city.rain.visible && !reduced) {
         for (let i = 0; i < n; i++) {
             rainArr[i * 6 + 1] -= dt * 16;
             rainArr[i * 6 + 4] -= dt * 16;

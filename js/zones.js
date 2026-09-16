@@ -286,6 +286,11 @@ export function buildColliders() {
         wall(boxes, s.maxX - 0.14, s.maxX + 0.14, z0, z1);
     }
     for (const s of SHOPS) shopShell(s);
+    for (let i = 0; i < SHOPS.length - 1; i++) {
+        const a = SHOPS[i];
+        const b = SHOPS[i + 1];
+        if (b.minX - a.maxX > 0.15) wall(boxes, a.maxX - 0.05, b.minX + 0.05, 32.05, 40.0);
+    }
     wall(boxes, -90, SHOPS[0].minX - 0.2, 32.05, 90, -1, 120);
     wall(boxes, SHOPS[SHOPS.length - 1].maxX + 0.2, 90, 32.05, 90, -1, 120);
     wall(boxes, -90, 90, 40.12, 90, -1, 120);

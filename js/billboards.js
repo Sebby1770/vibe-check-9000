@@ -136,9 +136,6 @@ export function buildBillboards(root, scene, config) {
       for (const side of [-1, 1]) {
         const lamp = addBox(group, unitBox, new THREE.MeshBasicMaterial({ color: 0xffe7a8 }), side * slot.w * 0.28, slot.h * 0.58, 0.55, 0.22, 0.08, 0.28);
         floods.push(lamp.material);
-        const light = new THREE.PointLight(0xffe2b0, slot.w > 10 ? 10 : 6, slot.w * 1.4, 2);
-        light.position.set(side * slot.w * 0.2, slot.h * 0.2, 0.8);
-        group.add(light);
       }
     }
     root.add(group);

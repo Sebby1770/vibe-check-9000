@@ -4,6 +4,16 @@ All notable changes to VIBE CHECK 9000™ are documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
+## [24.1.0] - 2026-09-16
+
+The street keeps its lights. The GPU keeps its job.
+
+### Changed
+
+- Dropped billboard and headlight point lights, cut rain and pedestrians, ran bloom at half-res, and skipped club floor/crowd work while you are outside.
+- Filled the gaps between shops, put rooms on the second storey, and closed the void behind the row with a mid-rise of windows and water towers.
+- Diner kitchen, hotel lobby chairs, Rivoli extra seats, and windows on the east/west bookend lots.
+
 ## [24.0.0] - 2026-09-16
 
 The skyline sits lower. Stripe is a field in a JSON file.

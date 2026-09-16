@@ -200,6 +200,21 @@ export function buildShops(root, scene, mats) {
     crowds.push(place(randomPedestrian(0.14, { outfit: "clerk", anim: "idle" }), 33.4, 33.8, 0.5, "idle"));
 
     const details=decorateShops(root,mats);
+    for (let i = 0; i < SHOPS.length - 1; i++) {
+        const a = SHOPS[i];
+        const b = SHOPS[i + 1];
+        const gap = b.minX - a.maxX;
+        if (gap < 0.15) continue;
+        const cx = (a.maxX + b.minX) / 2;
+        addBox(root, unitBox, brick, cx, 6.4, 36.05, gap + 0.18, 12.8, 8.1);
+        addBox(root, unitBox, black, cx, 12.85, 36.05, gap + 0.3, 0.28, 8.3);
+    }
+    addBox(root, unitBox, velvet, -2.2, 0.42, 35.2, 1.8, 0.18, 0.7);
+    addBox(root, unitBox, velvet, -2.2, 0.72, 34.85, 1.8, 0.48, 0.16);
+    addBox(root, unitBox, velvet, 8.4, 0.42, 35.2, 1.8, 0.18, 0.7);
+    addBox(root, unitBox, velvet, 8.4, 0.72, 34.85, 1.8, 0.48, 0.16);
+    addBox(root, unitBox, velvet, 17.0, 0.42, 36.6, 1.8, 0.18, 0.7);
+    addBox(root, unitBox, wood, 6.0, 1.15, 34.2, 0.7, 2.1, 0.12);
     crowds.forEach((h,i) => {h.userData.home={x:h.position.x,z:h.position.z,yaw:h.rotation.y};h.userData.shopIndex=i;scene.add(h);});
 
     return { crowds, pole, lights, film, details };
