@@ -1,0 +1,913 @@
+/* 47th Street: printed catalogs inside a borrowed visor. */
+.shop-overlay[hidden] {
+  display: none;
+}
+.shop-overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 80;
+  display: grid;
+  place-items: center;
+  padding: 28px;
+  background: rgba(9, 20, 23, 0.84);
+  backdrop-filter: blur(8px);
+  color: #253d39;
+  font-family: Georgia, "Times New Roman", serif;
+  letter-spacing: normal;
+  text-shadow: none;
+}
+.shop-sheet {
+  position: relative;
+  width: min(1180px, 100%);
+  max-height: calc(100dvh - 56px);
+  display: flex;
+  flex-direction: column;
+  background: #efe6d0;
+  border: 1px solid #e8dcc0;
+  box-shadow: 0 24px 100px #0009;
+  overflow: hidden;
+}
+.shop-mast {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 15px 28px;
+  border-bottom: 1px solid #a6a493;
+  font:
+    10px "Space Mono",
+    monospace;
+  letter-spacing: 2px;
+  color: #45554b;
+}
+.shop-mast i {
+  font-style: normal;
+  padding: 0 10px;
+}
+.shop-overlay button {
+  cursor: pointer;
+  font-family: "Space Mono", monospace;
+  letter-spacing: 0.06em;
+  transition:
+    background 0.16s,
+    color 0.16s;
+}
+.shop-overlay button:focus-visible {
+  outline: 3px solid #286858;
+  outline-offset: 3px;
+}
+.shop-close {
+  border: 0;
+  background: none;
+  color: #253d39;
+  font-size: 10px;
+  display: flex;
+  align-items: center;
+  gap: 18px;
+}
+.shop-close b {
+  font: 28px Georgia;
+}
+.shop-scroll {
+  overflow: auto;
+  overscroll-behavior: contain;
+  padding: 30px 36px 20px;
+  scrollbar-color: #8c9989 #e7dec8;
+}
+.shop-heading {
+  padding: 6px 0 27px;
+}
+.shop-eyebrow {
+  font:
+    10px "Space Mono",
+    monospace !important;
+  letter-spacing: 1.5px;
+  color: #697266;
+  margin: 0 0 12px !important;
+}
+.shop-eyebrow span {
+  float: right;
+  color: #426e56;
+}
+.shop-heading h1 {
+  font:
+    normal clamp(31px, 4.8vw, 61px) / 1.05 Georgia,
+    serif !important;
+  letter-spacing: -2px !important;
+  text-shadow: none !important;
+  color: #203d37;
+  margin: 0 0 12px !important;
+}
+.shop-heading > p:last-child {
+  font: italic 17px Georgia;
+  color: #617064;
+  margin: 0;
+}
+.shop-rule {
+  display: flex;
+  justify-content: space-between;
+  gap: 15px;
+  border-top: 2px solid #36584c;
+  border-bottom: 1px solid #aaa994;
+  padding: 10px 0;
+  font:
+    9px "Space Mono",
+    monospace;
+  letter-spacing: 1.5px;
+}
+.shop-cards {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 24px;
+  margin-top: 24px;
+}
+.shop-card {
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+  border-right: 1px solid #c2c2aa;
+  padding-right: 23px;
+}
+.shop-card:last-child {
+  border-right: none;
+  padding-right: 0;
+}
+.shop-art {
+  position: relative;
+  aspect-ratio: 1.1;
+  background: #ddd2b7;
+  overflow: hidden;
+}
+.shop-art svg {
+  display: block;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+.shop-number {
+  position: absolute;
+  right: 12px;
+  bottom: 12px;
+  background: #efe6d0;
+  color: #294e42;
+  padding: 5px 7px;
+  font: 10px monospace;
+}
+.shop-pick {
+  position: absolute;
+  left: 10px;
+  bottom: 12px;
+  background: #efe6d0;
+  color: #345544;
+  padding: 5px 9px;
+  font: 9px monospace;
+  letter-spacing: 1px;
+}
+.shop-card-copy {
+  display: flex;
+  flex-direction: column;
+  flex: 1;
+  padding-top: 17px;
+}
+.shop-item-kind {
+  font:
+    9px "Space Mono",
+    monospace;
+  text-transform: uppercase;
+  letter-spacing: 2px;
+  color: #687761;
+  margin: 0 0 8px;
+}
+.shop-card h2 {
+  font: normal 27px/1.1 Georgia;
+  margin: 0 0 8px;
+  color: #243e36;
+  letter-spacing: -0.5px;
+}
+.shop-description {
+  font: italic 13px Georgia;
+  margin: 0 0 14px;
+  color: #6e6757;
+}
+.shop-detail {
+  font:
+    13px/1.7 "Space Mono",
+    monospace;
+  color: #5c685b;
+  margin: 0 0 22px;
+}
+.shop-card-actions {
+  margin-top: auto;
+  display: grid;
+  gap: 8px;
+}
+.shop-select {
+  background: #284c3f;
+  color: #f4ead1;
+  border: 1px solid #284c3f;
+  text-align: left;
+  padding: 13px 12px;
+  font-size: 9px;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 6px;
+  min-height: 44px;
+}
+.shop-select:hover {
+  background: #42664c;
+}
+.shop-select span {
+  font-size: 18px;
+}
+.shop-preview {
+  border: 1px solid #929e88;
+  color: #395843;
+  background: none;
+  padding: 11px;
+  font-size: 10px;
+  min-height: 42px;
+}
+.shop-preview[aria-pressed="true"],
+.shop-preview:hover {
+  background: #dbdeca;
+}
+.is-selected .shop-art {
+  outline: 3px solid #65886c;
+  outline-offset: -3px;
+}
+.shop-note {
+  display: grid;
+  grid-template-columns: 150px 1fr;
+  border-top: 1px solid #b0b59c;
+  margin-top: 25px;
+  padding: 17px 0 0;
+  gap: 20px;
+}
+.shop-note > span {
+  font:
+    9px "Space Mono",
+    monospace;
+  letter-spacing: 1.2px;
+}
+.shop-note p {
+  margin: 0;
+  font: italic 14px/1.5 Georgia;
+  color: #66725e;
+}
+.shop-foot {
+  padding: 12px 28px;
+  border-top: 1px solid #a6a493;
+  display: flex;
+  justify-content: space-between;
+  gap: 20px;
+  font:
+    9px "Space Mono",
+    monospace;
+  line-height: 1.6;
+  background: #e7dec8;
+  color: #61705c;
+}
+.shop-receipt[hidden] {
+  display: none;
+}
+.shop-receipt {
+  position: absolute;
+  left: 30px;
+  right: 30px;
+  bottom: 60px;
+  background: #203e35;
+  box-shadow: 0 6px 20px #0004;
+  color: #f7edd6;
+  display: flex;
+  gap: 15px;
+  align-items: center;
+  padding: 16px 22px;
+  border: 1px solid #aabbaa;
+}
+.shop-receipt > span {
+  font-size: 29px;
+  color: #bdd3ae;
+}
+.shop-receipt strong {
+  font: 20px Georgia;
+}
+.shop-receipt p {
+  margin: 4px 0 0;
+  font:
+    12px/1.6 "Space Mono",
+    monospace;
+}
+.shop-receipt button {
+  margin-left: auto;
+  border: none;
+  background: none;
+  color: #f7edd6;
+  font: 26px Georgia;
+  min-width: 36px;
+  min-height: 40px;
+}
+.journal-tabs {
+  display: flex;
+  border-bottom: 2px solid #385945;
+  gap: 25px;
+  margin-bottom: 25px;
+}
+.journal-tabs button {
+  border: 0;
+  background: none;
+  color: #61705c;
+  padding: 12px 0;
+  font-size: 11px;
+  min-width: 85px;
+}
+.journal-tabs button[aria-current="page"] {
+  color: #284d3c;
+  box-shadow: inset 0 -4px #385945;
+}
+.journal-tabs small {
+  background: #d6dac3;
+  padding: 3px 5px;
+  margin-left: 8px;
+}
+.journal-pockets {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 15px;
+}
+.pocket-item {
+  display: flex;
+  gap: 16px;
+  align-items: center;
+  padding: 18px;
+  border: 1px solid #b1b9a0;
+}
+.pocket-item > span {
+  font-size: 30px;
+  color: #233e38;
+  width: 58px;
+  height: 72px;
+  display: grid;
+  place-items: center;
+  flex-shrink: 0;
+}
+.pocket-item small {
+  font: 9px monospace;
+  text-transform: uppercase;
+  letter-spacing: 1px;
+}
+.pocket-item h2 {
+  font: 23px Georgia;
+  margin: 5px 0;
+  color: #2c4e3f;
+}
+.pocket-item p {
+  font: 13px/1.5 Georgia;
+  color: #68705b;
+  margin: 0;
+}
+.pocket-portrait {
+  grid-column: 1/-1;
+  display: flex;
+  align-items: center;
+  gap: 25px;
+  padding: 20px;
+  background: #ddd9bf;
+}
+.pocket-portrait svg {
+  width: 130px;
+  flex-shrink: 0;
+}
+.pocket-portrait h2 {
+  font: 28px Georgia;
+  margin: 0 0 8px;
+}
+.pocket-portrait p {
+  font: 14px Georgia;
+}
+.journal-empty {
+  grid-column: 1/-1;
+  text-align: center;
+  padding: 35px;
+}
+.journal-empty > span {
+  font-size: 46px;
+}
+.journal-empty h2 {
+  font: 30px Georgia;
+}
+.journal-empty p {
+  font:
+    14px/1.7 "Space Mono",
+    monospace;
+  color: #66725e;
+  max-width: 500px;
+  margin: 15px auto;
+}
+.journal-empty button,
+.journal-errand button {
+  border: 1px solid #7c9076;
+  padding: 12px;
+  background: transparent;
+  color: #395740;
+  font:
+    10px "Space Mono",
+    monospace;
+  min-height: 44px;
+}
+.journal-log {
+  margin-top: 25px;
+  padding-top: 20px;
+  border-top: 1px solid #b2baa1;
+}
+.journal-log > p:not(.shop-eyebrow) {
+  font: 13px/1.6 Georgia;
+  color: #65715d;
+}
+.journal-errands {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 18px;
+}
+.journal-errand {
+  display: flex;
+  gap: 18px;
+  padding: 24px;
+  border: 1px solid #b2baa1;
+}
+.journal-errand > span {
+  font-size: 28px;
+}
+.journal-errand small {
+  font: 9px monospace;
+  letter-spacing: 1px;
+}
+.journal-errand h2 {
+  font: 26px Georgia;
+  margin: 10px 0;
+}
+.journal-errand p {
+  font:
+    13px/1.7 "Space Mono",
+    monospace;
+  color: #64705c;
+}
+.journal-errand.done {
+  background: #dfe2cc;
+  color: #698269;
+}
+.block-map {
+  background: #e3dfc8;
+  border: 1px solid #a0af94;
+  padding: 24px;
+}
+.map-north {
+  font: 10px monospace;
+  color: #556b54;
+  display: flex;
+  justify-content: space-between;
+  margin: 0 0 20px;
+}
+.map-shops {
+  display: grid;
+  grid-template-columns: repeat(6, 1fr);
+  gap: 8px;
+}
+.map-place {
+  border: 1px solid #9fae94;
+  background: #f1e9d0;
+  color: #2e4e3c;
+  padding: 20px 8px;
+  display: flex;
+  flex-direction: column;
+  gap: 9px;
+  justify-content: center;
+  align-items: center;
+  min-height: 85px;
+}
+.map-place span {
+  font: 17px Georgia;
+}
+.map-place small {
+  font: 8px monospace;
+  letter-spacing: 0.5px;
+}
+.map-place:hover,
+.map-place.here {
+  background: #b9c9aa;
+}
+.map-street {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 25px 15px;
+  border-top: 3px double #83957a;
+  border-bottom: 3px double #83957a;
+  margin: 12px -5px;
+  color: #536e54;
+}
+.map-street strong {
+  font: 20px Georgia;
+  letter-spacing: 6px;
+}
+.map-street > span {
+  font: 9px monospace;
+}
+.map-subway {
+  margin: -13px 0 12px 10px;
+  width: 130px;
+}
+.map-subway .map-place {
+  min-height: 50px;
+  padding: 8px;
+  width: 100%;
+  background: #314e43;
+  color: #f1e7ce;
+}
+.map-near {
+  display: grid;
+  grid-template-columns: 1fr 1.4fr 1fr;
+  gap: 15px;
+}
+.map-near .map-place {
+  min-height: 110px;
+}
+.map-detail {
+  font:
+    11px/2 "Space Mono",
+    monospace;
+  color: #62765b;
+  text-align: center;
+}
+.map-alley {
+  display: flex;
+  justify-content: center;
+  border-top: 1px dashed #82947b;
+  padding-top: 12px;
+}
+.map-alley .map-place {
+  min-height: 55px;
+  width: 210px;
+  padding: 8px;
+}
+.shopping .visor-top {
+  pointer-events: none;
+}
+.shopping #mobile-controls,
+.shopping #interact {
+  visibility: hidden;
+}
+.wayfinder {
+  position: fixed;
+  top: 68px;
+  left: 50%;
+  transform: translateX(-50%);
+  z-index: 8;
+  padding: 9px 16px;
+  max-width: 90vw;
+  background: #162d2de8;
+  color: #eee3c4;
+  border: 1px solid #bdb89066;
+  font:
+    10px/1.6 "Space Mono",
+    monospace;
+  text-align: center;
+  letter-spacing: 0.6px;
+}
+.wayfinder[hidden] {
+  display: none;
+}
+.wayfinder strong {
+  color: #adcfb7;
+}
+.mobile-actions {
+  position: fixed;
+  bottom: 135px;
+  right: 20px;
+  z-index: 20;
+  display: none;
+  gap: 12px;
+}
+.mobile-actions button {
+  width: 60px;
+  height: 52px;
+  border: 1px solid #b8c6ad;
+  background: #142e2bd9;
+  color: #e4e9d2;
+  font: 11px monospace;
+}
+.visor-top .top-links {
+  gap: 8px;
+}
+.shopping .wayfinder {
+  display: none;
+}
+.boot .hints {
+  color: #d7d6c5;
+  text-shadow: 0 2px 5px #000;
+}
+.boot .boot-dare {
+  background: #101b1ecc;
+  padding: 10px 16px;
+  color: #eee5cf;
+}
+.visor-mask {
+  opacity: 0.72;
+}
+.visor-telemetry {
+  color: #a9c8bc;
+}
+.visor-telemetry em {
+  color: #d7e4d1;
+}
+@media (pointer: coarse) {
+  body[data-phase="explore"] .mobile-actions {
+    display: flex;
+  }
+}
+@media (max-width: 760px) {
+  .shop-overlay {
+    padding: 10px;
+  }
+  .shop-sheet {
+    max-height: calc(100dvh - 20px);
+  }
+  .shop-mast {
+    padding: 10px 15px;
+    font-size: 8px;
+  }
+  .shop-scroll {
+    padding: 22px 18px;
+  }
+  .shop-heading h1 {
+    letter-spacing: -1px !important;
+  }
+  .shop-heading > p:last-child {
+    font-size: 15px;
+  }
+  .shop-eyebrow span {
+    float: none;
+    display: block;
+    margin-top: 7px;
+  }
+  .shop-cards {
+    grid-template-columns: 1fr;
+    gap: 24px;
+  }
+  .shop-card {
+    border-right: 0;
+    border-bottom: 1px solid #b3b89f;
+    padding: 0 0 24px;
+    display: grid;
+    grid-template-columns: 130px 1fr;
+    gap: 16px;
+  }
+  .shop-card:last-child {
+    border-bottom: 0;
+  }
+  .shop-card-copy {
+    padding-top: 0;
+  }
+  .shop-art {
+    aspect-ratio: 0.85;
+  }
+  .shop-card h2 {
+    font-size: 24px;
+  }
+  .shop-detail {
+    font-size: 11px;
+    margin-bottom: 13px;
+    line-height: 1.65;
+  }
+  .shop-card .shop-description {
+    font-size: 12px;
+  }
+  .shop-item-kind {
+    font-size: 8px;
+  }
+  .shop-number {
+    display: none;
+  }
+  .shop-pick {
+    font-size: 7px;
+    left: 5px;
+    bottom: 5px;
+    padding: 4px;
+  }
+  .shop-select {
+    font-size: 8px;
+    padding: 10px;
+  }
+  .shop-rule {
+    font-size: 8px;
+  }
+  .shop-note {
+    grid-template-columns: 1fr;
+    gap: 9px;
+  }
+  .shop-foot {
+    padding: 10px 15px;
+    font-size: 8px;
+  }
+  .shop-foot span:last-child {
+    display: none;
+  }
+  .shop-receipt {
+    left: 15px;
+    right: 15px;
+    bottom: 48px;
+    padding: 13px;
+  }
+  .shop-receipt p {
+    font-size: 10px;
+  }
+  .journal-pockets,
+  .journal-errands {
+    grid-template-columns: 1fr;
+  }
+  .journal-tabs {
+    gap: 18px;
+  }
+  .journal-tabs button {
+    font-size: 10px;
+    min-width: 65px;
+  }
+  .block-map {
+    padding: 12px;
+  }
+  .map-shops {
+    grid-template-columns: repeat(3, 1fr);
+  }
+  .map-place {
+    padding: 10px 5px;
+    min-height: 75px;
+  }
+  .map-place span {
+    font-size: 14px;
+  }
+  .map-place small {
+    font-size: 7px;
+  }
+  .map-street {
+    padding: 17px 6px;
+  }
+  .map-street strong {
+    font-size: 13px;
+    letter-spacing: 2px;
+  }
+  .map-street > span {
+    font-size: 7px;
+  }
+  .map-north span {
+    font-size: 7px;
+  }
+  .map-near {
+    gap: 6px;
+  }
+  .map-near .map-place {
+    min-height: 85px;
+  }
+  .map-detail {
+    font-size: 9px;
+  }
+  .pocket-portrait {
+    gap: 15px;
+    padding: 12px;
+  }
+  .pocket-portrait svg {
+    width: 100px;
+  }
+  .wayfinder {
+    top: 80px;
+    font-size: 9px;
+  }
+  .visor-top .logo {
+    font-size: 10px;
+  }
+  .visor-top .top-links {
+    gap: 4px;
+  }
+  .visor-top .icon-btn {
+    font-size: 8px;
+    padding: 7px;
+  }
+  .visor-top .top-links > a {
+    display: none;
+  }
+}
+@media (max-width: 390px) {
+  .shop-card {
+    grid-template-columns: 105px 1fr;
+    gap: 12px;
+  }
+  .shop-heading h1 {
+    font-size: 30px !important;
+  }
+  .shop-card h2 {
+    font-size: 22px;
+  }
+  .shop-description {
+    display: none;
+  }
+}
+
+.shop-art img {
+  display: block;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+@media (min-width: 761px) and (max-height: 800px) {
+  .shop-scroll {
+    padding: 17px 30px;
+  }
+  .shop-heading {
+    padding: 0 0 15px;
+  }
+  .shop-heading h1 {
+    font-size: 40px !important;
+  }
+  .shop-heading > p:last-child {
+    font-size: 14px;
+  }
+  .shop-eyebrow {
+    margin-bottom: 8px !important;
+  }
+  .shop-cards {
+    margin-top: 16px;
+    gap: 20px;
+  }
+  .shop-art {
+    height: 148px;
+    aspect-ratio: auto;
+  }
+  .shop-art img {
+    object-fit: contain;
+    background: #263b39;
+  }
+  .shop-card-copy {
+    padding-top: 12px;
+  }
+  .shop-card h2 {
+    font-size: 23px;
+  }
+  .shop-card .shop-detail {
+    font-size: 11px;
+    line-height: 1.55;
+    margin-bottom: 13px;
+  }
+  .shop-description {
+    margin-bottom: 10px;
+  }
+  .shop-card-actions {
+    gap: 5px;
+  }
+  .shop-select {
+    min-height: 40px;
+    padding: 9px 12px;
+  }
+  .shop-preview {
+    min-height: 36px;
+    padding: 8px;
+  }
+  .shop-note {
+    margin-top: 16px;
+    padding-top: 13px;
+  }
+  .shop-mast {
+    padding: 10px 25px;
+  }
+}
+
+@media (min-width: 761px) and (max-height: 680px) {
+  .shop-overlay {
+    padding: 16px;
+  }
+  .shop-sheet {
+    max-height: calc(100dvh - 32px);
+  }
+  .shop-scroll {
+    padding: 12px 30px;
+  }
+  .shop-heading {
+    padding-bottom: 10px;
+  }
+  .shop-heading h1 {
+    font-size: 32px !important;
+    margin-bottom: 6px !important;
+  }
+  .shop-art {
+    height: 112px;
+  }
+  .shop-cards {
+    margin-top: 12px;
+  }
+  .shop-rule {
+    padding: 7px 0;
+  }
+  .shop-card h2 {
+    font-size: 21px;
+  }
+  .shop-card .shop-detail {
+    margin-bottom: 10px;
+  }
+}

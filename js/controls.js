@@ -35,6 +35,8 @@ export function createControls(camera, domElement, colliders) {
     camera.lookAt(0, 1.6, -12);
 
     function onKey(e, down) {
+        if (!enabled) return;
+        if (["INPUT", "TEXTAREA"].includes(e.target?.tagName)) return;
         const k = e.key.toLowerCase();
         if (k === "w" || k === "arrowup") keys.w = down;
         if (k === "s" || k === "arrowdown") keys.s = down;
@@ -53,6 +55,7 @@ export function createControls(camera, domElement, colliders) {
 
     window.addEventListener("keydown", (e) => onKey(e, true));
     window.addEventListener("keyup", (e) => onKey(e, false));
+    window.addEventListener("blur", () => { for (const k of Object.keys(keys)) keys[k]=false; dance=false; sprint=false; stick.x=stick.y=0; });
 
     function applyLook(dx, dy) {
         _euler.setFromQuaternion(camera.quaternion);
@@ -111,9 +114,12 @@ export function createControls(camera, domElement, colliders) {
         get riding() { return riding; },
         setRiding(v) { riding = !!v; },
 
-        lock() { try { plc.lock(); } catch { /* optional */ } },
+        lock() {
+            // Browsers may reject capture after an overlay or without a fresh gesture.
+            try { domElement.requestPointerLock()?.catch(() => {}); } catch { /* Drag-to-look remains available. */ }
+        },
         unlock() { try { plc.unlock(); } catch { /* already free */ } },
-        setEnabled(v) { enabled = !!v; },
+        setEnabled(v) { enabled = !!v; if (!enabled) { for (const k of Object.keys(keys)) keys[k]=false; stick.x=stick.y=0; dance=false; sprint=false; lookDrag=false; } },
         setReduced(v) { reduced = !!v; },
         setSensitivity(v) {
             baseLook = v;
@@ -134,7 +140,7 @@ export function createControls(camera, domElement, colliders) {
             sitSpot = spot;
             floorY = spot.y || 0;
             camera.position.set(spot.x, floorY + (spot.eye || 1.16), spot.z);
-            camera.lookAt(spot.lookX, floorY + 1.32, spot.lookZ);
+            camera.lookAt(spot.lookX, floorY + (spot.lookY ?? 1.32), spot.lookZ);
             _euler.setFromQuaternion(camera.quaternion);
             _euler.z = 0;
             camera.quaternion.setFromEuler(_euler);
@@ -156,6 +162,7 @@ export function createControls(camera, domElement, colliders) {
             camera.updateProjectionMatrix();
         },
         get fov() { return fov; },
+        setDance(v) { dance=!!v && enabled; },
         setStick(x, y) {
             stick.x = Math.max(-1, Math.min(1, x));
             stick.y = Math.max(-1, Math.min(1, y));
@@ -181,7 +188,7 @@ export function createControls(camera, domElement, colliders) {
                 return { moving: true, dancing: false, tipsy, forward: _fwd, floorY };
             }
             if (!enabled || xrPresenting) {
-                camera.position.y = floorY + EYE;
+                camera.position.y = floorY + (sitting ? (sitSpot?.eye || 1.16) : EYE);
                 return { moving: false, dancing: false, tipsy, forward: _fwd, floorY };
             }
 

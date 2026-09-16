@@ -1,0 +1,761 @@
+/* The counters and the late edition. */
+.activity-sheet {
+  width: min(1120px, 100%);
+}
+.activity-heading {
+  padding: 4px 0 25px;
+  border-bottom: 2px solid #3d6355;
+  margin-bottom: 25px;
+}
+.activity-heading h1 {
+  font: normal clamp(28px, 4vw, 48px)/1.07 Georgia !important;
+  letter-spacing: -1.5px !important;
+  color: #284b40;
+  text-shadow: none !important;
+  margin: 0 0 12px !important;
+}
+.activity-heading > p:last-child {
+  font: italic 16px/1.4 Georgia;
+  color: #69725f;
+  margin: 0;
+}
+.activity-button,
+.activity-secondary {
+  display: block;
+  min-height: 44px;
+  padding: 13px 17px;
+  border: 1px solid #3d6355;
+  background: #2d5144;
+  color: #f4e7c9;
+  font:
+    10px/1.5 "Space Mono",
+    monospace;
+  text-align: left;
+  width: 100%;
+  cursor: pointer;
+}
+.activity-secondary {
+  background: transparent;
+  color: #38584b;
+  margin-top: 12px;
+}
+.activity-button:hover {
+  background: #476c58;
+}
+.activity-button:disabled {
+  opacity: 0.4;
+  cursor: default;
+}
+.activity-feedback {
+  min-height: 22px;
+  color: #365d48;
+  font: 13px/1.6 Georgia;
+  margin: 16px 0 0;
+}
+.counter-work {
+  display: grid;
+  grid-template-columns: minmax(240px, 0.8fr) minmax(350px, 1fr);
+  gap: 34px;
+}
+.order-slip {
+  background: #f8edcf;
+  padding: 18px 22px;
+  border-top: 5px solid var(--activity-color);
+  box-shadow: 0 4px 12px #55432213;
+  transform: rotate(-1deg);
+}
+.order-slip small,
+.order-slip li span {
+  font: 9px/1.6 monospace;
+  letter-spacing: 1px;
+  color: #617362;
+  display: block;
+}
+.order-slip h2 {
+  font: 24px Georgia;
+  margin: 10px 0 16px;
+}
+.order-slip ol {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+}
+.order-slip li {
+  padding: 8px 0;
+  border-top: 1px dashed #babaa3;
+  font: 17px Georgia;
+}
+.counter-art {
+  margin-top: 20px;
+  border: 1px solid #d4c8ab;
+}
+.counter-art svg {
+  width: 100%;
+  height: 190px;
+  display: block;
+}
+.counter-status {
+  font: 9px monospace;
+  letter-spacing: 2px;
+  text-align: center;
+  color: #547c64;
+}
+.counter-choices fieldset {
+  padding: 0 0 22px;
+  margin: 0 0 15px;
+  border: 0;
+  border-bottom: 1px solid #c3c3ac;
+}
+.counter-choices legend {
+  font: 10px monospace;
+  letter-spacing: 1px;
+  padding: 0 0 14px;
+  color: #49644f;
+}
+.counter-choices legend b {
+  font: 23px Georgia;
+  margin-right: 10px;
+  color: var(--activity-color);
+}
+.counter-choices fieldset > div {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 8px;
+}
+.counter-choice {
+  min-height: 60px;
+  background: transparent;
+  border: 1px solid #aab49c;
+  padding: 10px 8px;
+  font: 13px/1.4 Georgia !important;
+  letter-spacing: 0 !important;
+  color: #355342;
+  text-align: center;
+}
+.counter-choice[aria-pressed="true"] {
+  background: #355b49;
+  color: #f7edd5;
+  border-color: #355b49;
+  box-shadow: inset 0 -4px #a8b98a;
+}
+.counter-help {
+  font: 12px/1.6 Georgia;
+  color: #727967;
+  margin: 12px 0;
+}
+.shop-workshop-link {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 18px;
+  background: #e1dbc1;
+  border: 1px solid #b1b89f;
+  margin: 18px 0;
+  padding: 14px 18px;
+  color: #335543;
+  width: 100%;
+  text-align: left;
+}
+.shop-workshop-link strong {
+  display: block;
+  font: 19px Georgia;
+}
+.shop-workshop-link small {
+  display: block;
+  font: 9px/1.6 monospace;
+  letter-spacing: 1px;
+  margin-bottom: 3px;
+}
+.shop-workshop-link > b {
+  font: 25px Georgia;
+}
+.notice-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 20px;
+}
+.street-notice {
+  background: #e4ddc3;
+  border: 1px solid #b5b9a1;
+  padding: 24px;
+  display: flex;
+  flex-direction: column;
+}
+.street-notice:nth-child(2) {
+  background: #e6d2ba;
+}
+.street-notice:nth-child(3) {
+  background: #d7dfc8;
+}
+.street-notice:nth-child(4) {
+  background: #ddced0;
+}
+.street-notice small {
+  font: 9px monospace;
+  letter-spacing: 1.3px;
+  color: #62705c;
+}
+.street-notice h2 {
+  font: 28px Georgia;
+  margin: 20px 0 12px;
+}
+.street-notice p {
+  font: 15px/1.6 Georgia;
+  color: #63705d;
+  margin: 0 0 22px;
+}
+.street-notice button {
+  margin-top: auto;
+}
+.passport-notice {
+  grid-column: 1/-1;
+}
+.snack-grid {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 24px;
+}
+.snack-grid article {
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+}
+.snack-illustration {
+  font: 110px Georgia;
+  text-align: center;
+  color: #95683f;
+  background: #e3d6b9;
+  padding: 20px 0;
+  margin-bottom: 20px;
+}
+.snack-grid h2 {
+  font: 25px Georgia;
+  margin: 0 0 10px;
+}
+.snack-grid p:not(.shop-eyebrow) {
+  font: 14px/1.6 Georgia;
+  min-height: 50px;
+  color: #60715d;
+}
+.snack-grid button {
+  margin-top: auto;
+}
+.snack-grid article > small {
+  font: 9px monospace;
+  color: #5d7359;
+  margin-top: 12px;
+}
+.camera-loan {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 40px;
+  align-items: center;
+  padding: 25px 0;
+}
+.camera-loan h2 {
+  font: 28px Georgia;
+}
+.camera-loan p:not(.shop-eyebrow) {
+  font: 16px/1.65 Georgia;
+  color: #60715d;
+}
+.camera-loan button + button {
+  margin-top: 12px;
+}
+.camera-drawing {
+  position: relative;
+  background: #36524b;
+  border: 12px solid #bbad89;
+  border-radius: 14px;
+  height: 190px;
+  box-shadow: 0 10px 0 #263e37;
+  max-width: 370px;
+  width: 100%;
+  margin: 20px auto;
+}
+.camera-drawing i {
+  position: absolute;
+  left: 50%;
+  top: 50%;
+  transform: translate(-50%, -50%);
+  width: 122px;
+  height: 122px;
+  border: 16px solid #b69d68;
+  border-radius: 50%;
+  background: radial-gradient(
+    circle at 35% 35%,
+    #a9c6b9 0 7%,
+    #3f645f 8% 25%,
+    #102d2b 26% 50%,
+    #789388 51% 54%,
+    #203e38 55%
+  );
+}
+.camera-drawing span {
+  position: absolute;
+  left: 14px;
+  top: 14px;
+  color: #e4d4af;
+  font: 18px Georgia;
+}
+.camera-drawing b {
+  position: absolute;
+  right: 10px;
+  bottom: 10px;
+  font: 9px monospace;
+  color: #d8d0ad;
+}
+.signal-letter {
+  max-width: 720px;
+  margin: 10px auto 25px;
+  border: 1px solid #b8bba2;
+  padding: 30px;
+  background: #f5e9cb;
+}
+.signal-number {
+  font: 11px monospace;
+  letter-spacing: 3px;
+  color: #73816a;
+}
+.signal-letter > p {
+  font: 22px/1.65 Georgia;
+  color: #3e5647;
+  margin: 25px 0 35px;
+}
+.signal-complete {
+  padding: 20px;
+  background: #3d6554;
+  color: #eee2c0;
+  font: 21px Georgia;
+}
+.signal-complete small {
+  font: 12px/2 monospace;
+}
+.duet {
+  max-width: 750px;
+  margin: auto;
+  text-align: center;
+}
+.duet-score {
+  display: flex;
+  justify-content: space-between;
+  gap: 20px;
+  font: 10px monospace;
+  color: #6a785f;
+}
+.duet-score b {
+  display: block;
+  font: 23px Georgia;
+  color: #395d4b;
+  margin-top: 8px;
+}
+.duet-bars {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 13px;
+  height: 100px;
+  margin-top: 15px;
+}
+.duet-bars i {
+  display: block;
+  background: #527968;
+  width: 16px;
+}
+.duet-bars i:nth-child(3n) {
+  background: #c19d65;
+}
+.duet-instructions {
+  font: 17px/1.5 Georgia;
+  min-height: 50px;
+  color: #52735b;
+}
+.duet-pads {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 16px;
+  margin: 18px 0;
+}
+.duet-pad {
+  min-height: 125px;
+  background: #a8c0a4;
+  border: 2px solid #577a63;
+  color: #2a483d;
+  box-shadow: 0 5px #698671;
+}
+.duet-pad:nth-child(2) {
+  background: #d8ba80;
+}
+.duet-pad:nth-child(3) {
+  background: #c39b9a;
+}
+.duet-pad b {
+  display: block;
+  font: 44px Georgia;
+}
+.duet-pad span {
+  font: 9px monospace;
+  letter-spacing: 2px;
+}
+.duet-pad:disabled {
+  opacity: 0.55;
+}
+.duet-pad.sounding {
+  opacity: 1;
+  background: #fff2c9;
+  box-shadow: 0 0 0 5px #547a65;
+}
+.duet > .activity-button {
+  text-align: center;
+}
+.passport-intro {
+  display: flex;
+  gap: 25px;
+  align-items: center;
+  margin: 24px 0;
+}
+.passport-total {
+  font: 60px Georgia;
+  color: #3d6954;
+  white-space: nowrap;
+}
+.passport-total small {
+  font: 25px Georgia;
+  color: #8b9578;
+}
+.passport-intro h2,
+.album-intro h2 {
+  font: 27px Georgia;
+  margin: 0 0 12px;
+}
+.passport-intro p,
+.album-intro p {
+  font: 14px/1.7 Georgia;
+  color: #63705e;
+  margin: 0;
+}
+.passport-grid {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 14px;
+}
+.passport-stamp {
+  border: 1px dashed #9da888;
+  padding: 20px;
+  text-align: center;
+}
+.passport-stamp.earned {
+  border: 2px solid #4b7b60;
+  background: #dce3c8;
+}
+.passport-stamp > span {
+  font: 38px Georgia;
+  color: #6e8d6d;
+}
+.passport-stamp h3 {
+  font: 10px monospace;
+  letter-spacing: 1px;
+}
+.passport-stamp p {
+  font: 13px/1.55 Georgia;
+  color: #627058;
+}
+.passport-stamp small {
+  font: 9px monospace;
+  letter-spacing: 1px;
+  color: #3e7555;
+}
+.passport-stamp button,
+.album-intro button,
+.album-print button {
+  border: 1px solid #829579;
+  background: transparent;
+  color: #375b46;
+  min-height: 40px;
+  padding: 10px;
+  font: 9px monospace;
+}
+.street-souvenirs {
+  padding: 25px 0;
+  font: 15px Georgia;
+  color: #607458;
+}
+.album-intro {
+  margin: 25px 0;
+}
+.album-intro button {
+  margin-top: 18px;
+}
+.photo-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 20px;
+}
+.album-print {
+  padding: 12px;
+  background: #fbf1da;
+  box-shadow: 0 3px 8px #4b46351a;
+  min-width: 0;
+}
+.album-print img {
+  display: block;
+  width: 100%;
+  aspect-ratio: 16/9;
+  object-fit: cover;
+}
+.album-print h3 {
+  font: 20px Georgia;
+  margin: 16px 0 8px;
+}
+.album-print small {
+  font: 9px monospace;
+  color: #748166;
+}
+.album-print nav {
+  display: flex;
+  justify-content: space-between;
+  gap: 8px;
+  margin-top: 16px;
+}
+.album-empty {
+  padding: 35px 0;
+  font: italic 20px Georgia;
+  color: #788267;
+}
+.journal-tabs {
+  flex-wrap: wrap;
+}
+.map-new-places {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 10px;
+  margin-top: 18px;
+}
+.camera-trigger {
+  position: fixed;
+  bottom: 76px;
+  right: 30px;
+  z-index: 25;
+  border: 1px solid #b7d0ac;
+  background: #203d35e8;
+  color: #e6e6bd;
+  padding: 12px 16px;
+  font: 10px monospace;
+  min-height: 44px;
+}
+.camera-trigger[hidden] {
+  display: none;
+}
+@media (max-width: 760px) {
+  .activity-heading {
+    padding-bottom: 20px;
+    margin-bottom: 20px;
+  }
+  .activity-heading h1 {
+    font-size: 31px !important;
+  }
+  .counter-work {
+    grid-template-columns: 1fr;
+    gap: 22px;
+  }
+  .counter-order {
+    display: grid;
+    grid-template-columns: 1fr 100px;
+    gap: 12px;
+  }
+  .order-slip {
+    padding: 14px;
+  }
+  .order-slip h2 {
+    font-size: 20px;
+  }
+  .order-slip li {
+    font-size: 14px;
+  }
+  .counter-art {
+    margin: 0;
+    display: flex;
+    align-items: center;
+  }
+  .counter-art svg {
+    height: auto;
+  }
+  .counter-status {
+    grid-column: 1/-1;
+    margin: 0;
+  }
+  .counter-choices fieldset {
+    padding-bottom: 16px;
+  }
+  .counter-choice {
+    font-size: 12px !important;
+    min-height: 62px;
+  }
+  .notice-grid,
+  .snack-grid,
+  .camera-loan,
+  .photo-grid {
+    grid-template-columns: 1fr;
+  }
+  .street-notice {
+    padding: 20px;
+  }
+  .camera-loan {
+    gap: 20px;
+    padding: 0;
+  }
+  .camera-drawing {
+    height: 170px;
+  }
+  .signal-letter {
+    padding: 20px;
+  }
+  .signal-letter > p {
+    font-size: 19px;
+  }
+  .passport-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+  .passport-stamp {
+    padding: 13px;
+  }
+  .passport-intro {
+    gap: 16px;
+  }
+  .passport-intro h2 {
+    font-size: 23px;
+  }
+  .duet-pads {
+    gap: 10px;
+  }
+  .duet-pad {
+    min-height: 105px;
+  }
+  .duet-bars {
+    gap: 8px;
+  }
+  .camera-trigger {
+    bottom: 195px;
+    right: 18px;
+    padding: 10px;
+  }
+  .shop-workshop-link {
+    margin: 14px 0;
+    padding: 12px;
+  }
+  .shop-workshop-link strong {
+    font-size: 18px;
+  }
+  .snack-grid {
+    gap: 30px;
+  }
+  .snack-illustration {
+    font-size: 70px;
+    padding: 10px;
+  }
+  .journal-tabs button {
+    padding: 12px 10px;
+  }
+}
+@media (min-width: 761px) and (max-height: 750px) {
+  .activity-heading {
+    padding-bottom: 15px;
+    margin-bottom: 18px;
+  }
+  .activity-heading h1 {
+    font-size: 33px !important;
+  }
+  .counter-art svg {
+    height: 120px;
+  }
+  .order-slip {
+    padding: 12px 18px;
+  }
+  .order-slip li {
+    padding: 6px 0;
+  }
+  .counter-choices fieldset {
+    padding-bottom: 14px;
+    margin-bottom: 10px;
+  }
+  .counter-choice {
+    min-height: 49px;
+  }
+  .counter-work {
+    gap: 24px;
+  }
+  .counter-choices legend {
+    padding-bottom: 9px;
+  }
+  .shop-workshop-link {
+    margin: 12px 0;
+    padding: 10px 14px;
+  }
+}
+
+@media (min-width: 761px) and (max-height: 680px) {
+  .activity-heading {
+    padding: 0 0 10px;
+    margin-bottom: 12px;
+  }
+  .activity-heading h1 {
+    font-size: 28px !important;
+    margin-bottom: 7px !important;
+  }
+  .activity-heading .shop-eyebrow {
+    font-size: 8px !important;
+    margin-bottom: 6px !important;
+  }
+  .activity-heading > p:last-child {
+    font-size: 14px;
+  }
+  .activity-overlay .shop-scroll {
+    padding-top: 10px;
+    padding-bottom: 10px;
+  }
+  .order-slip {
+    padding: 10px 17px;
+  }
+  .order-slip h2 {
+    font-size: 20px;
+    margin: 8px 0 10px;
+  }
+  .order-slip li {
+    font-size: 15px;
+    padding: 4px 0;
+  }
+  .order-slip li span {
+    font-size: 8px;
+  }
+  .counter-art {
+    margin-top: 12px;
+  }
+  .counter-art svg {
+    height: 87px;
+  }
+  .counter-status {
+    font-size: 8px;
+    margin: 8px 0;
+  }
+  .counter-choices fieldset {
+    padding-bottom: 10px;
+    margin-bottom: 8px;
+  }
+  .counter-choices legend {
+    padding-bottom: 7px;
+  }
+  .counter-choices legend b {
+    font-size: 20px;
+  }
+  .counter-choice {
+    min-height: 44px;
+  }
+  .counter-help {
+    margin: 8px 0;
+    font-size: 11px;
+  }
+  .activity-feedback {
+    margin: 10px 0 0;
+    min-height: 18px;
+  }
+}

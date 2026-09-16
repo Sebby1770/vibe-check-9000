@@ -20,7 +20,7 @@ const mem = {
 const empty = loadProgress(mem);
 assert.deepEqual(empty.unlocked, ["stock"]);
 assert.equal(empty.look, "stock");
-assert.equal(LOOKS.length, 18);
+assert.equal(LOOKS.length, 23);
 
 let p = empty;
 p = evaluateUnlocks(p, { talkId: "rexa" }).progress;

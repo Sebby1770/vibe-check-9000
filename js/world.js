@@ -1,3 +1,6 @@
+import { buildLifeWorld } from './life-world.js';
+import { CLUB_SCENES } from './life.js';
+import { buildStreetLife } from "./street-life.js";
 import * as THREE from "three";
 import { EffectComposer } from "three/addons/postprocessing/EffectComposer.js";
 import { RenderPass } from "three/addons/postprocessing/RenderPass.js";
@@ -9,18 +12,20 @@ import { animateHuman } from "./human.js";
 import { buildColliders, getFloorY, getZone, isOutside } from "./zones.js";
 import { makeCubeEnv, makeDuskSky, paintSky } from "./kit.js";
 import { phaseLook } from "./night.js";
+import { createShopActivities } from "./shop-activities.js";
 
 const _color = new THREE.Color();
 const _vibe = new THREE.Color("#ff00ff");
 
-export function createWorld(canvas) {
+export function createWorld(canvas, adConfig) {
     const renderer = new THREE.WebGLRenderer({
         canvas,
         antialias: true,
         powerPreference: "high-performance",
         alpha: false,
     });
-    renderer.setPixelRatio(Math.min(window.devicePixelRatio || 1, 1.6));
+    renderer.info.autoReset = false;
+    renderer.setPixelRatio(Math.min(window.devicePixelRatio || 1, 2));
     renderer.setSize(window.innerWidth, window.innerHeight);
     renderer.outputColorSpace = THREE.SRGBColorSpace;
     renderer.toneMapping = THREE.ACESFilmicToneMapping;
@@ -43,7 +48,7 @@ export function createWorld(canvas) {
 
     const composer = new EffectComposer(renderer);
     composer.addPass(new RenderPass(scene, camera));
-    const bloom = new UnrealBloomPass(new THREE.Vector2(window.innerWidth, window.innerHeight), 0.48, 0.42, 0.22);
+    const bloom = new UnrealBloomPass(new THREE.Vector2(window.innerWidth, window.innerHeight), 0.38, 0.42, 0.68);
     composer.addPass(bloom);
     composer.addPass(new OutputPass());
     let bloomKick = 0;
@@ -53,8 +58,13 @@ export function createWorld(canvas) {
     scene.add(hemi);
 
     const club = buildClub(scene, env);
-    const city = buildCity(scene);
+    const city = buildCity(scene, adConfig);
     const colliders = buildColliders();
+    const streetLife = buildStreetLife(scene);
+    const lifeWorld = buildLifeWorld(scene,colliders);
+    let clubScene=CLUB_SCENES[0];
+    const sceneColor=new THREE.Color(clubScene.color),sceneAccent=new THREE.Color(clubScene.accent);
+    const activities = createShopActivities(scene,camera);
 
     function makeHand(side) {
         const g = new THREE.Group();
@@ -125,7 +135,7 @@ export function createWorld(canvas) {
         const h = window.innerHeight;
         camera.aspect = w / h;
         camera.updateProjectionMatrix();
-        renderer.setPixelRatio(Math.min(window.devicePixelRatio || 1, 1.6));
+        renderer.setPixelRatio(Math.min(window.devicePixelRatio || 1, 2));
         renderer.setSize(w, h);
         composer.setSize(w, h);
         bloom.setSize(w, h);
@@ -142,7 +152,16 @@ export function createWorld(canvas) {
         npcs: club.namedPeople,
         city,
         club,
+        streetLife,
+        lifeWorld,
 
+        setShopState(state) { activities.setState(state); city.setShopState?.(state); streetLife.setState(state.expansion); lifeWorld.setState(state.life); clubScene=CLUB_SCENES.find(s=>s.id===state.life.scene)||CLUB_SCENES[0];sceneColor.set(clubScene.color);sceneAccent.set(clubScene.accent); },
+        showPurchase(result) { activities.show(result); },
+        captureFrame(readCanvas) {
+            const visibility=camera.children.map(child=>[child,child.visible]);
+            try {visibility.forEach(([child])=>child.visible=false);composer.render();return readCanvas(renderer.domElement);}
+            finally {visibility.forEach(([child,visible])=>child.visible=visible);}
+        },
         setCrowdVisible(v) {
             crowdOn = !!v;
             applyCrowd();
@@ -152,7 +171,7 @@ export function createWorld(canvas) {
             camera.fov = fov;
             camera.updateProjectionMatrix();
         },
-        setBloomReduced(v) { bloom.strength = v ? 0.1 : 0.48; },
+        setBloomReduced(v) { bloom.strength = v ? 0.08 : 0.52; },
         setTipsy(v) {
             drunk = !!v;
             scene.fog.density = v ? 0.02 : 0.012;
@@ -191,6 +210,7 @@ export function createWorld(canvas) {
             const zone = getZone(p.x, p.z, p.y - 1.7);
             const outside = isOutside(p.x, p.z, p.y);
 
+            streetLife.update(t, reduced, p);
             const look = phaseLook(nightPhase);
             dusk.sky.visible = true;
             dusk.sun.visible = outside && look.sunOp > 0.05;
@@ -245,7 +265,7 @@ export function createWorld(canvas) {
                 scene.fog.density = 0.02;
                 hemi.color.set(0xffd0a0);
                 hemi.groundColor.set(0x201018);
-                hemi.intensity = 1.05;
+                hemi.intensity = 1.25;
                 dusk.sunLight.intensity = 0.12 * look.sunInt;
                 renderer.toneMappingExposure = 1.02;
             } else {
@@ -323,13 +343,14 @@ export function createWorld(canvas) {
             const laserSpeed = reduced ? 0.25 : 1;
             for (let i = 0; i < club.lasers.length; i++) {
                 const L = club.lasers[i];
+                L.mat.color.copy(i%2?sceneAccent:sceneColor);
                 L.pivot.rotation.z = Math.sin(t * 0.7 * laserSpeed + L.phase) * 0.85;
                 L.pivot.rotation.x = Math.cos(t * 0.55 * laserSpeed + L.phase * 1.3) * 0.7;
                 L.mat.opacity = outside ? 0.08 : (0.22 + bass * 0.28) * look.laser;
             }
             for (let i = 0; i < club.washes.length; i++) {
                 club.washes[i].opacity = outside ? 0.08 : (0.28 + bass * 0.45 + Math.sin(t * 6 + i) * 0.12) * look.laser;
-                club.washes[i].color.copy(i % 2 ? _vibe : _color.set(0x00fff7));
+                club.washes[i].color.copy(i % 2 ? sceneColor : sceneAccent);
             }
             for (let i = 0; i < club.hangLeds.length; i++) {
                 const pulse = 0.45 + bass * 0.55 + Math.sin(t * 5 + i * 0.9) * 0.25;
@@ -349,7 +370,7 @@ export function createWorld(canvas) {
                 const checker = (col + row) % 2;
                 let pulse = (0.1 + bass * 0.55 + snake * 0.85 + checker * 0.04 + mid * 0.12) * look.floor;
                 if (floorFlash > 0) pulse = 1.2;
-                _color.copy(_vibe);
+                _color.copy(sceneColor);
                 _color.multiplyScalar(0.35 + pulse * 0.9);
                 _color.r += snake * 0.25;
                 _color.b += (1 - snake) * 0.15;
@@ -359,7 +380,7 @@ export function createWorld(canvas) {
 
             if (bloomKick > 0) bloomKick -= dt;
             const drunkPulse = drunk && !reduced ? 0.22 + Math.sin(t * 1.3) * 0.08 : 0;
-            bloom.strength = reduced ? 0.1 : 0.42 + bass * 0.28 + bloomKick * 1.4 + drunkPulse;
+            bloom.strength = reduced ? 0.06 : (outside ? 0.46 : zone === "club" ? 0.34 : 0.18) + (zone === "club" ? bass * 0.18 + bloomKick : outside ? bloomKick * 0.4 : 0) + drunkPulse;
             const drunkFov = drunk && !reduced ? Math.sin(t * 0.7) * 4 + Math.sin(t * 1.9) * 1.6 : 0;
             const targetFov = baseFov + (reduced ? 0 : bass * 2.4 + bloomKick * 8) + drunkFov;
             if (Math.abs(camera.fov - targetFov) > 0.05) {
@@ -385,7 +406,8 @@ export function createWorld(canvas) {
                 ledTick = 0;
             }
 
-            updateCity(city, dt, t, { outside, reduced, lampMul: look.lamp });
+            updateCity(city, dt, t, { outside, reduced, lampMul: look.lamp, zone, position:p, camera });
+            activities.update(dt,t,reduced,club.namedPeople);
 
             club.particles.visible = zone === "club" || zone === "lounge";
         },

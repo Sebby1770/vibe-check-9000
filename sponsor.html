@@ -1,0 +1,69 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>Midtown Poster Co. — boards on 47th Street</title>
+    <meta name="description" content="Rent a 1954 Midtown billboard inside VIBE CHECK 9000. Rooftop, street, and visor placements.">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link href="https://fonts.googleapis.com/css2?family=Limelight&family=Special+Elite&family=Space+Mono:wght@400;700&display=swap" rel="stylesheet">
+    <style>
+        :root { color-scheme: dark; }
+        * { box-sizing: border-box; }
+        body { margin: 0; background: #07060c; color: #f2eee0; font-family: "Space Mono", monospace; }
+        header {
+            padding: 48px 8vw 24px;
+            background: linear-gradient(180deg, rgba(7,6,12,0.2), #07060c), url("assets/ads/taxi.jpg") center/cover;
+            min-height: 46vh;
+        }
+        .kicker { letter-spacing: 0.28em; color: #e0b25a; font-size: 12px; }
+        h1 { font-family: Limelight, serif; font-size: clamp(40px, 8vw, 88px); margin: 12px 0 8px; color: #ffe7a8; }
+        main { padding: 8px 8vw 80px; max-width: 980px; }
+        table { width: 100%; border-collapse: collapse; margin: 24px 0 36px; }
+        th, td { text-align: left; padding: 12px 8px; border-bottom: 1px solid rgba(224,178,90,0.25); }
+        th { color: #e0b25a; letter-spacing: 0.16em; font-size: 12px; }
+        .usd { color: #66ffe0; }
+        a { color: #66ffe0; }
+        .cta {
+            display: inline-block; margin-right: 12px; margin-top: 8px;
+            padding: 12px 18px; border: 1px solid #e0b25a; color: #ffe7a8;
+            text-decoration: none; letter-spacing: 0.14em;
+        }
+        p { max-width: 62ch; line-height: 1.6; color: #cbbba0; }
+        code { color: #ffe7a8; }
+        .pay { letter-spacing: 0.12em; font-size: 12px; }
+    </style>
+</head>
+<body>
+    <header>
+        <p class="kicker">MIDTOWN POSTER CO. · NOVEMBER 12, 1954</p>
+        <h1>YOUR NAME<br>IN THE RAIN.</h1>
+        <p>VIBE CHECK 9000 is a first-person night on 47th Street. People look up. The boards are already there. We sell the remaining faces.</p>
+    </header>
+    <main>
+        <p class="kicker" id="payStatus">RATE CARD · USD / 30 NIGHTS</p>
+        <table>
+            <thead><tr><th>Board</th><th>Kind</th><th>Price</th><th></th></tr></thead>
+            <tbody id="rateBody"></tbody>
+        </table>
+        <p>Creative is a 16:9 still. We set the type so the words stay readable in the rain. No pop-ups, no autoplay audio, no tracking pixels in the visor. A click opens your URL in a new tab. House ads stay on unsold faces.</p>
+        <p>To take real money, create Stripe Payment Links and paste the <code>https://buy.stripe.com/...</code> URLs into <code>ads.config.json</code>. Until then the buttons open GitHub Sponsors.</p>
+        <a class="cta" id="tillCta" href="https://github.com/sponsors/Sebby1770">KEEP THE LIGHTS ON</a>
+        <a class="cta" href="./">ENTER THE NIGHT</a>
+    </main>
+    <script type="module">
+        import { mergeAdConfig, pricedRates, tillUrl, stripeLive } from "./js/ads.js";
+        const raw = await fetch("ads.config.json", { cache: "no-store" }).then((r) => r.ok ? r.json() : {}).catch(() => ({}));
+        const config = mergeAdConfig(raw);
+        const live = stripeLive(config);
+        document.getElementById("payStatus").textContent = live
+            ? "STRIPE IS LIVE · USD / 30 NIGHTS"
+            : "RATE CARD · USD / 30 NIGHTS · STRIPE OFF";
+        document.getElementById("tillCta").href = tillUrl(config);
+        document.getElementById("rateBody").innerHTML = pricedRates(config).map((r) => {
+            const label = r.payKind === "stripe" ? "PAY" : r.payKind === "email" ? "ASK" : "TIP";
+            return `<tr><td>${r.name}</td><td>${r.kind}</td><td class="usd">$${r.usd}</td><td><a class="pay" href="${r.checkout}" target="_blank" rel="noreferrer">${label}</a></td></tr>`;
+        }).join("");
+    </script>
+</body>
+</html>

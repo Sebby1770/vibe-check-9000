@@ -1,3 +1,4 @@
+import { normalizeCommerce } from "./commerce.js";
 /* Local night stamps + cosmetic unlocks. No DOM. */
 
 export const PROGRESS_KEY = "vc9k-progress";
@@ -21,10 +22,16 @@ export const LOOKS = [
     { id: "token", name: "TOKEN GREEN", visor: "#39ff14", left: "#39ff14", right: "#66ffe0", how: "take the 12:04" },
     { id: "ice", name: "4B ICE", visor: "#88ccee", left: "#88ccee", right: "#e8e7ff", how: "find Frank's ice" },
     { id: "stub", name: "SILVER SCREEN", visor: "#ffe7a8", left: "#ffe7a8", right: "#e0b25a", how: "a Rivoli stub" },
+    { id: "block-regular", name: "BLOCK REGULAR", visor: "#a9cfa5", left: "#88b68a", right: "#e1c38c", how: "help at all seven shop counters" },
+    { id: "signal-silver", name: "SIGNAL SILVER", visor: "#c8d6eb", left: "#8faee0", right: "#c5ddcf", how: "follow the midnight frequency" },
+    { id: "corner-gold", name: "CORNER GOLD", visor: "#e3be77", left: "#cba665", right: "#bd91a0", how: "play all three Corner Set phrases" },
+    { id: "street-photo", name: "STREET PHOTOGRAPHER", visor: "#a2c8c0", left: "#c1aa85", right: "#86b3ac", how: "photograph four different areas" },
+    { id: "billboard", name: "BOARDWALK GOLD", visor: "#e0b25a", left: "#7b8cff", right: "#ffe7a8", how: "read five different 47th Street boards" },
+
 ];
 
 function emptyNight() {
-    return { talks: 0, energy: 0, flags: {}, talked: [] };
+    return { talks: 0, energy: 0, flags: {}, talked: [], zones: [], commerce: normalizeCommerce(), elapsed: 0 };
 }
 
 function empty() {
@@ -65,7 +72,9 @@ export function loadProgress(storage) {
                 ? {
                     ...emptyNight(),
                     ...data.night,
-                    flags: data.night.flags || {},
+                    flags: data.night.flags && typeof data.night.flags === "object" ? data.night.flags : {},
+                    zones: Array.isArray(data.night.zones) ? data.night.zones : [],
+                    commerce: normalizeCommerce(data.night.commerce),
                     talked: Array.isArray(data.night.talked) ? data.night.talked : [],
                 }
                 : emptyNight(),
@@ -81,7 +90,7 @@ export function loadProgress(storage) {
 export function saveProgress(data, storage) {
     const store = storage || (typeof localStorage !== "undefined" ? localStorage : null);
     if (!store) return data;
-    store.setItem(PROGRESS_KEY, JSON.stringify(data));
+    try { store.setItem(PROGRESS_KEY, JSON.stringify(data)); } catch { /* Private mode and full storage still allow this night to play. */ }
     return data;
 }
 
@@ -105,7 +114,7 @@ export function touchVisit(progress, today) {
         streak,
         visits: (progress.visits || 0) + 1,
         dareDone: false,
-        night: emptyNight(),
+        night: {...emptyNight(), commerce: normalizeCommerce({life: progress.night?.commerce?.life})},
     };
 }
 
@@ -125,7 +134,9 @@ export function evaluateUnlocks(progress, events = {}) {
     const night = {
         talks: progress.night?.talks || 0,
         energy: progress.night?.energy || 0,
-        flags: { ...(progress.night?.flags || {}), ...(events.nightFlags || {}) },
+        ...progress.night,
+        flags: { ...(progress.night?.flags || {}), ...(events.flags || {}), ...(events.nightFlags || {}) },
+        zones: [...new Set([...(progress.night?.zones || []), ...(events.zone ? [events.zone] : [])])],
         talked: [...nightTalked],
     };
     if (events.talkId) {
@@ -135,11 +146,12 @@ export function evaluateUnlocks(progress, events = {}) {
         talked.add(events.talkId);
     }
     if (events.zone) zones.add(events.zone);
-    if (events.energyPeak != null && events.energyPeak > (progress.energyPeak || 0)) {
-        progress.energyPeak = events.energyPeak;
-    }
     if (events.energyPeak != null) night.energy = Math.max(night.energy, events.energyPeak);
 
+    if (flags.counterRegular) unlock("block-regular");
+    if (flags.signalFound) unlock("signal-silver");
+    if (flags.streetDuet) unlock("corner-gold");
+    if (flags.streetPhotographer) unlock("street-photo");
     if (talked.has("rexa")) unlock("magenta");
     if (flags.sat) unlock("gold");
     if (flags.cat) unlock("lime");
@@ -157,6 +169,7 @@ export function evaluateUnlocks(progress, events = {}) {
     if (flags.token || flags.subway || zones.has("subway")) unlock("token");
     if (flags.ice) unlock("ice");
     if (flags.ticket) unlock("stub");
+    if (flags.billboards) unlock("billboard");
 
     const next = {
         ...progress,
@@ -193,9 +206,17 @@ export function setLook(progress, id) {
 }
 
 export function buildRecap(progress, extras = {}) {
-    const talked = progress.talked || [];
-    const flags = progress.flags || {};
+    const talked = progress.night?.talked || [];
+    const flags = progress.night?.flags || {};
     const bits = [];
+    const life = progress.night?.commerce?.life;
+    if (life?.home) bits.push("came home to their own apartment");
+    if (life?.shifts) bits.push(`finished ${life.shifts} paid shifts`);
+    const expansion = progress.night?.commerce?.expansion;
+    if (expansion && Object.keys(expansion.workshops).length) bits.push(`helped at ${Object.keys(expansion.workshops).length} shop counters`);
+    if (flags.signalFound) bits.push("found the midnight frequency");
+    if (flags.streetDuet) bits.push("played a duet on the corner");
+    if (expansion?.photos.length) bits.push(`kept ${expansion.photos.length} photographs`);
     if (talked.length) bits.push(`talked to ${talked.length}`);
     if (flags.sat) bits.push("sat like rent");
     if (flags.cat) bits.push("paid the cat");
@@ -204,19 +225,20 @@ export function buildRecap(progress, extras = {}) {
     if (flags.jazz) bits.push("asked Velma");
     if (flags.guest) bits.push("signed the list");
     if (flags.cube) bits.push("touched geometry");
-    if ((progress.energyPeak || 0) >= 80) bits.push("the floor noticed");
+    if ((progress.night?.energy || 0) >= 80) bits.push("the floor noticed");
+    for (const [key, text] of Object.entries({vinyl:"found a B-side at Rex’s", tonic:"stopped at the soda fountain", haircut:"sat for Tony’s portrait", ticket:"caught a Rivoli picture", recordDelivered:"changed REXA’s set",flowersDelivered:"brought Velma flowers",ginDelivered:"supplied the supper club",iceDelivered:"brought Frank his ice",midnightStory:"heard Dottie’s midnight story"})) if (flags[key]) bits.push(text);
     return {
         clock: extras.clock || "",
         phase: extras.phase || "doors",
         set: extras.set || "",
         look: extras.look || progress.look,
-        energy: Math.round(extras.energy ?? progress.energyPeak ?? 0),
+        energy: Math.round(extras.energy ?? progress.night?.energy ?? 0),
         talked: talked.length,
         streak: progress.streak || 0,
         visits: progress.visits || 0,
         dare: extras.dare || "",
         dareDone: !!extras.dareDone,
         bits,
-        zones: progress.zones || [],
+        zones: progress.night?.zones || [],
     };
 }

@@ -10,21 +10,27 @@
     <meta property="og:description" content="Put on the visor. 47th Street is raining. The lounge is upstairs.">
     <meta property="og:type" content="website">
     <meta property="og:url" content="https://sebby1770.github.io/vibe-check-9000/">
+    <meta property="og:image" content="assets/ads/taxi.jpg">
     <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Crect width='64' height='64' rx='10' fill='%2307060c'/%3E%3Ctext x='32' y='44' font-size='34' text-anchor='middle' fill='%23e0b25a' font-family='serif'%3E%E2%97%88%3C/text%3E%3C/svg%3E">
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Limelight&family=Orbitron:wght@400;700;900&family=Special+Elite&family=Space+Mono:wght@400;700&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="style.css">
+    <link rel="stylesheet" href="shops.css">
     <script type="importmap">
     {
       "imports": {
-        "three": "https://cdn.jsdelivr.net/npm/three@0.160.1/build/three.module.js",
-        "three/addons/": "https://cdn.jsdelivr.net/npm/three@0.160.1/examples/jsm/"
+        "three": "./vendor/three/build/three.module.js",
+        "three/addons/": "./vendor/three/examples/jsm/"
       }
     }
     </script>
+    <link rel="stylesheet" href="expansion.css">
+    <link rel="stylesheet" href="life.css">
+    <link rel="stylesheet" href="ads.css">
 </head>
 <body data-zone="club">
+    <button id="cameraCapture" class="camera-trigger" type="button" hidden>CAMERA [C]</button>
     <canvas id="gl" aria-hidden="true"></canvas>
 
     <div class="visor" id="visor">
@@ -45,6 +51,8 @@
             <span class="status"><span class="status-dot"></span> <span id="statusPlace">THE FLOOR</span></span>
             <nav class="top-links">
                 <a href="https://github.com/Sebby1770/vibe-check-9000" target="_blank" rel="noreferrer">GitHub</a>
+                <button type="button" id="lifeBtn" class="icon-btn life-trigger">LIFE [L] · $120</button>
+                <button type="button" id="journalBtn" class="icon-btn">POCKETS [J]</button>
                 <button type="button" id="deckBtn" class="icon-btn">DECK</button>
                 <button type="button" id="muteBtn" class="icon-btn">MUTE</button>
                 <button type="button" id="settingsBtn" class="icon-btn" aria-label="Settings">⚙</button>
@@ -62,19 +70,20 @@
         <div class="visor-reticle" aria-hidden="true"></div>
 
         <section id="boot" class="overlay boot" aria-label="Doors">
-            <p class="boot-tag">v19.0.0 // TONIGHT'S BILL // <span id="bootSet">HOUSE SYSTEM</span></p>
+            <p class="boot-tag">v24.0.0 // TONIGHT'S BILL // <span id="bootSet">HOUSE SYSTEM</span></p>
             <h1>VIBE CHECK <span>9000</span></h1>
             <p class="boot-sub" id="bootSub">THE SUN IS STILL IN THE STREET</p>
             <p class="boot-headline" id="bootHeadline"></p>
             <p class="boot-bill" id="bootBill">the visor remembers who walked in</p>
             <p class="boot-dare" id="bootDare"></p>
+            <p class="boot-sponsor" id="bootSponsor">TONIGHT'S BOARD · THE STREET STILL SELLS LIGHT</p>
             <div class="boot-actions">
                 <button type="button" class="cta" id="enterBtn">ENTER THE NIGHT</button>
             </div>
             <div id="vr-slot" class="vr-slot"></div>
             <ul class="hints">
                 <li>WASD move · mouse look · SPACE dance</li>
-                <li>E talk · front door 47th · back door alley · stairs lounge</li>
+                <li>E use / talk · J pockets & map · front door 47th · back door alley · stairs lounge</li>
                 <li>Hail a Checker · shops across 47th · subway · Astoria 2F</li>
                 <li>ESC: deck, visor looks, night stamp, recap, tip the till</li>
                 <li class="mobile-only">Mobile: tap look + on-screen stick</li>
@@ -100,13 +109,15 @@
                 <p class="boot-dare" id="pauseDare"></p>
                 <div class="result-actions">
                     <button type="button" class="btn-primary" id="resumeBtn">BACK IN</button>
-                    <button type="button" class="btn-secondary" id="pauseDeckBtn">DECK</button>
+                    <button type="button" class="btn-secondary" id="pauseJournalBtn">POCKETS & THE BLOCK</button>
+                <button type="button" class="btn-secondary" id="pauseDeckBtn">DECK</button>
                     <button type="button" class="btn-secondary" id="pauseLookBtn">VISOR</button>
                     <button type="button" class="btn-secondary" id="pauseShareBtn">STAMP</button>
                     <button type="button" class="btn-secondary" id="pauseRecapBtn">RECAP</button>
                 </div>
+                <a class="pause-ad" id="pauseAd" href="sponsor.html">YOUR NAME IN LIGHTS · RENT A BOARD ON 47TH</a>
                 <p class="tip-line">ION's till is a hat.
-                    <a href="https://github.com/sponsors/Sebby1770" target="_blank" rel="noreferrer">[KEEP THE LIGHTS ON]</a>
+                    <a href="https://github.com/sponsors/Sebby1770" target="_blank" rel="noreferrer" data-till>[KEEP THE LIGHTS ON]</a>
                     <a href="https://github.com/Sebby1770/vibe-check-9000" target="_blank" rel="noreferrer">[STAR THE ROOM]</a>
                 </p>
                 <p class="footer-links">
@@ -180,8 +191,22 @@
                     <button type="button" class="btn-secondary" id="pauseShareBtn2">STAMP</button>
                 </div>
                 <p class="tip-line">ION's till is a hat.
-                    <a href="https://github.com/sponsors/Sebby1770" target="_blank" rel="noreferrer">[KEEP THE LIGHTS ON]</a>
+                    <a href="https://github.com/sponsors/Sebby1770" target="_blank" rel="noreferrer" data-till>[KEEP THE LIGHTS ON]</a>
                 </p>
+            </div>
+        </section>
+
+        <section id="adsDesk" class="overlay panel-wrap hidden" aria-label="Midtown Poster Co.">
+            <div class="panel ads-panel">
+                <p class="paper-kicker">MIDTOWN POSTER CO.</p>
+                <h2>47TH STREET BOARDS</h2>
+                <p class="dim" id="adsPitch">The city still sells light by the square yard.</p>
+                <p class="dim" id="adsPayHint">Stripe is off until you paste a Payment Link into ads.config.json.</p>
+                <ul class="rate-list" id="rateList"></ul>
+                <div class="result-actions">
+                    <a class="btn-primary" id="adsMail" href="https://github.com/sponsors/Sebby1770" target="_blank" rel="noreferrer">RENT A BOARD</a>
+                    <button type="button" class="btn-secondary" id="adsClose">FOLD THE RATE CARD</button>
+                </div>
             </div>
         </section>
 
@@ -194,6 +219,8 @@
             </div>
         </section>
 
+        <div id="wayfinder" class="wayfinder" hidden></div>
+        <div class="mobile-actions"><button id="mobileInteract" type="button">USE</button><button id="mobileDance" type="button">DANCE</button></div>
         <div id="mobile-controls" class="mobile-controls hidden">
             <div id="stick" class="stick" aria-label="Move stick"><div id="stick-knob" class="stick-knob"></div></div>
             <div id="look-pad" class="look-pad" aria-label="Look pad">LOOK</div>

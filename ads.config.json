@@ -1,0 +1,26 @@
+{
+  "domain": "vibecheck9000.com",
+  "email": "",
+  "githubSponsors": "https://github.com/sponsors/Sebby1770",
+  "koFi": "",
+  "stripePaymentLink": "",
+  "stripeLinks": {
+    "tower-spire": "",
+    "tower-center": "",
+    "spectacular-center": "",
+    "spectacular-west": "",
+    "tower-west": "",
+    "tower-east": "",
+    "tower-far-west": "",
+    "tower-far-east": "",
+    "shop-fascia": "",
+    "lily-fascia": "",
+    "hotel-south": "",
+    "alley-wall": "",
+    "newsstand": "",
+    "boot-pause": ""
+  },
+  "hideSponsorSlots": false,
+  "slots": {},
+  "sponsors": []
+}

@@ -9,12 +9,12 @@ function canvasTex(draw, size = 256, repeatX = 1, repeatY = 1) {
     tex.colorSpace = THREE.SRGBColorSpace;
     tex.wrapS = tex.wrapT = THREE.RepeatWrapping;
     tex.repeat.set(repeatX, repeatY);
-    tex.anisotropy = 4;
+    tex.anisotropy = 8;
     tex.needsUpdate = true;
     return tex;
 }
 
-export function brickTex(mortar = "#2a1c18", brick = "#6a3a32", size = 256) {
+export function brickTex(mortar = "#2a1c18", brick = "#6a3a32", size = 512) {
     return canvasTex((g, s) => {
         g.fillStyle = mortar;
         g.fillRect(0, 0, s, s);
@@ -41,10 +41,16 @@ export function asphaltTex() {
     return canvasTex((g, s) => {
         g.fillStyle = "#1a1a1e";
         g.fillRect(0, 0, s, s);
-        for (let i = 0; i < 1200; i++) {
+        for (let i = 0; i < 2200; i++) {
             const n = Math.random();
-            g.fillStyle = `rgba(${40 + n * 40},${40 + n * 40},${44 + n * 40},${0.15 + n * 0.25})`;
+            g.fillStyle = `rgba(${36 + n * 50},${40 + n * 46},${48 + n * 52},${0.12 + n * 0.32})`;
             g.fillRect(Math.random() * s, Math.random() * s, 2, 2);
+        }
+        g.fillStyle = "rgba(180,200,220,0.07)";
+        for (let i = 0; i < 40; i++) {
+            g.beginPath();
+            g.ellipse(Math.random() * s, Math.random() * s, 18 + Math.random() * 24, 6 + Math.random() * 10, Math.random(), 0, Math.PI * 2);
+            g.fill();
         }
         g.strokeStyle = "rgba(180,160,80,0.35)";
         g.lineWidth = 6;
@@ -53,7 +59,7 @@ export function asphaltTex() {
         g.moveTo(s * 0.5, 0);
         g.lineTo(s * 0.5, s);
         g.stroke();
-    }, 256, 8, 2);
+    }, 512, 8, 2);
 }
 
 export function sidewalkTex() {
@@ -65,11 +71,13 @@ export function sidewalkTex() {
         g.strokeRect(2, 2, s - 4, s - 4);
         g.strokeRect(s / 2, 2, 1, s - 4);
         g.strokeRect(2, s / 2, s - 4, 1);
-        for (let i = 0; i < 80; i++) {
-            g.fillStyle = `rgba(0,0,0,${Math.random() * 0.15})`;
+        for (let i = 0; i < 140; i++) {
+            g.fillStyle = `rgba(0,0,0,${Math.random() * 0.18})`;
             g.fillRect(Math.random() * s, Math.random() * s, 8, 2);
         }
-    }, 256, 4, 4);
+        g.fillStyle = "rgba(200,210,220,0.05)";
+        for (let i = 0; i < 18; i++) g.fillRect(Math.random() * s, Math.random() * s, 22, 3);
+    }, 512, 4, 4);
 }
 
 export function plasterTex() {

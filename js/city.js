@@ -1,12 +1,14 @@
 import * as THREE from "three";
 import { addBox, unitBox, neonCanvas, marqueeCanvas } from "./kit.js";
 import { brickTex, darkBrickTex, asphaltTex, sidewalkTex, plasterTex, woodTex, checkerTex, gazetteTex } from "./textures.js";
+import { buildBillboards } from "./billboards.js";
+import { mergeAdConfig } from "./ads.js";
 import { randomPedestrian } from "./human.js";
 import { buildShops } from "./shops.js";
 import { buildSubway, updateSubway } from "./under.js";
 import { SECOND_Y, HOTEL_STAIRS } from "./zones.js";
 
-const RAIN_N = 900;
+const RAIN_N = 1600;
 const STEAM_N = 80;
 const _dummy = new THREE.Object3D();
 
@@ -50,6 +52,14 @@ function sedan(scene, { x, z, yaw = 0, taxi = false, color = 0x2a2a32, moving = 
     const lightR = lightL.clone();
     lightR.position.z = -0.5;
     g.add(lightL, lightR);
+    if (moving) {
+        const beam = new THREE.PointLight(0xfff1c4, 14, 14, 2);
+        beam.position.set(1.95, 0.6, 0);
+        g.add(beam);
+        const tail = new THREE.Mesh(new THREE.BoxGeometry(0.08, 0.08, 1.2), new THREE.MeshBasicMaterial({ color: 0xff3355 }));
+        tail.position.set(-1.9, 0.58, 0);
+        g.add(tail);
+    }
     g.position.set(x, 0, z);
     g.rotation.y = yaw;
     g.userData.wheels = wheels;
@@ -58,14 +68,14 @@ function sedan(scene, { x, z, yaw = 0, taxi = false, color = 0x2a2a32, moving = 
     return g;
 }
 
-export function buildCity(scene) {
+export function buildCity(scene, adConfig = mergeAdConfig()) {
     const root = new THREE.Group();
     scene.add(root);
 
     const brick = new THREE.MeshStandardMaterial({ map: brickTex(), roughness: 0.88, metalness: 0.04, color: 0x8a5a4a });
     const brickDark = new THREE.MeshStandardMaterial({ map: darkBrickTex(), roughness: 0.9, color: 0x5a3a32 });
     const brickBrown = new THREE.MeshStandardMaterial({ map: brickTex("#241814", "#5a3a28"), roughness: 0.9, color: 0x6a4a38 });
-    const asphalt = new THREE.MeshStandardMaterial({ map: asphaltTex(), roughness: 0.55, metalness: 0.25, color: 0x2a2a30 });
+    const asphalt = new THREE.MeshStandardMaterial({ map: asphaltTex(), roughness: 0.28, metalness: 0.55, color: 0x1c222c });
     const walk = new THREE.MeshStandardMaterial({ map: sidewalkTex(), roughness: 0.8, metalness: 0.05, color: 0x4a4a50 });
     const plaster = new THREE.MeshStandardMaterial({ map: plasterTex(), roughness: 0.85 });
     const wood = new THREE.MeshStandardMaterial({ map: woodTex(), roughness: 0.75, color: 0x6a4a32 });
@@ -346,13 +356,16 @@ export function buildCity(scene) {
     fillWins(warmList, winWarm);
     fillWins(offList, winOff);
 
-    const billboard = new THREE.Mesh(new THREE.PlaneGeometry(14, 6), new THREE.MeshBasicMaterial({ map: marqueeCanvas("MIDTOWN GIN", "THE SMOOTH CENTURY") }));
-    billboard.position.set(-16, 36, 47.4);
-    root.add(billboard);
-    addBox(root, unitBox, black, -16, 36, 47.8, 14.4, 6.4, 0.4);
-    const bill2 = new THREE.Mesh(new THREE.PlaneGeometry(12, 5), new THREE.MeshBasicMaterial({ map: marqueeCanvas("LUCKIES", "SO ROUND  ·  SO FIRM") }));
-    bill2.position.set(48, 34, 49.2);
-    root.add(bill2);
+    const ads = buildBillboards(root, scene, adConfig);
+    const wetRoad = new THREE.Mesh(
+        new THREE.PlaneGeometry(180, 8.2),
+        new THREE.MeshStandardMaterial({
+            color: 0x151c24, metalness: 0.92, roughness: 0.12, transparent: true, opacity: 0.42, envMapIntensity: 1.4,
+        }),
+    );
+    wetRoad.rotation.x = -Math.PI / 2;
+    wetRoad.position.set(0, 0.012, 22.8);
+    root.add(wetRoad);
 
     // Alley back wall
     addBox(root, unitBox, brickDark, 0, 8, -32.2, 80, 16, 4);
@@ -398,15 +411,27 @@ export function buildCity(scene) {
         scene.add(pl);
         lampLights.push(pl);
     }
-    for (const x of [-24, 8, 40]) {
+    for (const x of [-40, -24, -8, 8, 24, 40]) {
         addBox(root, unitBox, black, x, 2.2, 27.9, 0.12, 4.4, 0.12);
         addBox(root, unitBox, neonAmber, x, 4.35, 28.4, 0.35, 0.22, 0.35);
-        const pl = new THREE.PointLight(0xffb070, 16, 10, 2);
+        const pl = new THREE.PointLight(0xffb070, 18, 11, 2);
         pl.position.set(x, 4.2, 28.2);
-        pl.userData.base = 16;
+        pl.userData.base = 18;
         scene.add(pl);
         lampLights.push(pl);
     }
+    const dinerGlow = new THREE.Mesh(
+        new THREE.PlaneGeometry(8.8, 1.8),
+        new THREE.MeshBasicMaterial({ color: 0xff3355, transparent: true, opacity: 0.16, blending: THREE.AdditiveBlending, depthWrite: false }),
+    );
+    dinerGlow.position.set(-27.6, 4.7, 12.92);
+    root.add(dinerGlow);
+    const hotelGlow = new THREE.Mesh(
+        new THREE.PlaneGeometry(10.4, 1.6),
+        new THREE.MeshBasicMaterial({ color: 0xffb25a, transparent: true, opacity: 0.14, blending: THREE.AdditiveBlending, depthWrite: false }),
+    );
+    hotelGlow.position.set(27.6, 10.4, 12.92);
+    root.add(hotelGlow);
 
     // Hydrants, mailbox, newsstand, phone booth
     const hydrant = new THREE.Mesh(new THREE.CylinderGeometry(0.12, 0.14, 0.7, 8), new THREE.MeshStandardMaterial({ color: 0xb82828, roughness: 0.45, metalness: 0.4 }));
@@ -458,17 +483,25 @@ export function buildCity(scene) {
     }));
     scene.add(steam);
 
-    // Rain
-    const rainPos = new Float32Array(RAIN_N * 3);
-    for (let i = 0; i < RAIN_N; i++) {
-        rainPos[i * 3] = (Math.random() - 0.5) * 90;
-        rainPos[i * 3 + 1] = Math.random() * 16;
-        rainPos[i * 3 + 2] = (Math.random() - 0.5) * 80;
+    // Rain streaks
+    const rainPos = new Float32Array(RAIN_N * 6);
+    function seedRain(i) {
+        const x = (Math.random() - 0.5) * 96;
+        const y = Math.random() * 18;
+        const z = (Math.random() - 0.5) * 84;
+        const len = 0.55 + Math.random() * 0.5;
+        rainPos[i * 6] = x;
+        rainPos[i * 6 + 1] = y;
+        rainPos[i * 6 + 2] = z;
+        rainPos[i * 6 + 3] = x + 0.1;
+        rainPos[i * 6 + 4] = y - len;
+        rainPos[i * 6 + 5] = z;
     }
+    for (let i = 0; i < RAIN_N; i++) seedRain(i);
     const rainGeo = new THREE.BufferGeometry();
     rainGeo.setAttribute("position", new THREE.BufferAttribute(rainPos, 3));
-    const rain = new THREE.Points(rainGeo, new THREE.PointsMaterial({
-        color: 0xc8d0d8, size: 0.04, transparent: true, opacity: 0.28, depthWrite: false, sizeAttenuation: true,
+    const rain = new THREE.LineSegments(rainGeo, new THREE.LineBasicMaterial({
+        color: 0xc5d4de, transparent: true, opacity: 0.32, depthWrite: false,
     }));
     scene.add(rain);
 
@@ -544,8 +577,12 @@ export function buildCity(scene) {
 
     return {
         root,
+        ads,
+        winOn,
+        winWarm,
         rain,
         rainGeo,
+        rainN: RAIN_N,
         steam,
         steamGeo,
         steamOrigins,
@@ -561,6 +598,10 @@ export function buildCity(scene) {
         hotelLight,
         marquee,
         shopCrowd: shops.crowds,
+        shopDetails: shops.details,
+        shopLights: shops.lights,
+        playFilm(id) { shops.film.userData.play(id); },
+        setShopState(state) { if (state.film && this.currentFilm !== state.film.id) {this.currentFilm=state.film.id; shops.film.userData.play(state.film.id);} },
         barberPole: shops.pole,
         film: shops.film,
         signal,
@@ -581,21 +622,32 @@ export function buildCity(scene) {
     };
 }
 
-export function updateCity(city, dt, t, { outside, reduced, lampMul = 1 }) {
+export function updateCity(city, dt, t, { outside, reduced, lampMul = 1, zone, position, camera }) {
     const rainArr = city.rainGeo.attributes.position.array;
+    const n = city.rainN || RAIN_N;
     city.rain.visible = !!outside && !reduced;
     if (!reduced) {
-        for (let i = 0; i < RAIN_N; i++) {
-            rainArr[i * 3 + 1] -= dt * 14;
-            rainArr[i * 3] += dt * 1.2;
-            if (rainArr[i * 3 + 1] < 0) {
-                rainArr[i * 3 + 1] = 12 + Math.random() * 6;
-                rainArr[i * 3] = (Math.random() - 0.5) * 90;
-                rainArr[i * 3 + 2] = (Math.random() - 0.5) * 80;
+        for (let i = 0; i < n; i++) {
+            rainArr[i * 6 + 1] -= dt * 16;
+            rainArr[i * 6 + 4] -= dt * 16;
+            rainArr[i * 6] += dt * 1.35;
+            rainArr[i * 6 + 3] += dt * 1.35;
+            if (rainArr[i * 6 + 4] < 0) {
+                const x = (Math.random() - 0.5) * 96;
+                const y = 12 + Math.random() * 6;
+                const z = (Math.random() - 0.5) * 84;
+                const len = 0.55 + Math.random() * 0.5;
+                rainArr[i * 6] = x;
+                rainArr[i * 6 + 1] = y;
+                rainArr[i * 6 + 2] = z;
+                rainArr[i * 6 + 3] = x + 0.1;
+                rainArr[i * 6 + 4] = y - len;
+                rainArr[i * 6 + 5] = z;
             }
         }
         city.rainGeo.attributes.position.needsUpdate = true;
     }
+    city.ads?.update?.(dt, t, { camera, reduced, outside });
 
     const st = city.steamGeo.attributes.position.array;
     for (let i = 0; i < STEAM_N; i++) {
@@ -645,12 +697,30 @@ export function updateCity(city, dt, t, { outside, reduced, lampMul = 1 }) {
 
     const mul = Number.isFinite(lampMul) ? lampMul : 1;
     for (const l of city.lampLights || []) {
-        l.intensity = (l.userData.base || 16) * mul;
+        l.intensity = (l.userData.base || 16) * mul * (reduced ? 1 : 0.92 + Math.sin(t * 1.7 + l.position.x) * 0.08);
+    }
+    if (city.winOn && !reduced && outside) {
+        const pulse = 0.86 + Math.sin(t * 0.55) * 0.08;
+        city.winOn.color.setRGB(1 * pulse, 0.89 * pulse, 0.66 * pulse);
+        if (city.winWarm) city.winWarm.color.setRGB(1 * pulse, 0.75 * pulse, 0.47 * pulse);
     }
     if (city.alleyLight) city.alleyLight.intensity = 28 * Math.max(1, mul * 0.85);
     if (city.barberPole) city.barberPole.rotation.y += dt * 2.4;
     updateSubway(city.under, dt);
-    if (city.film?.userData.draw) city.film.userData.draw(t);
+    if (zone === "rivoli" && city.film?.userData.draw) city.film.userData.draw(reduced ? Math.floor(t) : t);
+    if (city.shopDetails && zone === "records") {city.shopDetails.disc.rotation.y+=dt*2;city.shopDetails.label.rotation.y+=dt*2;}
+    for(const person of city.shopCrowd || []) {
+        const home=person.userData.home;if(!home||person.userData.mode==="sit")continue;
+        const index=person.userData.shopIndex,cycle=(t+index*3)%18;
+        person.rotation.y=home.yaw+(reduced?0:Math.sin(t*.5+index)*.15);
+        person.position.z=home.z+(reduced?0:Math.sin(cycle/18*Math.PI*2)*.27);
+        person.userData.mode=cycle<5?"lean":"idle";
+    }
+    for(const light of city.shopLights || []) {
+        light.userData.base ??= light.intensity;
+        const near=!position||Math.hypot(position.x-light.position.x,position.z-light.position.z)<24;
+        light.visible=near;light.intensity=light.userData.base*(zone==="rivoli"?.7:1);
+    }
     if (city.signal?.userData.lamps) {
         const phase = Math.floor(t / 3.2) % 3;
         const L = city.signal.userData.lamps;

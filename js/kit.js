@@ -29,7 +29,7 @@ export function neonCanvas(text, color, w = 1024, h = 256, bg = "#08060a") {
     g.fillText(text, w / 2, h / 2);
     const tex = new THREE.CanvasTexture(c);
     tex.colorSpace = THREE.SRGBColorSpace;
-    tex.anisotropy = 4;
+    tex.anisotropy = 8;
     return tex;
 }
 

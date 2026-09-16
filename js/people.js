@@ -1002,13 +1002,13 @@ export const NPCS = [
             start: {
                 say: "2F. 4B's ice machine finally works, which Frank will never believe. Vacant's the room with the window on 47th. Don't tell Eleanor I said vacant. She prefers 'between guests.'",
                 choices: [
-                    { text: "I'll take the ice.", next: "ice", action: "ice" },
+                    { text: "I'll take the ice.", next: "ice", action: "lead-ice" },
                     { text: "The window.", next: "window" },
                 ],
             },
             ice: {
                 say: "Machine's in 4B. Tell Frank the plot twist was plumbing. He'll still look in the lounge.",
-                action: "ice",
+                action: "lead-ice",
                 choices: [{ text: "I'll be the messenger.", next: null }],
             },
             window: {
@@ -1019,7 +1019,25 @@ export const NPCS = [
     },
 ];
 
+// A reward belongs to one dialogue transition, never both arrival and departure.
+for (const npc of NPCS) for (const node of Object.values(npc.nodes)) for (const choice of node.choices || []) {
+    if (choice.action && choice.next && npc.nodes[choice.next]?.action === choice.action) delete npc.nodes[choice.next].action;
+}
+for (const [id, text, action] of [
+    ["rexa","I brought a B-side from Rex’s.","deliver-rexa"],
+    ["velma","A bouquet for the piano.","deliver-velma"],
+    ["marco","Your bottle from Midtown Gin.","deliver-marco"],
+    ["frank","I brought your ice.","deliver-frank"],
+    ["frank","I’ll find the machine in 4B.","lead-ice"],
+    ["dottie","Tell me about the booth after midnight.","midnight-story"],
+]) NPCS.find(n=>n.id===id).nodes.start.choices.push({text,action,next:null});
+
 export const PROPS = [
+    { id:"florist-counter",x:-12.2,z:36.7,y:0,r:2.3,prompt:"[E] CHOOSE A BOUQUET",action:"rose" },
+    { id:"gin-counter",x:24.6,z:36.5,y:0,r:2.3,prompt:"[E] BROWSE MIDTOWN GIN",action:"gin" },
+    { id:"rivoli-program",x:6,z:35.6,y:0,r:2.3,prompt:"[E] TONIGHT’S PICTURES",action:"ticket" },
+    { id:"diner-menu",x:-28.6,z:1.55,y:0,r:2.1,prompt:"[E] DOTTIE’S MENU",action:"coffee" },
+    { id:"barber-tools",x:35.9,z:36.4,y:0,r:2,prompt:"[E] TONY’S CHAIR",action:"haircut" },
     { id: "phone", x: 7.15, z: 14.85, y: 0, r: 1.7, prompt: "[E] PICK UP THE RECEIVER", action: "phone" },
     { id: "gazette", x: -11.8, z: 14.9, y: 0, r: 1.6, prompt: "[E] READ THE MIDTOWN GAZETTE", action: "paper" },
     { id: "juke", x: 11.15, z: -9.35, y: 4.4, r: 1.7, prompt: "[E] FEED THE JUKEBOX", action: "juke" },
@@ -1048,7 +1066,7 @@ export const SIT_SPOTS = [
     { id: "diner-counter", x: -28.6, z: 1.55, y: 0, eye: 1.2, lookX: -25.5, lookZ: 3.5, r: 1.55, prompt: "[E] SIT THE COUNTER" },
     { id: "diner-booth", x: -33.05, z: -8.0, y: 0, eye: 1.14, lookX: -34.6, lookZ: -8.0, r: 1.5, prompt: "[E] SLIDE INTO THE BOOTH" },
     { id: "hotel-lobby", x: 25.2, z: 3.85, y: 0, eye: 1.16, lookX: 25.2, lookZ: 5.9, r: 1.55, prompt: "[E] SIT IN THE LOBBY" },
-    { id: "rivoli-bench", x: 11.2, z: 34.2, y: 0, eye: 1.14, lookX: 6.0, lookZ: 37.4, r: 1.5, prompt: "[E] SIT THE RIVOLI" },
+    { id: "rivoli-bench", x: 11.2, z: 34.2, y: 0, eye: 1.14, lookX: 12.9, lookZ: 39.5, lookY: 2.12, r: 1.5, prompt: "[E] SIT THE RIVOLI" },
     { id: "barber-chair", x: 34.15, z: 35.55, y: 0, eye: 1.16, lookX: 35.9, lookZ: 37.2, r: 1.4, prompt: "[E] SIT FOR TONY" },
     { id: "listen-booth", x: -30.15, z: 33.85, y: 0, eye: 1.14, lookX: -33.2, lookZ: 35.2, r: 1.4, prompt: "[E] CROUCH THE BINS" },
     { id: "suite-bed", x: 21.2, z: 7.15, y: 4.4, eye: 1.12, lookX: 21.2, lookZ: 12.2, r: 1.55, prompt: "[E] THE VACANT ROOM" },

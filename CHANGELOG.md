@@ -4,6 +4,79 @@ All notable changes to VIBE CHECK 9000™ are documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
+## [24.0.0] - 2026-09-16
+
+The skyline sits lower. Stripe is a field in a JSON file.
+
+### Added
+
+- Street-height spectaculars on the west and center towers, plus Lily's fascia, so the boards read without craning.
+- Painted stills for Tony, Lily, Astoria, the Gazette, and Luckies.
+- Per-board Stripe Payment Links in `ads.config.json` (`stripePaymentLink` and `stripeLinks`).
+- PAY / ASK / TIP buttons on the in-game rate card and on `sponsor.html`.
+- Looking at a board names it. Available faces prompt TO LET.
+
+### Changed
+
+- More shop-side lamps, additive neon wash on Dottie's and the Astoria, pulsing TO LET boards, brighter cab lamps, living window glow.
+- ION's till follows `githubSponsors` or `koFi` from config.
+
+## [23.0.0] - 2026-09-16
+
+The street sells light. The visor looks up.
+
+### Added
+
+- Ten painted 47th Street billboards with period stills, floodlights, and a walk-up Midtown Poster Co. kiosk.
+- House ads for Dottie's, Rex's, the Rivoli, Midtown Gin, Tony's, Checkers, the Gazette, and Astoria; unsold faces read YOUR NAME IN LIGHTS.
+- Boot, pause, and Gazette placements plus a public rate card at `sponsor.html`.
+- `ads.config.json` insertion orders so a paid creative can claim a slot without touching the renderer.
+- BOARDWALK GOLD visor look for reading five different boards.
+
+### Changed
+
+- Wetter asphalt, streak rain, traffic headlamps, stronger night bloom, sharper brick and sidewalk textures.
+- GitHub Pages now deploys through GitHub Actions (`github-actions[bot]`).
+
+## [21.0.0] - 2026-09-14
+
+A block worth getting lost in.
+
+### Added
+
+- Seven counter activities with 27 daily orders each, illustrated work surfaces, ingredient/component choices, feedback, and a seven-shop passport.
+- The Corner Set street stage and a three-phrase call-and-response activity with touch, keyboard, and visual note cues.
+- Mabel’s Night Cart with three snacks and once-per-night energy benefits.
+- 47th Camera Club: borrow a camera, photograph the game, keep six frames, and export captioned postcards.
+- A neighborhood noticeboard and new destinations on the notebook map.
+- An ordered five-clue payphone mystery with physical props at Rex’s and Astoria, a new house set, and a saved next lead.
+- Four permanent visor looks for counter work, the mystery, the duet, and photography.
+- New street fixtures, a vendor and musician, corner planters, festoon lighting, and shop completion seals.
+- Expansion state migration and dedicated logic/browser regression suites.
+
+## [20.0.0] - 2026-09-13
+
+The shops have shelves worth browsing and things worth carrying home.
+
+### Added
+
+- Seven illustrated catalogs with 21 selections, record previews, receipts, and once-per-night rewards.
+- Pocket notebook with inventory, delivery leads, a block map, and destination guidance.
+- REXA record sets, Velma's flowers, Marco's gin, and Frank's ice deliveries with visible payoffs.
+- Tony's haircut previews, brief service animation, saved portrait, and personalized night stamp.
+- Rivoli auditorium with three original animated shorts and Dottie's midnight story.
+- Distinct shop fittings, printed signage, stocked displays, localized audio, and purchase feedback.
+- Commerce and targeting tests plus a browser journey covering all seven businesses.
+
+### Fixed
+
+- Interaction prompts and actions now use the same aim, reach, floor, and visibility checks.
+- Duplicate dialogue rewards, night-only challenge tracking, save migration, and night reload continuity.
+- Nellie gives directions; the actual machine supplies the ice.
+- Reduced effects no longer mute audio, and overlays clear movement input.
+- Storefront sign orientation, shop entrance visibility, and excessive bloom.
+- Three.js now loads from pinned local files, avoiding a runtime CDN dependency.
+
 ## [19.0.0] - 2026-09-09
 
 The 12:04 is a train. 4B has ice. The Rivoli is showing something.

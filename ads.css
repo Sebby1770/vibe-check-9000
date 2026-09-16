@@ -1,0 +1,66 @@
+body[data-phase="ads"] .wayfinder,
+body[data-phase="ads"] .toast.show { display: none; }
+
+.boot-sponsor {
+    margin: 10px 0 0;
+    font-size: 12px;
+    letter-spacing: 0.16em;
+    color: #e0b25a;
+    text-transform: uppercase;
+}
+.pause-ad, .boot-sponsor a {
+    color: #ffe7a8;
+    text-decoration: none;
+}
+.pause-ad {
+    display: block;
+    margin: 14px 0 4px;
+    padding: 10px 12px;
+    border: 1px solid rgba(224, 178, 90, 0.45);
+    background: rgba(18, 12, 8, 0.55);
+    font-size: 12px;
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+}
+.pause-ad small {
+    display: block;
+    color: #9a8a6a;
+    letter-spacing: 0.2em;
+    margin-bottom: 4px;
+}
+.ads-panel { max-width: 560px; }
+.rate-list {
+    list-style: none;
+    margin: 12px 0 18px;
+    max-height: 42vh;
+    overflow: auto;
+}
+.rate-list li {
+    display: grid;
+    grid-template-columns: 1fr auto;
+    gap: 8px;
+    padding: 10px 0;
+    border-bottom: 1px solid rgba(224, 178, 90, 0.18);
+    font-size: 13px;
+}
+.rate-list strong { color: #ffe7a8; }
+.rate-list em { color: #9a8a6a; font-style: normal; }
+.rate-list .usd { color: #66ffe0; font-variant-numeric: tabular-nums; }
+.rate-pay { display: flex; flex-direction: column; align-items: flex-end; gap: 4px; }
+.rate-buy {
+    color: #ffe7a8;
+    text-decoration: none;
+    letter-spacing: 0.14em;
+    font-size: 11px;
+    border: 1px solid rgba(224, 178, 90, 0.45);
+    padding: 2px 6px;
+}
+#adsPayHint { margin: 8px 0 0; font-size: 12px; color: #9a8a6a; }
+.paper-ad {
+    margin-top: 8px;
+    padding-top: 8px;
+    border-top: 1px dashed rgba(224, 178, 90, 0.4);
+    color: #6a5840;
+    font-size: 12px;
+    letter-spacing: 0.04em;
+}

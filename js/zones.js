@@ -1,3 +1,6 @@
+import { lifeColliders } from './life.js';
+import { streetColliders } from "./expansion.js";
+import { posterCollider } from "./ads.js";
 /* 1954 Midtown layout. Meters. Club at origin, street +Z, alley -Z. */
 
 export const SECOND_Y = 4.4;
@@ -178,7 +181,9 @@ export function zoneTint(zone) {
 }
 
 function wall(boxes, minX, maxX, minZ, maxZ, minY = -1, maxY = 8.6) {
-    boxes.push({ minX, maxX, minZ, maxZ, minY, maxY });
+    const box = { minX, maxX, minZ, maxZ, minY, maxY };
+    boxes.push(box);
+    return box;
 }
 
 export function buildColliders() {
@@ -218,8 +223,8 @@ export function buildColliders() {
     wall(boxes, 16.28, 16.72, -16.5, -0.4);
 
     // Interior furniture — ground
-    wall(boxes, -5.3, 5.3, -14.35, -10.15, -1, 2.9);
-    wall(boxes, -16.4, -13.55, -8.5, 8.5, -1, 2.9);
+    wall(boxes, -5.3, 5.3, -14.35, -10.15, -1, 2.9).sightMaxY = 1.1;
+    wall(boxes, -16.4, -13.55, -8.5, 8.5, -1, 2.9).sightMaxY = 1.2;
     wall(boxes, -8.95, -7.45, 10.0, 11.15, -1, 2.5);
     wall(boxes, 7.45, 8.85, 10.15, 10.75, -1, 2.2);
     wall(boxes, -32.6, -18.4, 2.4, 5.1, -1, 1.8);
@@ -326,5 +331,8 @@ export function buildColliders() {
     wall(boxes, 30.55, 33.45, -9.45, -7.55, 4.2, 5.55);
     wall(boxes, 18.15, 24.15, 6.35, 8.25, 4.2, 5.45);
 
+    boxes.push(...streetColliders(), ...lifeColliders(), posterCollider());
+    wall(boxes,28.15,29.65,8.5,9.1,-1,1.3).sightMaxY=1.1;
+    wall(boxes,8.95,10.85,-9.5,-8.7,-1,1.3).sightMaxY=1.1;
     return { bounds: BOUNDS, boxes, getFloorY };
 }

@@ -67,6 +67,9 @@ export function createAudio() {
     let nightPhase = "doors";
     let jazzOn = false;
     let houseName = "HOUSE SYSTEM";
+    let shopGain = null, shopFilter = null, previewGain = null;
+    let previewNodes = [];
+    let previewing = false;
 
     const state = {
         bpm: 128,
@@ -75,6 +78,8 @@ export function createAudio() {
         stereoWidth: 0.35,
         intensity: 1,
         jazzBpm: 96,
+        tone: 0,
+        rhythm: 0,
     };
 
     const freqData = new Uint8Array(128);
@@ -191,6 +196,11 @@ export function createAudio() {
         rainSrc.connect(rainLp);
         rainLp.connect(rainGain);
         rainSrc.start();
+        shopGain = ctx.createGain(); shopGain.gain.value = 0; shopGain.connect(master);
+        shopFilter = ctx.createBiquadFilter(); shopFilter.type = "bandpass"; shopFilter.frequency.value = 900;
+        const roomNoise = ctx.createBufferSource(); roomNoise.buffer = noiseBuf; roomNoise.loop = true;
+        roomNoise.connect(shopFilter); shopFilter.connect(shopGain); roomNoise.start();
+        previewGain = ctx.createGain(); previewGain.gain.value = 0; previewGain.connect(muteGain);
     }
 
     function ensureDeckEl() {
@@ -377,10 +387,10 @@ export function createAudio() {
                 const peak = nightPhase === "peak";
                 const late = nightPhase === "lastcall" || nightPhase === "close";
                 if (s % 2 === 0 && (!late || s === 0 || s === 4)) kick(t);
-                if (s % 2 === 1) hat(t, false);
+                if (s % 2 === 1 || (state.rhythm === 2 && s === 4)) hat(t, false);
                 if (s === 3 || s === 7) hat(t, true);
                 if (s === 2 || s === 6 || (peak && s === 0)) clap(t);
-                bassNote(t, A_MIN_BASS[s]);
+                bassNote(t, A_MIN_BASS[(s + state.rhythm * 2) % 8] * 2 ** (state.tone / 12));
                 if (barStep === 0 || (peak && s === 0)) stab(t);
                 if (peak && s === 4) hat(t, true);
             }
@@ -426,6 +436,7 @@ export function createAudio() {
     }
 
     return {
+        get previewing() { return previewing; },
         get bpm() { return zone === "lounge" ? state.jazzBpm : state.bpm; },
         get context() { return ctx; },
         get started() { return started; },
@@ -494,10 +505,14 @@ export function createAudio() {
                 lastcall: [0.72, 1.12, 1.2],
                 close: [0.32, 0.65, 1.45],
             }[nightPhase] || [1, 1, 1];
-            clubGain.gain.setTargetAtTime(mix[0] * night[0], t, 0.4);
-            jazzGain.gain.setTargetAtTime(mix[1] * night[1], t, 0.4);
+            const duck = previewing ? 0.18 : 1;
+            clubGain.gain.setTargetAtTime(mix[0] * night[0] * duck, t, 0.4);
+            jazzGain.gain.setTargetAtTime(mix[1] * night[1] * duck, t, 0.4);
             rainGain.gain.setTargetAtTime(mix[2] * night[2], t, 0.45);
             if (rumbleGain) rumbleGain.gain.setTargetAtTime(zone === "subway" ? 0.22 : 0, t, 0.35);
+            const room = { records:[.012,1800], pharmacy:[.015,3100], florist:[.006,650], rivoli:[.016,340], liquor:[.005,800], barber:[.012,1600], diner:[.014,2400] }[zone];
+            shopGain?.gain.setTargetAtTime(room ? room[0] : 0,t,.4);
+            if (room) shopFilter?.frequency.setTargetAtTime(room[1],t,.4);
         },
 
         consumeKick() {
@@ -562,6 +577,7 @@ export function createAudio() {
             if (!set) return;
             state.bpm = set.bpm || 128;
             houseName = set.name || "HOUSE SYSTEM";
+            state.tone = set.tone || 0; state.rhythm = set.rhythm || 0;
             if (delay && ctx) delay.delayTime.setTargetAtTime(60 / state.bpm / 2, ctx.currentTime, 0.25);
         },
         setNightPhase(phase) {
@@ -595,6 +611,36 @@ export function createAudio() {
         setIntensity(v) {
             state.intensity = v;
             if (master && ctx) master.gain.setTargetAtTime(0.7 * v, ctx.currentTime, 0.05);
+        },
+        previewRecord(item) {
+            this.stopPreview(); graph();
+            previewing = true; previewGain.gain.setValueAtTime(.3,ctx.currentTime);
+            if (usingDeck) deckGain.gain.setTargetAtTime(.18,ctx.currentTime,.1);
+            const set=item.set||{}, duration=8, beat=60/(set.bpm||128), start=ctx.currentTime+.02;
+            for(let n=0;n*beat/2<duration;n++) {
+                const t=start+n*beat/2, freq=A_MIN_BASS[(n+(set.rhythm||0)*2)%8]*2**((set.tone||0)/12);
+                const osc=ctx.createOscillator(), gain=ctx.createGain(); osc.type=(set.rhythm===2?'sawtooth':'triangle');
+                osc.frequency.value=freq*(n%2?4:2); gain.gain.setValueAtTime(0,t); gain.gain.linearRampToValueAtTime(.22,t+.012); gain.gain.exponentialRampToValueAtTime(.001,t+beat*.45);
+                osc.connect(gain);gain.connect(previewGain);osc.start(t);osc.stop(t+beat*.48);previewNodes.push(osc);
+                osc.onended=()=>{osc.disconnect();gain.disconnect();};
+            }
+            this.setZone(zone);
+        },
+        stopPreview() {
+            previewing=false;
+            if(ctx){ for(const node of previewNodes)try{node.stop();}catch{}; previewNodes=[]; previewGain?.gain.setTargetAtTime(0,ctx.currentTime,.03); if(usingDeck)deckGain?.gain.setTargetAtTime(.85,ctx.currentTime,.1); this.setZone(zone); }
+        },
+        playStreetNote(index) {
+            if(!ctx||muted)return;
+            const t=ctx.currentTime,o=ctx.createOscillator(),g=ctx.createGain();
+            o.type="triangle";o.frequency.value=[261.63,329.63,392][index]||261.63;
+            g.gain.setValueAtTime(.16,t);g.gain.exponentialRampToValueAtTime(.001,t+.38);
+            o.connect(g);g.connect(muteGain);o.start(t);o.stop(t+.4);o.onended=()=>{o.disconnect();g.disconnect();};
+        },
+        playShopSound(kind='bell') {
+            if(!ctx||muted)return;
+            const t=ctx.currentTime, notes=kind==='haircut'?[820,1050,720,940]:kind==='ticket'?[240,360]:[880,1174];
+            notes.forEach((freq,i)=>{const o=ctx.createOscillator(),g=ctx.createGain();o.type=kind==='haircut'?'triangle':'sine';o.frequency.value=freq;g.gain.setValueAtTime(.07,t+i*.12);g.gain.exponentialRampToValueAtTime(.001,t+i*.12+.28);o.connect(g);g.connect(master);o.start(t+i*.12);o.stop(t+i*.12+.3);o.onended=()=>{o.disconnect();g.disconnect();};});
         },
         cheer,
         horn,

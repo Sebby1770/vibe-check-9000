@@ -35,6 +35,7 @@ export function drawNightCard({
     tag = "",
     dare = "",
     dareDone = false,
+    style = null,
 } = {}) {
     const w = 960;
     const h = 540;
@@ -94,8 +95,8 @@ export function drawNightCard({
     g.fillText(`${lookName}  ·  ENERGY ${Math.round(e)}`, 56, 432);
     g.fillStyle = "rgba(255,255,255,0.55)";
     g.font = "16px Georgia, serif";
-    g.fillText("I was there. The visor remembers.", 56, 486);
-    g.fillText("sebby1770.github.io/vibe-check-9000", 56, 510);
+    g.fillText("I was there. The visor remembers.", 56, 472);
+    g.fillText("sebby1770.github.io/vibe-check-9000", 56, 494);
     g.fillStyle = visor;
     g.beginPath();
     g.arc(w - 90, 90, 18, 0, Math.PI * 2);
@@ -105,6 +106,20 @@ export function drawNightCard({
     g.beginPath();
     g.arc(w - 90, 90, 26, 0, Math.PI * 2);
     g.stroke();
+    if (style) {
+        g.save(); g.translate(724,144); g.scale(.72,.72);
+        g.fillStyle="#e8d5ad";g.fillRect(0,0,240,282);
+        g.fillStyle=style.color||"#ad8067";g.beginPath();g.moveTo(0,240);g.quadraticCurveTo(25,159,120,176);g.quadraticCurveTo(211,156,240,240);g.lineTo(240,250);g.lineTo(0,250);g.fill();
+        g.fillStyle="#ce9773";g.fillRect(104,137,34,47);g.beginPath();g.ellipse(120,109,45,57,0,0,Math.PI*2);g.fill();
+        g.fillStyle="#392e2b";g.beginPath();
+        if(style.id==="crop"){g.ellipse(120,73,46,22,0,Math.PI,Math.PI*2);g.lineTo(164,84);g.lineTo(75,84);}
+        else if(style.id==="side-part"){g.moveTo(74,103);g.bezierCurveTo(48,45,165,23,166,103);g.lineTo(151,68);g.lineTo(85,85);}
+        else{g.moveTo(73,105);g.bezierCurveTo(40,63,88,22,119,30);g.bezierCurveTo(186,11,172,86,155,96);g.lineTo(148,70);g.lineTo(83,77);}g.fill();
+        g.fillStyle="#243938";g.fillRect(84,106,73,21);g.fillStyle="#acd8c7";g.fillRect(89,111,63,10);
+        g.strokeStyle="#744c3c";g.lineWidth=3;g.beginPath();g.moveTo(110,147);g.quadraticCurveTo(121,153,133,146);g.stroke();
+        g.strokeStyle="#81785f";g.lineWidth=2;g.strokeRect(12,12,216,230);
+        g.textAlign="center";g.fillStyle="#294a3c";g.font="bold 14px Georgia";g.fillText(style.name||"TONY'S",120,268,214);g.restore();
+    }
     return c;
 }
 

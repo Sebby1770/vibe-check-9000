@@ -214,16 +214,16 @@ export function dareFor(hash) {
 
 export function dareComplete(progress, dare) {
     if (!dare) return false;
-    const flags = progress.flags || {};
     const night = progress.night || {};
-    const zones = progress.zones || [];
+    const flags = night.flags || {};
+    const zones = night.zones || [];
     switch (dare.id) {
         case "talk3": return (night.talks || 0) >= 3;
         case "lounge": return !!flags.sat;
         case "socks": return !!flags.cat;
         case "street": return zones.includes("street");
         case "cube": return !!flags.cube;
-        case "energy": return (progress.energyPeak || 0) >= 80 || (night.energy || 0) >= 80;
+        case "energy": return (night.energy || 0) >= 80;
         case "paper": return !!flags.paper;
         case "cab": return !!flags.cab;
         case "pie": return !!flags.pie;
@@ -233,7 +233,7 @@ export function dareComplete(progress, dare) {
         case "shop": return ["records", "pharmacy", "florist", "rivoli", "liquor", "barber"].some((z) => zones.includes(z));
         case "vinyl": return !!flags.vinyl;
         case "haircut": return !!flags.haircut;
-        case "subway": return !!flags.subway || !!flags.token || (progress.zones || []).includes("subway");
+        case "subway": return !!flags.subway || !!flags.token || zones.includes("subway");
         case "ice": return !!flags.ice;
         default: return false;
     }
@@ -384,7 +384,13 @@ export function nightSay(npc, node, phase) {
     return node;
 }
 
-export function memoryLine(npcId, flags = {}) {
+export function memoryLine(npcId, flags = {}, commerce = {}) {
+    if (npcId === "sid" && commerce.record) return `${commerce.record.name}. Good choice. ${commerce.playingRecord?.id === commerce.record.id ? "I can hear REXA playing it from here. That's the right sort of noise complaint." : "Take it to REXA. Tell her Sid still has taste."}`;
+    if (npcId === "tony" && commerce.style) return `${commerce.style.name}. Still looking sharp. Your portrait's in the notebook. Try not to dance the parting out.`;
+    if (npcId === "walter" && commerce.film) return `${commerce.film.name}. Your seat's still yours. The picture doesn't mind a second viewing.`;
+    if (npcId === "lily" && flags.flowersDelivered) return "Velma sent word. The piano looks better with flowers. Most things do.";
+    if (npcId === "rosie" && flags.ginDelivered) return "Marco got his bottle. A quiet delivery. My favorite kind of business.";
+    if (npcId === "frank" && flags.iceDelivered) return "The ice is here. The evening is saved. Nellie gets the credit. You get the good chair.";
     if (!npcId) return null;
     if (npcId === "nova" && flags.guest) return "You're on the list. Don't make me regret the handwriting.";
     if (npcId === "ion" && flags.drunk) return "You already took the sermon. Water's still a lie. Sit if you have to.";

@@ -43,8 +43,8 @@ export function createHud(hooks) {
     }
 
     function setPhase(p) {
-        if (p === "settings" || p === "deck" || p === "paper" || p === "wardrobe" || p === "recap") {
-            if (run.phase !== "settings" && run.phase !== "deck" && run.phase !== "paper" && run.phase !== "wardrobe" && run.phase !== "recap") {
+        if (p === "settings" || p === "deck" || p === "paper" || p === "wardrobe" || p === "recap" || p === "ads") {
+            if (run.phase !== "settings" && run.phase !== "deck" && run.phase !== "paper" && run.phase !== "wardrobe" && run.phase !== "recap" && run.phase !== "ads") {
                 run.prevPhase = run.phase === "talk" ? "explore" : run.phase;
             }
         }
@@ -57,6 +57,7 @@ export function createHud(hooks) {
         $("paper").classList.toggle("hidden", p !== "paper");
         $("wardrobe").classList.toggle("hidden", p !== "wardrobe");
         if ($("recap")) $("recap").classList.toggle("hidden", p !== "recap");
+        if ($("adsDesk")) $("adsDesk").classList.toggle("hidden", p !== "ads");
         $("crosshair").classList.toggle("hidden", p !== "explore");
         document.body.dataset.phase = p;
         const overlay = p !== "explore" && p !== "boot";
@@ -77,7 +78,7 @@ export function createHud(hooks) {
         const flavor = NPC_PHASE_LINES[npc.id] && npc.nodes.start === node
             ? NPC_PHASE_LINES[npc.id][run.phaseNight]
             : null;
-        const mem = npc.nodes.start === node ? memoryLine(npc.id, run.flags) : null;
+        const mem = npc.nodes.start === node ? memoryLine(npc.id, run.flags, run.commerce) : null;
         $("talkLine").textContent = mem || flavor || node.say;
         const box = $("talkChoices");
         box.innerHTML = "";
@@ -166,8 +167,48 @@ export function createHud(hooks) {
         $("paperHeadline").textContent = g.headline;
         $("paperLede").textContent = g.lede;
         $("paperCols").innerHTML = (g.columns || []).map((c) => `<p>${c}</p>`).join("");
+        if (run.classifieds?.length) {
+            $("paperCols").innerHTML += `<p class="paper-ad">${run.classifieds.map((line) => line).join("<br>")}</p>`;
+        }
         hooks.onUnlockLook?.();
         setPhase("paper");
+    }
+
+    function paintAds() {
+        const ads = run.ads || {};
+        const sponsor = ads.sponsor;
+        if ($("bootSponsor") && sponsor) {
+            $("bootSponsor").innerHTML = `TONIGHT'S BOARD · ${sponsor.brand} — ${sponsor.line}`;
+        }
+        if ($("pauseAd") && sponsor) {
+            $("pauseAd").href = sponsor.url || ads.checkout || "sponsor.html";
+            $("pauseAd").innerHTML = `<small>${ads.stripeLive ? "STRIPE · PAID PLACEMENT" : "PAID PLACEMENT"}</small>${sponsor.brand} · ${sponsor.line}`;
+        }
+        if ($("adsPitch")) $("adsPitch").textContent = ads.pitch || "The city still sells light by the square yard.";
+        if ($("adsPayHint")) {
+            $("adsPayHint").textContent = ads.stripeLive
+                ? "STRIPE IS LIVE — pick a board and pay. Send the still after."
+                : "Stripe is off. Paste a Payment Link into ads.config.json. Until then, RENT A BOARD opens GitHub Sponsors.";
+        }
+        if ($("rateList") && ads.rates) {
+            $("rateList").innerHTML = ads.rates.map((r) => {
+                const label = r.payKind === "stripe" ? "PAY" : r.payKind === "email" ? "ASK" : "TIP";
+                return `<li><span><strong>${r.name}</strong><br><em>${r.line}</em></span><span class="rate-pay"><span class="usd">$${r.usd}</span><a class="rate-buy" href="${r.checkout}" target="_blank" rel="noreferrer">${label}</a></span></li>`;
+            }).join("");
+        }
+        if ($("adsMail")) {
+            $("adsMail").href = ads.checkout || ads.till || "sponsor.html";
+            $("adsMail").textContent = ads.stripeLive ? "PAY WITH STRIPE" : "RENT A BOARD";
+        }
+        document.querySelectorAll("[data-till]").forEach((a) => {
+            a.href = ads.till || "https://github.com/sponsors/Sebby1770";
+        });
+    }
+
+    function openAds() {
+        paintAds();
+        hooks.onUnlockLook?.();
+        setPhase("ads");
     }
 
     async function stampCard() {
@@ -176,7 +217,7 @@ export function createHud(hooks) {
             clock: run.clock,
             phase: (PHASE_COPY[run.phaseNight] && PHASE_COPY[run.phaseNight].status) || (run.phaseNight || "doors").toUpperCase(),
             zone: $("hudZone") ? $("hudZone").textContent : "THE FLOOR",
-            setName: run.bill?.set?.name || "HOUSE SYSTEM",
+            setName: run.setName || run.bill?.set?.name || "HOUSE SYSTEM",
             lookName: look.name,
             energy: run.energy,
             visor: look.visor,
@@ -185,6 +226,7 @@ export function createHud(hooks) {
             tag: run.bill?.tag || "",
             dare: run.dare?.text || "",
             dareDone: run.dareDone,
+            style: run.style,
         });
         await downloadCard(canvas);
         toast("NIGHT STAMP SAVED", look.visor);
@@ -290,11 +332,7 @@ export function createHud(hooks) {
             if (run.tipsy) toast("DRUNK — the room has a second opinion", "#ffb703");
         });
         $("fxToggle").checked = run.reducedFx;
-        if (run.reducedFx) {
-            run.muted = true;
-            $("muteBtn").textContent = "UNMUTE";
-            $("muteToggle").checked = true;
-        }
+        $("adsClose")?.addEventListener("click", leaveOverlay);
 
         document.querySelectorAll("[data-modal]").forEach((link) => {
             link.addEventListener("click", (e) => {
@@ -310,13 +348,14 @@ export function createHud(hooks) {
         });
 
         window.addEventListener("keydown", (e) => {
+            if (e.repeat || run.phase === "shop" || run.phase === "journal" || run.phase === "activity") return;
             if (run.phase === "talk" && /^[1-9]$/.test(e.key)) {
                 hooks.onTalkChoice?.(Number(e.key) - 1);
                 return;
             }
             if (e.key === "Escape") {
                 $("modalBg").classList.remove("active");
-                if (run.phase === "settings" || run.phase === "deck" || run.phase === "talk" || run.phase === "paper" || run.phase === "wardrobe" || run.phase === "recap") {
+                if (run.phase === "settings" || run.phase === "deck" || run.phase === "talk" || run.phase === "paper" || run.phase === "wardrobe" || run.phase === "recap" || run.phase === "ads") {
                     leaveOverlay();
                     return;
                 }
@@ -356,6 +395,7 @@ export function createHud(hooks) {
             <p>WASD to move. SPACE on the tiles to dance. E to talk. Upstairs, E sits you. Cross 47th for shops. Subway kiosk for the 12:04. Astoria east stairs for 2F.</p>
             <p>Drop MP3 / WAV / FLAC on the DECK. Hail a Checker. Pet the cat. Read the Gazette. ION will get you drunk if you ask.</p>
             <p>The night moves from doors to last call. Earn visor looks. Each calendar day has a dare. ESC → STAMP saves a night card. Tips keep the lights on.</p>
+            <p>The rooftop boards are for rent. Midtown Poster Co. keeps a kiosk on 47th, east of the phone booth. <a href="sponsor.html">Rate card</a>.</p>
         `,
     };
 
@@ -418,6 +458,12 @@ export function createHud(hooks) {
             setPhase("deck");
         },
         openPaper,
+        openAds,
+        setAds(payload) {
+            run.ads = payload;
+            run.classifieds = payload?.classifieds || [];
+            paintAds();
+        },
         pickPhone() {
             const line = PHONE_LINES[Math.floor(Math.random() * PHONE_LINES.length)];
             toast(line, "#e0b25a");
@@ -481,7 +527,7 @@ export function createHud(hooks) {
             if ($("hudPhase")) $("hudPhase").textContent = (copy && copy.status) || phase;
             if ($("pauseClock")) $("pauseClock").textContent = `${clock}  ·  ${(copy && copy.status) || phase}`;
             if ($("pauseBill") && run.bill?.set) {
-                $("pauseBill").textContent = `${run.bill.set.name} — ${run.bill.tag}. ${copy?.status || ""}.`;
+                $("pauseBill").textContent = `${run.setName || run.bill.set.name} — ${run.bill.tag}. ${copy?.status || ""}.`;
             }
             if ($("pauseLook")) $("pauseLook").textContent = getLook(run.look).name;
             fillDare($("pauseDare"));

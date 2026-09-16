@@ -1,13 +1,40 @@
+import { createLifeUI } from './life-ui.js';
+import { credit, startShift, submitShift, buyHome, buyFurnishing, updateLife, money, HOMES } from './life.js';
+import { LIFE_PROPS } from './life-world.js';
+import { createExpansionUI } from "./expansion-ui.js";
+import { finishCounter, followSignal, takeSnack, finishDuet, addPhoto, removePhoto, SIGNAL_SET, STREET_PLACES } from "./expansion.js";
+import { STREET_PROPS } from "./street-life.js";
+import { framePhoto, drawPhotoPostcard } from "./postcards.js";
+import { downloadCard } from "./share.js";
 import { VRButton } from "three/addons/webxr/VRButton.js";
 import { Vector3 } from "three";
 import { createWorld } from "./world.js";
 import { createAudio } from "./audio.js";
 import { createControls } from "./controls.js";
 import { createHud } from "./hud.js";
-import { nearestNpc, nearestProp, nearestSit, onDanceFloor, applyChoice, NPCS } from "./people.js";
+import { onDanceFloor, applyChoice, NPCS, PROPS, SIT_SPOTS } from "./people.js";
 import { getZone, zoneLabel } from "./zones.js";
 import { createClock, dayKey, dayHash, tonightBill, PHASE_COPY, dareComplete } from "./night.js";
 import { loadProgress, saveProgress, evaluateUnlocks, stampNight, setLook, getLook, touchVisit, buildRecap } from "./progress.js";
+
+import { SHOPS_CATALOG, normalizeCommerce, transact, deliver, collectIce, addLead, getErrands, DESTINATIONS } from "./commerce.js";
+import { createShopUI } from "./shop-ui.js";
+import { selectInteraction } from "./interactions.js";
+import {
+    mergeAdConfig,
+    POSTER_KIOSK,
+    classifieds,
+    tonightSponsor,
+    checkoutUrl,
+    tillUrl,
+    stripeLive,
+    pitchCopy,
+    recordView,
+    boardsRead,
+    boardProps,
+    pricedRates,
+    filledSlots,
+} from "./ads.js";
 
 const _dir = new Vector3();
 
@@ -83,6 +110,13 @@ async function boot() {
     const audio = createAudio();
     let world = null;
     let controls = null;
+    let shopUI = null;
+    let activityUI = null;
+    let lifeUI = null;
+    let pendingPhoto = false;
+    let previewTimer = null;
+    let destination = null;
+    let savedAt = 0;
     const cubeFound = { done: false };
     let energy = 0;
     let ride = null;
@@ -92,8 +126,19 @@ async function boot() {
     let progress = touchVisit(loadProgress(), today);
     if (bill.dare) progress = { ...progress, dareId: bill.dare.id };
     saveProgress(progress);
-    let lastPhase = "doors";
+    let commerce = normalizeCommerce(progress.night.commerce);
+    cubeFound.done = !!progress.night.flags.cube;
+    clock.tick(Math.max(0, Number(progress.night.elapsed) || 0));
+    let activeSet = commerce.expansion.signalOn ? SIGNAL_SET : commerce.playingRecord?.set || bill.set;
+    if(!commerce.expansion.camera && !commerce.expansion.mystery && !Object.keys(commerce.expansion.workshops).length) destination=STREET_PLACES.find(p=>p.id==="noticeboard");
+    let lastPhase = clock.phase;
     let peaked = false;
+    let adConfig = mergeAdConfig();
+    let adViews = { viewed: [], counts: {} };
+    try {
+        const res = await fetch("ads.config.json", { cache: "no-store" });
+        if (res.ok) adConfig = mergeAdConfig(await res.json());
+    } catch { /* house boards still paint */ }
     let lastZone = "club";
     let recapShown = false;
     let dareToasted = !!progress.dareDone;
@@ -111,7 +156,9 @@ async function boot() {
             || next.talked.length !== progress.talked.length
             || next.zones.length !== progress.zones.length
             || next.energyPeak !== progress.energyPeak
-            || JSON.stringify(next.flags) !== JSON.stringify(progress.flags);
+            || JSON.stringify(next.flags) !== JSON.stringify(progress.flags)
+            || JSON.stringify(next.night) !== JSON.stringify(progress.night)
+            || events.force;
         progress = next;
         if (!changed) return;
         const done = dareComplete(progress, bill.dare);
@@ -122,7 +169,7 @@ async function boot() {
         hud.setProgress({
             unlocked: progress.unlocked,
             look: progress.look,
-            flags: progress.flags,
+            flags: progress.night.flags,
             streak: progress.streak,
             dareDone: progress.dareDone,
         });
@@ -134,7 +181,7 @@ async function boot() {
         hud.setRecap(buildRecap(progress, {
             clock: clock.clock,
             phase: clock.phase,
-            set: bill.set.name,
+            set: activeSet.name,
             look: progress.look,
             energy,
             dare: bill.dare?.text,
@@ -145,9 +192,8 @@ async function boot() {
     const hud = createHud({
         onEnter: async () => {
             await audio.unlock();
-            if (!hud.reducedFx) audio.start();
-            else audio.setMuted(true);
-            if (!audio.muted) audio.start();
+            audio.setMuted(hud.run.muted);
+            audio.start();
             if (!isTouch() && controls) controls.lock();
             document.getElementById("mobile-controls").classList.toggle("hidden", !isTouch());
         },
@@ -185,6 +231,9 @@ async function boot() {
         onInteract: () => tryInteract(),
         onTalkChoice: (i) => handleChoice(i),
         onFiles: (files) => {
+            if (shopUI?.isOpen) { shopUI.close(); stopPreview(); }
+            if (activityUI?.isOpen) activityUI.close();
+            if (lifeUI?.isOpen) lifeUI.close();
             const n = audio.addFiles(files);
             if (n) {
                 hud.toast(`${n} TRACK${n > 1 ? "S" : ""} ON THE DECK`, "#00fff7");
@@ -209,10 +258,10 @@ async function boot() {
         },
         onHouse: () => {
             audio.houseSystem();
-            audio.setHouseSet(bill.set);
+            audio.setHouseSet(activeSet);
             hud.renderTracks(audio.playlist, audio.trackIndex, false);
-            world?.setLedMessage(bill.set.name, "HOUSE SYSTEM");
-            hud.toast(`${bill.set.name} BACK ONLINE`, "#39ff14");
+            world?.setLedMessage(activeSet.name, "HOUSE SYSTEM");
+            hud.toast(`${activeSet.name} BACK ONLINE`, "#39ff14");
         },
         onLook: (look) => {
             progress = setLook(progress, look.id);
@@ -226,7 +275,7 @@ async function boot() {
                 zone: hud.run.zone,
                 energy,
                 look: progress.look,
-                set: bill.set.name,
+                set: activeSet.name,
                 dare: bill.dare?.text,
                 dareDone: progress.dareDone,
             });
@@ -234,18 +283,74 @@ async function boot() {
         },
     });
 
+    activityUI = createExpansionUI({
+        onClose: shopId => shopId ? openShop(shopId) : resumeStreet(),
+        onCounter: (id,picks) => {
+            const r=finishCounter(commerce.expansion,id,picks,dayHash(today));
+            if(r.ok&&r.reward){commerce.life=credit(commerce.life,20,`${id} · nightly counter thank-you`);r.message+=" A $20 thank-you is in your wallet.";}
+            return applyExpansion(r);
+        },
+        onSnack: id => { const r=takeSnack(commerce.expansion,id);energy=Math.min(100,energy+(r.energy||0));if(r.steady)hud.setTipsy(false);audio.playShopSound();return applyExpansion(r); },
+        onDuet: rounds => applyExpansion(finishDuet(commerce.expansion,rounds)),
+        onNote: index => {audio.playStreetNote(index);world?.streetLife.pulse(index);},
+        onStopNotes: () => world?.streetLife.pulse(-1),
+        onCamera: () => {applyExpansion({state:{...commerce.expansion,camera:true},ok:true});return commerce.expansion;},
+        onClue: place => applySignal(place),
+        onSignalPlay: () => {activeSet=SIGNAL_SET;audio.houseSystem();audio.setHouseSet(activeSet);world.setLedMessage(activeSet.name,"THE CITY ANSWERS");applyExpansion({state:{...commerce.expansion,signalOn:true},ok:true});},
+        onNotebook: tab => openJournal(tab),
+        onNavigate: id => {destination=DESTINATIONS.find(d=>d.id===id)||null;resumeStreet();},
+    });
+    lifeUI = createLifeUI({
+        onClose: resumeStreet,
+        onNavigate: id => {destination=DESTINATIONS.find(d=>d.id===id)||null;resumeStreet();hud.toast(destination?`Marked: ${destination.name}`:'Route cleared');},
+        onStart: id => atWork(id)?applyLife(startShift(commerce.life,id,dayHash(today))):{state:commerce.life,ok:false,message:'Visit this workplace to clock in.'},
+        onSubmit: (picks,token) => atWork(commerce.life.active?.job)?applyLife(submitShift(commerce.life,picks,token)):{state:commerce.life,ok:false,message:'Return to your workplace to finish this order.'},
+        onBuyHome: id => applyLife(buyHome(commerce.life,id)),
+        onAction: (action,id) => applyLife(updateLife(commerce.life,action,id)),
+        onNote: i => audio.playStreetNote(i),
+    });
+    shopUI = createShopUI({
+        onCareer: id => openLife('jobs',{job:id}),
+        onLife: page => openLife(page),
+        onFurnishing: id => {const r=applyLife(buyFurnishing(commerce.life,id));shopUI.update(commerce);shopUI.showReceipt(null,r.message);},
+        onWorkshop: id => openActivity("counter",{shop:id}),
+        onExportPhoto: async id => {const photo=commerce.expansion.photos.find(p=>p.id===id);if(photo)try{await downloadCard(await drawPhotoPostcard(photo),"47th-street-postcard.png");}catch{hud.toast("The postcard could not be exported. Try again.");}},
+        onDeletePhoto: id => {applyExpansion({state:removePhoto(commerce.expansion,id),ok:true});shopUI.update(commerce);},
+        onClose: () => { stopPreview(); hud.setPhase(hud.run.entered ? "explore" : "boot"); if (hud.run.entered && !isTouch()) controls?.lock(); },
+        onSelect: (shopId,itemId) => applyPurchase(transact(commerce,shopId,itemId)),
+        onPreview: (item) => { stopPreview(); audio.previewRecord(item); previewTimer=setTimeout(()=>{audio.stopPreview();shopUI.stopPreview();},8000); },
+        onStopPreview: stopPreview,
+        onNavigate: id => { destination=DESTINATIONS.find(d=>d.id===id)||null; hud.toast(destination?`Marked: ${destination.name}`:"Route cleared", "#b5cfad"); },
+    });
     hud.wire();
+    document.getElementById("lifeBtn").textContent=`LIFE [L] · ${money(commerce.life.wallet)}`;
+    document.getElementById("lifeBtn").addEventListener('click',()=>openLife());
+    window.addEventListener('keydown',e=>{if(e.key.toLowerCase()==='l'&&!e.repeat&&hud.phase==='explore'){e.preventDefault();openLife();}});
+    document.getElementById("journalBtn").addEventListener("click",()=>openJournal());
+    document.getElementById("pauseJournalBtn").addEventListener("click",()=>openJournal());
+    window.addEventListener("keydown",e=>{if(e.key.toLowerCase()==="j"&&!e.repeat&&hud.phase==="explore"){e.preventDefault();openJournal();}});
     hud.setBill(bill);
+    hud.setAds?.({
+        config: adConfig,
+        sponsor: tonightSponsor(adConfig, dayHash(today)),
+        rates: pricedRates(adConfig),
+        classifieds: classifieds(adConfig),
+        checkout: checkoutUrl(adConfig, { id: "boot-pause", name: "Visor inserts", usd: 99 }),
+        till: tillUrl(adConfig),
+        stripeLive: stripeLive(adConfig),
+        pitch: pitchCopy(adConfig),
+    });
+    hud.run.setName=activeSet.name;
     hud.setProgress({
         unlocked: progress.unlocked,
         look: progress.look,
-        flags: progress.flags,
+        flags: progress.night.flags,
         streak: progress.streak,
         dareDone: progress.dareDone,
     });
     hud.setRecap(buildRecap(progress, {
-        clock: clock.clock, phase: clock.phase, set: bill.set.name,
-        look: progress.look, energy: progress.energyPeak, dare: bill.dare?.text, dareDone: progress.dareDone,
+        clock: clock.clock, phase: clock.phase, set: activeSet.name,
+        look: progress.look, energy: progress.night.energy, dare: bill.dare?.text, dareDone: progress.dareDone,
     }));
     const scotty = NPCS.find((n) => n.id === "scotty");
     if (scotty && bill.gazette) {
@@ -253,22 +358,26 @@ async function boot() {
         scotty.nodes.head.say = `${bill.gazette.headline} I shouted it first.`;
     }
     audio.setReduced(hud.reducedFx);
-    if (hud.reducedFx) audio.setMuted(true);
-    audio.setHouseSet(bill.set);
+
+    audio.setHouseSet(activeSet);
+    audio.setNightPhase(clock.phase);
 
     if (!hasWebGL()) {
         hud.showFallback();
         return;
     }
 
-    world = createWorld(canvas);
+    world = createWorld(canvas, adConfig);
     controls = createControls(world.camera, canvas, world.colliders);
     controls.setReduced(hud.reducedFx);
     controls.setEnabled(hud.phase === "explore");
-    world.setLedMessage(bill.set.name, "DOORS OPEN");
+    world.setLedMessage(activeSet.name, "DOORS OPEN");
     world.setNightPhase(clock.phase);
     world.city?.setRivoli?.(bill.gazette.headline);
     wear(getLook(progress.look));
+    world.setShopState(commerce);
+    hud.run.commerce = commerce;
+    hud.run.style = commerce.style;
 
     if (navigator.xr && navigator.xr.isSessionSupported) {
         navigator.xr.isSessionSupported("immersive-vr").then((ok) => {
@@ -281,6 +390,131 @@ async function boot() {
     }
 
     bindMobile(controls, hud);
+
+    function atWork(id){return !!id&&getZone(world.camera.position.x,world.camera.position.z,controls.floorY)===id;}
+    function applyLife(result){
+        if(result.ok){commerce={...commerce,life:result.state};persistCommerce();audio.playShopSound();}
+        return result;
+    }
+    function openLife(page='wallet',context={}){
+        shopUI?.close();activityUI?.close();stopPreview();hud.run.talkNpc=null;hud.setPhase('activity');
+        lifeUI.open(commerce.life,page,context);
+    }
+    function resumeStreet(){hud.setPhase("explore");if(!isTouch())controls?.lock();}
+    function applyExpansion(result){
+        if(result.state){commerce={...commerce,expansion:result.state};persistCommerce();note(result.events||{});}
+        return result;
+    }
+    function applySignal(place){
+        const result=followSignal(commerce.expansion,place);
+        if(result.ok && result.state.signalOn){activeSet=SIGNAL_SET;audio.houseSystem();audio.setHouseSet(activeSet);world.setLedMessage(activeSet.name,"THE CITY ANSWERS");world.flashFloor();}
+        applyExpansion(result);return result;
+    }
+    function openActivity(type,context={}){
+        lifeUI?.close();shopUI.close();stopPreview();hud.run.talkNpc=null;hud.setPhase("activity");
+        activityUI.open(type,commerce.expansion,{seed:dayHash(today),...context});
+    }
+    function openStreet(place){
+        if(["payphone","signal-sleeve","lostproperty"].includes(place)){const result=applySignal(place);openActivity("signal",{story:result});}
+        else openActivity(place);
+    }
+    function requestPhoto(){
+        if(hud.phase!=="explore")return;
+        if(!commerce.expansion.camera){destination=DESTINATIONS.find(p=>p.id==="camera");hud.toast("Borrow a camera at the 47th Camera Club. The way is marked.");return;}
+        pendingPhoto=true;
+    }
+    document.getElementById("cameraCapture").addEventListener("click",requestPhoto);
+    window.addEventListener("keydown",e=>{if(e.key.toLowerCase()==="c"&&!e.repeat&&hud.phase==="explore"){e.preventDefault();requestPhoto();}});
+
+    function stopPreview() { clearTimeout(previewTimer); audio.stopPreview(); }
+    function persistCommerce() {
+        document.getElementById("lifeBtn").textContent=`LIFE [L] · ${money(commerce.life.wallet)}`;
+        progress={...progress,night:{...progress.night,commerce,elapsed:clock.elapsedReal}};
+        hud.run.commerce=commerce;
+        hud.run.style=commerce.style;
+        hud.run.setName=activeSet.name;
+        world?.setShopState(commerce);
+        note({force:true});
+    }
+    function openJournal(section="pockets") {
+        if(section==="life"){openLife();return;}
+        lifeUI?.close();
+        activityUI?.close();
+        stopPreview(); hud.run.talkNpc=null; hud.setPhase("journal");
+        shopUI.openJournal(commerce,getErrands(commerce),hud.run.zone,section);
+    }
+    function openShop(id) {
+        lifeUI?.close();
+        const shop=SHOPS_CATALOG.find(s=>s.id===id); if(!shop)return;
+        stopPreview(); hud.run.talkNpc=null; hud.setPhase("shop");
+        shopUI.openShop(shop,commerce,{clock:clock.clock,featuredIndex:dayHash(today)%3});
+        audio.playShopSound();
+    }
+    function finishShopping() { shopUI.close();stopPreview();hud.setPhase("explore");if(!isTouch())controls.lock(); }
+    function applyPurchase(result) {
+        if(!result.ok){ shopUI.showReceipt(result.item,result.message);hud.toast(result.message,"#d7bd93");return; }
+        commerce=result.state; persistCommerce(); note(result.events||{});
+        if(result.reward) energy=Math.min(100,energy+(result.item?.energy||0));
+        if(result.item?.steady)hud.setTipsy(false);
+        audio.playShopSound(result.effect); world.showPurchase(result);
+        shopUI.update(commerce);shopUI.showReceipt(result.item,result.message);
+        if(["haircut","ticket","coffee","pie"].includes(result.effect)) {
+            finishShopping();
+            const id=result.effect==="haircut"?"barber-chair":result.effect==="ticket"?"rivoli-bench":"diner-counter";
+            const seat=SIT_SPOTS.find(s=>s.id===id); controls.sit(seat);
+            if(result.effect==="ticket"){world.city.playFilm(result.item.id);commerce=addLead(commerce,"diner");persistCommerce();}
+            hud.toast(result.message,result.item.color);
+        }
+    }
+    const shopActions={vinyl:"records",tonic:"pharmacy",rose:"florist",gin:"liquor",haircut:"barber",ticket:"rivoli",coffee:"diner",pie:"diner"};
+    function commerceAction(action) {
+        if(shopActions[action]){openShop(shopActions[action]);return true;}
+        if(action?.startsWith("deliver-")){
+            const recipient=action.slice(8), result=deliver(commerce,recipient);
+            if(!result.ok){commerce=addLead(commerce,({rexa:"record",velma:"flowers",marco:"gin",frank:"ice"})[recipient]);persistCommerce();}
+            else {
+                commerce=result.state;
+                if(recipient==="rexa") activeSet=result.item.set;
+                persistCommerce();note(result.events);world.showPurchase(result);audio.playShopSound();
+                if(recipient==="rexa") { activeSet=result.item.set;audio.houseSystem();audio.setHouseSet(activeSet);world.setLedMessage(activeSet.name,"SID SENT YOU");world.flashFloor();hud.renderTracks(audio.playlist,audio.trackIndex,false); }
+                if(recipient==="velma")audio.boostJazz();
+            }
+            hud.closeTalk();hud.toast(result.message,result.item?.color||"#d6bd91");return true;
+        }
+        if(action==="lead-ice") {commerce=addLead(commerce,"ice");persistCommerce();hud.closeTalk();hud.toast("Marked in your notebook: Astoria east stairs → 2F → the 4B machine.","#91c8db");return true;}
+        if(action==="ice"){
+            const result=collectIce(commerce);if(result.ok){commerce=result.state;persistCommerce();note(result.events);world.showPurchase(result);audio.playShopSound();}
+            hud.toast(result.message,"#91c8db");return true;
+        }
+        if(action==="midnight-story") {
+            commerce=addLead(commerce,"diner");
+            const late=["peak","lastcall","close"].includes(clock.phase);
+            if(late&&!commerce.completed.includes("midnight-story")) {commerce.completed.push("midnight-story");commerce.log.push("Dottie saved the booth. Even the city needs somewhere to sit.");note({flags:{midnightStory:true}});}
+            persistCommerce();hud.closeTalk();
+            const npc={id:"dottie-story",name:"DOTTIE",role:late?"THE MIDNIGHT BOOTH":"A TABLE FOR LATER",nodes:{start:{say:late?"The woman in the picture? She sat right there. Ordered two coffees. Waited for someone wearing your visor. Left before the second one went cold. I kept the booth. Sit. Your pie's warmer than the plot.":"After midnight, sweetheart. The booth keeps better hours than the cinema. Come back when the club drops the heavy one.",choices:[{text:late?"I'll take the booth.":"I'll be back.",next:null,action:late?"story-seat":null}]}}};hud.openTalk(npc);return true;
+        }
+        if(action==="story-seat"){hud.closeTalk();controls.sit(SIT_SPOTS.find(s=>s.id==="diner-booth"));return true;}
+        return false;
+    }
+    const candidates=[
+        ...LIFE_PROPS,
+        POSTER_KIOSK,
+        ...boardProps(adConfig),
+        ...STREET_PROPS,
+        ...NPCS.map(n=>({...n,type:"npc",ref:n,aimY:n.kind==="cat"?.4:1.5,reach:3.1,prompt:`[E] TALK TO ${n.name}`})),
+        ...PROPS.map(p=>({...p,type:"prop",aimY:1.05,reach:p.r||2.4})),
+        ...SIT_SPOTS.map(s=>({...s,type:"seat",ref:s,aimY:.62,reach:2.15})),
+        {id:"cube",type:"cube",x:world.cube.position.x,z:world.cube.position.z,y:0,aimY:.5,reach:1.8,prompt:"[E] TOUCH THE CUBE"},
+    ];
+    function interactionTarget() {
+        world.camera.getWorldDirection(_dir);
+        return selectInteraction({position:world.camera.position,forward:_dir,floorY:controls.floorY,
+            candidates:cubeFound.done?candidates.filter(c=>c.type!=="cube"):candidates,boxes:world.colliders.boxes,touch:isTouch()});
+    }
+    document.getElementById("mobileInteract").addEventListener("click",tryInteract);
+    const danceButton=document.getElementById("mobileDance");
+    danceButton.addEventListener("pointerdown",e=>{danceButton.setPointerCapture(e.pointerId);controls.setDance(true);});
+    for(const event of ["pointerup","pointercancel","lostpointercapture"])danceButton.addEventListener(event,()=>controls.setDance(false));
 
     function startRide() {
         if (ride) return;
@@ -295,6 +529,15 @@ async function boot() {
 
     function handleAction(action) {
         if (!action) return;
+        if(action.startsWith("life-")){openLife(action.slice(5),action==="life-club"?{job:"club"}:{});return;}
+        if(action.startsWith("street-")){openStreet(action.slice(7));return;}
+        if(action==="rent-board"){hud.openAds?.();return;}
+        if(action.startsWith("ad-open:")){
+            const url=action.slice(8);
+            if(url) window.open(url,"_blank","noopener,noreferrer");
+            return;
+        }
+        if (commerceAction(action)) return;
         if (action === "drop") {
             world.flashFloor();
             world.shiftLasers();
@@ -329,7 +572,7 @@ async function boot() {
             hud.openPaper();
             note({ flags: { paper: true } });
         } else if (action === "phone") {
-            hud.pickPhone();
+            openStreet("payphone");
         } else if (action === "hail-cab") {
             startRide();
             note({ flags: { cab: true } });
@@ -341,26 +584,6 @@ async function boot() {
             note({ flags: { booth: true } });
         } else if (action === "coat") {
             hud.toast("The coat check is a rumor. Your jacket is a theory.", "#e0b25a");
-        } else if (action === "vinyl") {
-            hud.toast("B-SIDE ACQUIRED — don't scratch the jazz", "#c77dff");
-            energy = Math.min(100, energy + 10);
-            note({ flags: { vinyl: true } });
-        } else if (action === "tonic") {
-            hud.toast("IRIS'S TONIC — pupils file a report", "#66ffe0");
-            energy = Math.min(100, energy + 8);
-            note({ flags: { tonic: true } });
-        } else if (action === "gin") {
-            hud.toast("MIDTOWN GIN — the smooth century", "#e0b25a");
-            note({ flags: { gin: true } });
-        } else if (action === "rose") {
-            hud.toast("A ROSE THAT IGNORES THE YEAR", "#ff6b9a");
-            note({ flags: { rose: true } });
-        } else if (action === "ticket") {
-            hud.toast("RIVOLI STUB — the picture is a rumor", "#ffe7a8");
-            note({ flags: { ticket: true } });
-        } else if (action === "haircut") {
-            hud.toast("TONY FIXED THE DECADE", "#ff3355");
-            note({ flags: { haircut: true } });
         } else if (action === "subway") {
             controls.place(-22.4, 27.15, -22.4, 29.4);
             hud.toast("DOWNTOWN — hold the rail", "#39ff14");
@@ -368,9 +591,6 @@ async function boot() {
         } else if (action === "token") {
             hud.toast("TOKEN ACCEPTED — the tunnel keeps its hours", "#39ff14");
             note({ flags: { token: true } });
-        } else if (action === "ice") {
-            hud.toast("ICE — tell Frank the plot twist was plumbing", "#88ccee");
-            note({ flags: { ice: true } });
         } else if (action && action.startsWith("enter-")) {
             const dest = {
                 "enter-records": [-33.2, 33.5, 37.2],
@@ -386,22 +606,16 @@ async function boot() {
             }
         } else if (action === "pet-cat") {
             hud.toast("SOCKS APPROVES — alley reputation +1", "#d8d0c4");
-            energy = Math.min(100, energy + 8);
+            if (!progress.night.flags.cat) energy = Math.min(100, energy + 8);
             note({ flags: { cat: true } });
-        } else if (action === "coffee") {
-            hud.setTipsy(false);
-            hud.toast("DOTTIE'S COFFEE — the visor focuses", "#c45c28");
-            energy = Math.min(100, energy + 12);
-        } else if (action === "pie") {
-            hud.toast("CHERRY PIE — 1954 tastes like a win", "#ff6b6b");
-            energy = Math.min(100, energy + 16);
-            note({ flags: { pie: true } });
+
         }
     }
 
     function handleChoice(i) {
         const npc = hud.talkNpc;
         const result = applyChoice(npc, hud.talkNode, i);
+        if (commerceAction(result.action)) return;
         if (result.action === "open-deck") {
             handleAction(result.action);
             return;
@@ -420,19 +634,20 @@ async function boot() {
         }
         const p = world.camera.position;
         const fy = controls.floorY;
-        const hit = nearestNpc(p.x, p.z, fy, 2.3);
-        if (hit) {
-            hud.openTalk(hit.npc);
-            note({ talkId: hit.npc.id });
-            return;
+        const target=interactionTarget();
+        if(target?.type==="npc") {
+            const npc=target.ref;
+            if(npc.id==="frank"){commerce=addLead(commerce,"ice");persistCommerce();}
+            if(npc.id==="velma"){commerce=addLead(commerce,"flowers");persistCommerce();}
+            if(npc.id==="marco"){commerce=addLead(commerce,"gin");persistCommerce();}
+            hud.openTalk(npc);note({talkId:npc.id});return;
         }
-        const prop = nearestProp(p.x, p.z, fy, 2.4);
-        if (prop) {
-            handleAction(prop.prop.action);
-            return;
-        }
-        const seat = nearestSit(p.x, p.z, fy, 1.85);
+        if(target?.type==="prop"){handleAction(target.action);return;}
+        const seat=target?.type==="seat"?{spot:target.ref}:null;
         if (seat) {
+            if(seat.spot.id==="barber-chair"){openShop("barber");return;}
+            if(seat.spot.id==="rivoli-bench"&&!commerce.film){openShop("rivoli");return;}
+            if(seat.spot.id==="listen-booth"){openShop("records");return;}
             controls.sit(seat.spot);
             if ((seat.spot.y || 0) >= 4) {
                 hud.toast("THE LOUNGE HAS YOU NOW", "#e0b25a");
@@ -454,13 +669,22 @@ async function boot() {
             }
             return;
         }
-        if (!cubeFound.done && Math.hypot(p.x - world.cube.position.x, p.z - world.cube.position.z) < 1.8 && fy < 2) {
+        if (target?.type === "cube") {
             cubeFound.done = true;
             hud.toast("FORBIDDEN GEOMETRY — the floor likes you more now", "#fff700");
             world.flashFloor();
             energy = Math.min(100, energy + 25);
             note({ flags: { cube: true }, energyPeak: energy });
         }
+    }
+
+    // Local-only inspection API for repeatable scene and browser regression checks.
+    if (["127.0.0.1","localhost"].includes(location.hostname) && new URLSearchParams(location.search).has("inspect")) {
+        window.__vibeInspect = {
+            place(x,z,lookX,lookZ,y=0) {controls.sit({x,z,y,eye:1.7,lookX,lookZ});controls.stand();},
+            advance(seconds){clock.tick(seconds);},
+            snapshot(){return {homes:Object.fromEntries([...world.lifeWorld.doors].map(([id,door])=>[id,{locked:door.visible,furnishings:[...world.lifeWorld.decor.get(id)].filter(([,g])=>g.visible).map(([key])=>key)}])),commerce,progress,phase:hud.phase,night:clock.phase,zone:hud.run.zone,sitting:controls.sitting,energy,filmVersion:world.city.film.material.map.version,audio:{preview:audio.previewing,muted:audio.muted,usingDeck:audio.usingDeck,bpm:audio.bpm},position:{x:world.camera.position.x,y:world.camera.position.y,z:world.camera.position.z},target:interactionTarget()?.id,set:activeSet,render:world.renderer.info.render,memory:world.renderer.info.memory};},
+        };
     }
 
     canvas.addEventListener("click", () => {
@@ -470,6 +694,7 @@ async function boot() {
 
     let last = performance.now();
     world.renderer.setAnimationLoop((now) => {
+        world.renderer.info.reset();
         const t = now * 0.001;
         const dt = Math.min(0.05, (now - last) / 1000);
         last = now;
@@ -506,14 +731,14 @@ async function boot() {
         if (move.dancing && onFloor) energy = Math.min(100, energy + dt * 22);
         else energy = Math.max(0, energy - dt * 7);
 
-        clock.tick(hud.phase === "explore" ? dt : dt * 0.25);
+        clock.tick(hud.phase === "explore" ? dt : 0);
         const phase = clock.phase;
         if (phase !== lastPhase) {
             lastPhase = phase;
             const copy = PHASE_COPY[phase];
             audio.setNightPhase(phase);
             world.setNightPhase(phase);
-            world.setLedMessage(bill.set.name, copy.led);
+            world.setLedMessage(activeSet.name, copy.led);
             hud.toast(copy.toast, phase === "peak" ? "#ff00ff" : "#ffb703");
             if (phase === "peak" && !peaked) {
                 peaked = true;
@@ -529,7 +754,7 @@ async function boot() {
                 hud.openRecap();
             }
         }
-        if (phase === "peak" && onFloor && !progress.flags.peakFloor) {
+        if (phase === "peak" && onFloor && !progress.night.flags.peakFloor) {
             note({ flags: { peakFloor: true } });
         }
 
@@ -539,8 +764,9 @@ async function boot() {
         hud.setNight({ clock: clock.clock, phase, copy: PHASE_COPY[phase] });
         if (zone !== lastZone) {
             lastZone = zone;
+            if (SHOPS_CATALOG.some(s=>s.id===zone))audio.playShopSound();
             note({ zone, energyPeak: energy });
-        } else if (energy > (progress.energyPeak || 0) + 4) {
+        } else if (energy > (progress.night.energy || 0) + 4) {
             note({ energyPeak: energy });
         }
 
@@ -553,6 +779,14 @@ async function boot() {
             phase,
             dancing: move.dancing && onFloor,
         });
+        if (hud.phase === "explore") {
+            const seen = world.city?.ads?.lastSeen || [];
+            for (const id of seen) {
+                const before = boardsRead(adViews);
+                adViews = recordView(adViews, id);
+                if (before < 5 && boardsRead(adViews) >= 5) note({ flags: { billboards: true } });
+            }
+        }
         hud.setTelemetry({
             bpm: audio.bpm,
             track: audio.trackName,
@@ -564,21 +798,43 @@ async function boot() {
         if (hud.phase === "explore" && !ride) {
             if (controls.sitting) hud.setInteract("[E] STAND UP  ·  WASD TO GET UP", true);
             else {
-                const hit = nearestNpc(p.x, p.z, fy, 2.3);
-                const prop = nearestProp(p.x, p.z, fy, 2.4);
-                const seat = nearestSit(p.x, p.z, fy, 1.85);
-                const nearCube = !cubeFound.done && Math.hypot(p.x - world.cube.position.x, p.z - world.cube.position.z) < 1.8 && fy < 2;
-                if (hit) hud.setInteract(`[E] TALK TO ${hit.npc.name}`, true);
-                else if (prop) hud.setInteract(prop.prop.prompt, true);
-                else if (seat) hud.setInteract(seat.spot.prompt, true);
-                else if (nearCube) hud.setInteract("[E] TOUCH THE CUBE", true);
-                else if (onFloor) hud.setInteract("SPACE TO DANCE", true);
-                else hud.setInteract("", false);
+                const target=interactionTarget();
+                if(target)hud.setInteract(target.prompt,true);
+                else {
+                    const seenId=(world.city?.ads?.lastSeen||[])[0];
+                    const seen=seenId&&filledSlots(adConfig).find(s=>s.id===seenId);
+                    if(seen) hud.setInteract(seen.creative.kind==="available"?`[LOOK] TO LET · ${seen.creative.brand}`:`[LOOK] ${seen.creative.brand} — ${seen.creative.line}`,true);
+                    else if (onFloor) hud.setInteract("SPACE TO DANCE", true);
+                    else hud.setInteract("", false);
+                }
             }
         }
 
+        if(hud.phase!=="explore")hud.setInteract("",false);
+        const marker=document.getElementById("wayfinder");
+        marker.hidden=!destination||hud.phase!=="explore";
+        if(destination) {
+            let target=destination, hint="";
+            if(destination.y>2 && fy<2) {
+                target=destination.id==="ice"?{x:37,z:9.5}:{x:14.6,z:9.7};
+                hint=destination.id==="ice"?"ASTORIA EAST STAIRS → 2F":"CLUB EAST STAIRS → LOUNGE";
+            }
+            const dx=target.x-p.x,dz=target.z-p.z,dist=Math.hypot(dx,dz),cross=_dir.x*dz-_dir.z*dx,dot=_dir.x*dx+_dir.z*dz;
+            const arrow=dist<2?"●":dot<0?"↶":cross>1?"←":cross< -1?"→":"↑";
+            marker.textContent=`${arrow} ${destination.name} · ${Math.round(dist)} m${hint?" · "+hint:""} · J notebook`;
+        }
+        savedAt+=dt;
+        if(savedAt>10&&hud.run.entered){savedAt=0;progress={...progress,night:{...progress.night,elapsed:clock.elapsedReal,commerce}};saveProgress(progress);}
         if (xr) world.renderer.render(world.scene, world.camera);
         else world.composer.render();
+        document.getElementById("cameraCapture").hidden = !commerce.expansion.camera || hud.phase!=="explore";
+        if(pendingPhoto){
+            pendingPhoto=false;
+            try {
+                const photo={id:String(Date.now()),image:world.captureFrame(framePhoto),title:zoneLabel(zone),clock:clock.clock};
+                const result=addPhoto(commerce.expansion,photo,zone);applyExpansion(result);audio.playShopSound("ticket");hud.toast(result.message,"#bdd3b2");
+            } catch {hud.toast("That frame didn’t develop. Try another photograph.");}
+        }
     });
 }
 
