@@ -30,6 +30,8 @@ export function createControls(camera, domElement, colliders) {
     let sitting = false;
     let sitSpot = null;
     let drunkDrift = 0;
+    let air = null;
+    let cool = 0;
 
     camera.position.set(0, EYE, 8);
     camera.lookAt(0, 1.6, -12);
@@ -112,7 +114,20 @@ export function createControls(camera, domElement, colliders) {
         get object() { return camera; },
         get floorY() { return floorY; },
         get riding() { return riding; },
+        get airborne() { return !!air; },
         setRiding(v) { riding = !!v; },
+        knock(hit) {
+            if (!hit || air || cool > 0 || riding || sitting) return false;
+            sitting = false;
+            sitSpot = null;
+            air = {
+                vx: hit.vx,
+                vz: hit.vz,
+                vy: hit.vy,
+                t: 0,
+            };
+            return true;
+        },
 
         lock() {
             // Browsers may reject capture after an overlay or without a fresh gesture.
@@ -183,6 +198,33 @@ export function createControls(camera, domElement, colliders) {
         },
 
         update(dt, bpm, xrPresenting) {
+            if (cool > 0) cool -= dt;
+            if (air) {
+                air.t += dt;
+                air.vy -= 16.5 * dt;
+                camera.position.x += air.vx * dt;
+                camera.position.z += air.vz * dt;
+                camera.position.y += air.vy * dt;
+                air.vx *= 0.985;
+                air.vz *= 0.985;
+                resolve(camera.position);
+                floorY = colliders.getFloorY(camera.position.x, camera.position.z, floorY);
+                const ground = floorY + EYE;
+                _euler.setFromQuaternion(camera.quaternion);
+                _euler.z = Math.sin(air.t * 9) * 0.28;
+                _euler.x += air.vy * dt * 0.04;
+                _euler.x = Math.max(PI_2 - plc.maxPolarAngle, Math.min(PI_2 - plc.minPolarAngle, _euler.x));
+                camera.quaternion.setFromEuler(_euler);
+                if (camera.position.y <= ground && air.vy <= 0) {
+                    camera.position.y = ground;
+                    air = null;
+                    cool = 0.85;
+                    _euler.z = 0;
+                    camera.quaternion.setFromEuler(_euler);
+                }
+                camera.getWorldDirection(_fwd);
+                return { moving: true, dancing: false, tipsy, airborne: true, forward: _fwd, floorY };
+            }
             if (riding) {
                 camera.position.y = EYE + 0.55;
                 return { moving: true, dancing: false, tipsy, forward: _fwd, floorY };

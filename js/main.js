@@ -20,6 +20,7 @@ import { loadProgress, saveProgress, evaluateUnlocks, stampNight, setLook, getLo
 import { SHOPS_CATALOG, normalizeCommerce, transact, deliver, collectIce, addLead, getErrands, DESTINATIONS } from "./commerce.js";
 import { createShopUI } from "./shop-ui.js";
 import { selectInteraction } from "./interactions.js";
+import { hitByCar } from "./traffic.js";
 import {
     mergeAdConfig,
     POSTER_KIOSK,
@@ -683,7 +684,9 @@ async function boot() {
         window.__vibeInspect = {
             place(x,z,lookX,lookZ,y=0) {controls.sit({x,z,y,eye:1.7,lookX,lookZ});controls.stand();},
             advance(seconds){clock.tick(seconds);},
-            snapshot(){return {homes:Object.fromEntries([...world.lifeWorld.doors].map(([id,door])=>[id,{locked:door.visible,furnishings:[...world.lifeWorld.decor.get(id)].filter(([,g])=>g.visible).map(([key])=>key)}])),commerce,progress,phase:hud.phase,night:clock.phase,zone:hud.run.zone,sitting:controls.sitting,energy,filmVersion:world.city.film.material.map.version,audio:{preview:audio.previewing,muted:audio.muted,usingDeck:audio.usingDeck,bpm:audio.bpm},position:{x:world.camera.position.x,y:world.camera.position.y,z:world.camera.position.z},target:interactionTarget()?.id,set:activeSet,render:world.renderer.info.render,memory:world.renderer.info.memory};},
+            traffic(){return world.city.traffic.map((c)=>({x:c.position.x,z:c.position.z,dir:c.userData.moving}));},
+            airborne(){return !!controls.airborne;},
+            snapshot(){return {homes:Object.fromEntries([...world.lifeWorld.doors].map(([id,door])=>[id,{locked:door.visible,furnishings:[...world.lifeWorld.decor.get(id)].filter(([,g])=>g.visible).map(([key])=>key)}])),commerce,progress,phase:hud.phase,night:clock.phase,zone:hud.run.zone,sitting:controls.sitting,airborne:!!controls.airborne,energy,filmVersion:world.city.film.material.map.version,audio:{preview:audio.previewing,muted:audio.muted,usingDeck:audio.usingDeck,bpm:audio.bpm},position:{x:world.camera.position.x,y:world.camera.position.y,z:world.camera.position.z},target:interactionTarget()?.id,set:activeSet,render:world.renderer.info.render,memory:world.renderer.info.memory};},
         };
     }
 
@@ -726,6 +729,13 @@ async function boot() {
 
         const move = controls.update(dt, audio.bpm, xr);
         const p = world.camera.position;
+        if (!ride && hud.phase === "explore" && !controls.airborne && !controls.sitting) {
+            const struck = hitByCar(p, world.city.traffic);
+            if (struck && controls.knock(struck)) {
+                audio.horn();
+                hud.toast("THE CHECKER DOESN'T YIELD", "#f5c518");
+            }
+        }
         const fy = controls.floorY;
         const onFloor = onDanceFloor(p.x, p.z, fy);
         if (move.dancing && onFloor) energy = Math.min(100, energy + dt * 22);

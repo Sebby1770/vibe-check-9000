@@ -17,7 +17,7 @@ No install. Click **ENTER THE NIGHT**.
 The clock starts at 10:00 PM and runs to after hours. Doors, heat, midnight drop, last call, 2am street. The sky, the crowd, and the house system move with it. Today's Gazette and today's set are not yesterday's.
 
 1. Click **ENTER THE NIGHT** (pointer lock + house system).
-2. **WASD** to move, mouse to look, **SPACE** on the LED floor to dance.
+2. **WASD** to move, mouse to look, **SPACE** on the LED floor to dance. Stay off the asphalt — moving Checkers will throw you.
 3. Walk up to a named person and press **E** to talk. What they say depends on the hour.
 4. **Front doors** open onto 47th Street — rain, Checkers, Dottie's, Hotel Astoria. Cross the street for records, tonic, flowers, the Rivoli, gin, a haircut. Subway kiosk for the 12:04. Astoria east stairs for 2F and Frank's ice.
 5. **Back doors** dump you in the alley — Vinnie, Muldoon, Socks the cat, fire escape.

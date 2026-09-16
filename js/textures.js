@@ -24,10 +24,14 @@ export function brickTex(mortar = "#2a1c18", brick = "#6a3a32", size = 512) {
         const bw = s / cols;
         for (let r = 0; r < rows; r++) {
             const off = r % 2 ? bw / 2 : 0;
+            const header = r % 4 === 3;
             for (let c = -1; c < cols + 1; c++) {
                 const jitter = ((r * 13 + c * 7) % 5) - 2;
-                g.fillStyle = shade(brick, jitter * 6);
+                const burnt = (r * 11 + c * 5) % 13 === 0;
+                g.fillStyle = shade(brick, jitter * 7 + (header ? -18 : 0) + (burnt ? -28 : 0));
                 g.fillRect(c * bw + off + 2, r * bh + 2, bw - 4, bh - 4);
+                g.fillStyle = "rgba(255,220,180,0.07)";
+                g.fillRect(c * bw + off + 4, r * bh + 3, bw * 0.35, 3);
             }
         }
     }, size, 6, 10);
@@ -78,6 +82,92 @@ export function sidewalkTex() {
         g.fillStyle = "rgba(200,210,220,0.05)";
         for (let i = 0; i < 18; i++) g.fillRect(Math.random() * s, Math.random() * s, 22, 3);
     }, 512, 4, 4);
+}
+
+export function windowPaneTex(kind = "on") {
+    const lit = kind !== "off";
+    const warm = kind === "warm";
+    const pane = !lit ? "#14161c" : warm ? "#ffb060" : "#ffe2a4";
+    const tex = canvasTex((g, s) => {
+        g.fillStyle = "#2a221c";
+        g.fillRect(0, 0, s, s);
+        g.fillStyle = "#4a3a32";
+        g.fillRect(6, 6, s - 12, s - 12);
+        const wall = warm ? "#6a3a28" : lit ? "#4a4038" : "#1a1c22";
+        g.fillStyle = wall;
+        g.fillRect(18, 18, s - 36, s - 36);
+        if (lit) {
+            const grd = g.createLinearGradient(18, 18, s - 18, s - 18);
+            grd.addColorStop(0, pane);
+            grd.addColorStop(1, warm ? "#c86830" : "#d8a060");
+            g.fillStyle = grd;
+            g.fillRect(22, 22, s - 44, s - 44);
+            g.fillStyle = "rgba(40,24,16,0.45)";
+            g.fillRect(22, 22, 28, s - 44);
+            g.fillStyle = "rgba(90,50,36,0.5)";
+            for (let i = 0; i < 7; i++) g.fillRect(24, 26 + i * 14, 22, 5);
+            g.fillStyle = "rgba(255,236,190,0.55)";
+            g.beginPath();
+            g.arc(s * 0.66, s * 0.58, 18, 0, Math.PI * 2);
+            g.fill();
+            g.fillStyle = "rgba(255,210,140,0.35)";
+            g.beginPath();
+            g.arc(s * 0.66, s * 0.58, 28, 0, Math.PI * 2);
+            g.fill();
+            g.fillStyle = "rgba(24,14,10,0.35)";
+            g.fillRect(s * 0.5, s * 0.5, 36, 42);
+            g.fillStyle = "rgba(30,18,12,0.4)";
+            g.beginPath();
+            g.moveTo(s * 0.72, s - 28);
+            g.lineTo(s * 0.8, s * 0.62);
+            g.lineTo(s * 0.88, s - 28);
+            g.fill();
+        } else {
+            g.fillStyle = "rgba(70,80,96,0.16)";
+            g.fillRect(22, 22, s - 44, s - 44);
+            g.fillStyle = "rgba(20,16,14,0.55)";
+            g.fillRect(22, 22, s - 44, s - 44);
+            g.fillStyle = "rgba(180,190,210,0.08)";
+            g.fillRect(40, 30, 18, 70);
+        }
+        g.fillStyle = "#1c1614";
+        g.fillRect(s / 2 - 5, 14, 10, s - 28);
+        g.fillRect(16, s / 2 - 5, s - 32, 10);
+        g.strokeStyle = "#5a4a40";
+        g.lineWidth = 8;
+        g.strokeRect(14, 14, s - 28, s - 28);
+        g.fillStyle = "#3a3028";
+        g.fillRect(10, s - 22, s - 20, 12);
+        g.strokeStyle = "#1a1410";
+        g.lineWidth = 12;
+        g.strokeRect(4, 4, s - 8, s - 8);
+    }, 256, 1, 1);
+    tex.wrapS = tex.wrapT = THREE.ClampToEdgeWrapping;
+    tex.repeat.set(1, 1);
+    return tex;
+}
+
+export function stoneTex() {
+    return canvasTex((g, s) => {
+        g.fillStyle = "#6a5a48";
+        g.fillRect(0, 0, s, s);
+        const rows = 5;
+        const cols = 3;
+        const bh = s / rows;
+        const bw = s / cols;
+        for (let r = 0; r < rows; r++) {
+            const off = r % 2 ? bw / 2 : 0;
+            for (let c = -1; c < cols + 1; c++) {
+                const jitter = ((r * 9 + c * 4) % 7) - 3;
+                g.fillStyle = shade("#c4b496", jitter * 5);
+                g.fillRect(c * bw + off + 3, r * bh + 3, bw - 6, bh - 6);
+                g.fillStyle = "rgba(255,240,210,0.12)";
+                g.fillRect(c * bw + off + 6, r * bh + 5, bw * 0.4, 4);
+                g.fillStyle = "rgba(40,30,20,0.12)";
+                g.fillRect(c * bw + off + bw * 0.45, r * bh + bh * 0.45, bw * 0.4, bh * 0.35);
+            }
+        }
+    }, 256, 4, 6);
 }
 
 export function plasterTex() {

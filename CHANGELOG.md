@@ -4,6 +4,16 @@ All notable changes to VIBE CHECK 9000™ are documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
+## [24.2.0] - 2026-09-16
+
+The windows have rooms in them. The Checkers have opinions.
+
+### Added
+
+- Car hits: step onto 47th's asphalt and a moving cab throws you up and down the lane.
+- Window panes with rooms, curtains, blinds, and lamp glow. Stone bases, cornices, sills, window units, and fire escapes on the block.
+- Overcoats, lapels, scarves, glasses, and umbrellas held in hand. Checkers with roofs, grilles, whitewalls, and running boards.
+
 ## [24.1.0] - 2026-09-16
 
 The street keeps its lights. The GPU keeps its job.

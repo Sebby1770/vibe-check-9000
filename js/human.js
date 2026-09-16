@@ -30,6 +30,16 @@ function geo() {
     GEO.glow = new THREE.BoxGeometry(0.03, 0.36, 0.03);
     GEO.headphone = new THREE.TorusGeometry(0.12, 0.018, 6, 16, Math.PI);
     GEO.badge = new THREE.CircleGeometry(0.03, 8);
+    GEO.coat = new THREE.BoxGeometry(0.42, 0.58, 0.24);
+    GEO.collar = new THREE.BoxGeometry(0.24, 0.08, 0.18);
+    GEO.lapel = new THREE.BoxGeometry(0.09, 0.24, 0.02);
+    GEO.scarf = new THREE.BoxGeometry(0.1, 0.32, 0.06);
+    GEO.umbShaft = new THREE.CylinderGeometry(0.012, 0.012, 0.92, 6);
+    GEO.umbCanopy = new THREE.ConeGeometry(0.36, 0.16, 10, 1, true);
+    GEO.hatBand = new THREE.TorusGeometry(0.105, 0.012, 6, 14);
+    GEO.lens = new THREE.CircleGeometry(0.022, 8);
+    GEO.bridge = new THREE.BoxGeometry(0.04, 0.008, 0.008);
+    GEO.heel = new THREE.BoxGeometry(0.07, 0.03, 0.08);
     return GEO;
 }
 
@@ -59,14 +69,22 @@ const OUTFITS = {
     florist: { top: 0x3a4a32, bottom: 0x2a241c, accent: 0xff6b9a, hat: "none", extra: "apron", shoes: 0x111111 },
 };
 
+const MATS = new Map();
 function mat(color, extra = {}) {
-    return new THREE.MeshStandardMaterial({
-        color,
-        roughness: extra.roughness ?? 0.62,
-        metalness: extra.metalness ?? 0.08,
-        emissive: extra.emissive ?? 0x000000,
-        emissiveIntensity: extra.emissiveIntensity ?? 0,
-    });
+    const key = `${color}|${extra.roughness ?? 0.62}|${extra.metalness ?? 0.08}|${extra.emissive ?? 0}|${extra.emissiveIntensity ?? 0}|${extra.side ?? 0}`;
+    let m = MATS.get(key);
+    if (!m) {
+        m = new THREE.MeshStandardMaterial({
+            color,
+            roughness: extra.roughness ?? 0.62,
+            metalness: extra.metalness ?? 0.08,
+            emissive: extra.emissive ?? 0x000000,
+            emissiveIntensity: extra.emissiveIntensity ?? 0,
+            side: extra.side ?? THREE.FrontSide,
+        });
+        MATS.set(key, m);
+    }
+    return m;
 }
 
 function limb(geometry, material, length, axis = "y") {
@@ -110,7 +128,7 @@ export function createHuman(spec = {}) {
     const hairStyle = spec.hairStyle || "short";
     const root = new THREE.Group();
 
-    const skinM = mat(skinC, { roughness: 0.55 });
+    const skinM = mat(skinC, { roughness: 0.48, emissive: skinC, emissiveIntensity: 0.04 });
     const topM = mat(o.top, {
         roughness: o.dress ? 0.4 : 0.65,
         metalness: o.dress ? 0.25 : 0.08,
@@ -135,6 +153,29 @@ export function createHuman(spec = {}) {
     const torso = new THREE.Mesh(G.torso, topM);
     torso.position.y = 0.22;
     spine.add(torso);
+    const streetCoat = !o.dress && outfitName !== "raver" && outfitName !== "dj" && outfitName !== "host";
+    if (streetCoat) {
+        const coat = new THREE.Mesh(G.coat, topM);
+        coat.position.y = 0.14;
+        spine.add(coat);
+        const collar = new THREE.Mesh(G.collar, topM);
+        collar.position.set(0, 0.46, 0.02);
+        spine.add(collar);
+        const lapelM = mat(0xe8dcc8, { roughness: 0.7 });
+        const lapelL = new THREE.Mesh(G.lapel, lapelM);
+        lapelL.position.set(-0.08, 0.32, 0.13);
+        lapelL.rotation.z = 0.18;
+        const lapelR = lapelL.clone();
+        lapelR.position.x = 0.08;
+        lapelR.rotation.z = -0.18;
+        spine.add(lapelL, lapelR);
+    }
+    if (o.hat === "fedora" || outfitName === "lady" || outfitName === "lounge") {
+        const scarf = new THREE.Mesh(G.scarf, accentM);
+        scarf.position.set(0.02, 0.42, 0.08);
+        scarf.rotation.z = 0.35;
+        spine.add(scarf);
+    }
 
     if (o.extra === "tie" || o.extra === "bowtie") {
         const tie = new THREE.Mesh(G.tie, accentM);
@@ -183,6 +224,20 @@ export function createHuman(spec = {}) {
     const mouth = new THREE.Mesh(new THREE.BoxGeometry(0.05, 0.012, 0.012), mat(0x5a2030, { roughness: 0.5 }));
     mouth.position.set(0, -0.045, 0.098);
     head.add(mouth);
+    if (outfitName === "clerk" || outfitName === "pharmacist" || outfitName === "salesman") {
+        const glassM = mat(0x1a1410, { roughness: 0.25, metalness: 0.6 });
+        for (const s of [-1, 1]) {
+            const lens = new THREE.Mesh(G.lens, mat(0x88aacc, { roughness: 0.1, metalness: 0.4, side: THREE.DoubleSide }));
+            lens.position.set(s * 0.038, 0.02, 0.11);
+            const rim = new THREE.Mesh(G.lens, glassM);
+            rim.position.set(s * 0.038, 0.02, 0.109);
+            rim.scale.setScalar(1.15);
+            head.add(lens, rim);
+        }
+        const bridge = new THREE.Mesh(G.bridge, glassM);
+        bridge.position.set(0, 0.025, 0.11);
+        head.add(bridge);
+    }
 
     if (hairStyle === "updo") {
         const hair = new THREE.Mesh(G.hairShort, hairM);
@@ -206,7 +261,11 @@ export function createHuman(spec = {}) {
         brim.position.y = 0.08;
         const crown = new THREE.Mesh(G.hatCrown, mat(0x1a1612, { roughness: 0.55 }));
         crown.position.y = 0.14;
-        head.add(brim, crown);
+        crown.scale.set(1, 1.12, 0.92);
+        const band = new THREE.Mesh(G.hatBand, accentM);
+        band.rotation.x = Math.PI / 2;
+        band.position.y = 0.1;
+        head.add(brim, crown, band);
     } else if (o.hat === "cop") {
         const brim = new THREE.Mesh(G.hatBrim, mat(0x1a2744));
         brim.scale.set(0.85, 1, 0.85);
@@ -296,6 +355,9 @@ export function createHuman(spec = {}) {
     const lFoot = new THREE.Mesh(G.foot, shoeM);
     lFoot.position.set(0, -0.38, 0.04);
     lShin.add(lFoot);
+    const lHeel = new THREE.Mesh(G.heel, shoeM);
+    lHeel.position.set(0, -0.4, -0.04);
+    lShin.add(lHeel);
 
     const rThigh = limb(G.thigh, botM, 0.4);
     rHip.add(rThigh);
@@ -305,11 +367,29 @@ export function createHuman(spec = {}) {
     const rFoot = new THREE.Mesh(G.foot, shoeM);
     rFoot.position.set(0, -0.38, 0.04);
     rShin.add(rFoot);
+    const rHeel = new THREE.Mesh(G.heel, shoeM);
+    rHeel.position.set(0, -0.4, -0.04);
+    rShin.add(rHeel);
 
     if (o.dress) {
         const dress = new THREE.Mesh(G.dress, topM);
         dress.position.y = -0.18;
         hips.add(dress);
+    }
+
+    if (spec.umbrella) {
+        const shaft = new THREE.Mesh(G.umbShaft, mat(0x2a241c, { roughness: 0.4, metalness: 0.35 }));
+        const canopy = new THREE.Mesh(
+            G.umbCanopy,
+            mat(spec.umbrellaColor || o.accent || 0x1a2438, { roughness: 0.55, side: THREE.DoubleSide }),
+        );
+        canopy.position.y = 0.48;
+        const umb = new THREE.Group();
+        umb.add(shaft, canopy);
+        umb.position.set(0.02, 0.12, 0);
+        umb.rotation.set(0.15, 0, 0.25);
+        lHand.add(umb);
+        root.userData.umbrella = true;
     }
 
     if (spec.name && spec.color) {
@@ -493,6 +573,10 @@ export function animateHuman(obj, t, ctx = {}) {
             j.spine.rotation.x = 0.06;
         }
     }
+    if (obj.userData.umbrella && mode !== "sit") {
+        j.lUpper.rotation.set(-2.05, 0.12, 0.42);
+        j.lFore.rotation.set(-0.28, 0, 0.08);
+    }
 }
 
 const PED_SKINS = [0x8d5524, 0xc68642, 0xe0ac69, 0xf1c27d, 0x5c3317, 0x3b2219];
@@ -501,6 +585,7 @@ const PED_OUTFITS = ["salesman", "lady", "hood", "clerk", "cabbie", "pedestrian"
 
 export function randomPedestrian(seed = Math.random(), extra = {}) {
     const i = Math.floor(seed * 97);
+    const walk = (extra.anim || "walk") === "walk";
     return createHuman({
         outfit: extra.outfit || PED_OUTFITS[i % PED_OUTFITS.length],
         skin: extra.skin || PED_SKINS[i % PED_SKINS.length],
@@ -510,6 +595,8 @@ export function randomPedestrian(seed = Math.random(), extra = {}) {
         anim: extra.anim || "walk",
         color: extra.color,
         accent: extra.accent,
+        umbrella: extra.umbrella ?? (walk && i % 3 !== 1),
+        umbrellaColor: extra.umbrellaColor || [0x1a2744, 0x8b1e1e, 0x2a3040, 0x3a2418][i % 4],
     });
 }
 
