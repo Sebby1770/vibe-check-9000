@@ -3,7 +3,7 @@ import { WORKSHOPS, counterBrief } from './expansion.js';
 export const money = n => `$${Math.floor(n).toLocaleString('en-US')}`;
 export const PRICES = {record:8, flowers:6, tonic:3, gin:8, haircut:7, ticket:4, coffee:2, pie:4};
 export const FURNISHINGS = [
-  {id:'turntable',shop:'records',name:'Walnut listening station',price:38,icon:'◎',color:'#568b86',detail:'A record player and a stack of sleeves beside your armchair.'},
+  {id:'turntable',shop:'records',name:'Walnut listening station',price:38,icon:'◎',color:'#568b86',detail:'A record player for the walnut writing desk in your apartment.'},
   {id:'plant',shop:'florist',name:'Sunday in a pot',price:24,icon:'✿',color:'#739668',detail:'A tall, leafy plant for a corner that needed company.'},
   {id:'lamp',shop:'pharmacy',name:'Milk-glass reading lamp',price:26,icon:'◒',color:'#d3b782',detail:'A warm glow over your bedside table.'},
   {id:'bar',shop:'liquor',name:'The after-hours bar cart',price:42,icon:'♧',color:'#b68b55',detail:'Brass rails, two bottles and enough glasses for a guest.'},
@@ -118,6 +118,6 @@ export function lifeColliders() {
     wall(r.maxX-.08,r.maxX+.08,r.minZ,z-.85);wall(r.maxX-.08,r.maxX+.08,z+.85,r.maxZ);wall(r.maxX-.08,r.maxX+.08,z-.85,z+.85,r.id);
     // Bed and desk footprints leave a broad central path.
     wall(r.minX+.5,r.minX+2.7,r.minZ+.65,r.minZ+3.25);
-    boxes.at(-1).maxY=5.4;
+    boxes.at(-1).sightMaxY=5.4;
   }return boxes;
 }

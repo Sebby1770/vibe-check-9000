@@ -9,10 +9,31 @@ export function buildLifeWorld(scene,colliders){
  const wood=mat('#694937'),cream=mat('#e0ceb0'),brass=mat('#c7a463'),dark=mat('#294146'),white=mat('#eadfc8'),leaf=mat('#537659');
  const box=(g,m,x,y,z,w,h,d)=>addBox(g,unitBox,m,x,y,z,w,h,d);
  const sign=(g,lines,x,y,z,w,h,rotation=0,paper='#e7d8b8',ink='#294c42')=>{const m=new THREE.Mesh(new THREE.PlaneGeometry(w,h),new THREE.MeshBasicMaterial({map:printedCard(lines,{paper,ink,width:768,height:384}),side:THREE.DoubleSide}));m.position.set(x,y,z);m.rotation.y=rotation;g.add(m);return m;};
+ function skylineWindow(g,x,y,z,color) {
+  const canvas=document.createElement('canvas');canvas.width=768;canvas.height=384;
+  const ctx=canvas.getContext('2d'),sky=ctx.createLinearGradient(0,0,0,384);
+  sky.addColorStop(0,'#273e58');sky.addColorStop(1,'#c19579');ctx.fillStyle=sky;ctx.fillRect(0,0,768,384);
+  ctx.fillStyle='#eddaad';ctx.beginPath();ctx.arc(610,80,29,0,Math.PI*2);ctx.fill();
+  for(let i=0;i<13;i++){const bx=i*64-20,top=110+(i*73)%133;
+   ctx.fillStyle=i%2?'#344758':'#2a3d4c';ctx.fillRect(bx,top,60,384-top);
+   for(let wx=bx+9;wx<bx+52;wx+=16)for(let wy=top+15;wy<370;wy+=26){ctx.fillStyle=(wx+wy+i)%5<2?'#cfb884':'#5a6c74';ctx.fillRect(wx,wy,7,10);}
+   if(i%3===0){ctx.fillStyle='#293d49';ctx.fillRect(bx+17,top-18,26,18);ctx.fillRect(bx+29,top-50,3,32);}
+  }
+  ctx.strokeStyle='#a6b1b0';ctx.globalAlpha=.18;ctx.lineWidth=2;for(let i=0;i<28;i++){ctx.beginPath();ctx.moveTo(i*35,0);ctx.lineTo(i*35-110,384);ctx.stroke();}ctx.globalAlpha=1;
+  const tex=new THREE.CanvasTexture(canvas);tex.colorSpace=THREE.SRGBColorSpace;
+  const pane=new THREE.Mesh(new THREE.PlaneGeometry(2.8,1.3),new THREE.MeshBasicMaterial({map:tex}));pane.position.set(x,y,z);g.add(pane);
+  for(const dx of [-1.46,0,1.46])box(g,white,x+dx,y,z+.04,.06,1.45,.08);
+  for(const dy of [-.71,0,.71])box(g,white,x,y+dy,z+.04,2.98,.05,.08);
+  const curtain=mat(color);for(const dx of [-1.7,1.7]){box(g,curtain,x+dx,y-.12,z+.12,.36,1.85,.12);box(g,brass,x+dx,y-.5,z+.2,.4,.055,.04);}
+  box(g,wood,x,y+.87,z+.15,3.85,.08,.1);
+ }
  const doors=new Map(),decor=new Map();
  for(const home of HOMES){const r=HOME_BOUNDS.find(r=>r.id===home.id),room=new THREE.Group(),color=mat(home.color),cx=(r.minX+r.maxX)/2,cz=(r.minZ+r.maxZ)/2;
   root.add(room);
   const w=r.maxX-r.minX,d=r.maxZ-r.minZ;
+  box(room,cream,cx,7.76,cz,w,.12,d);
+  for(const z of [r.minZ+.1,r.maxZ-.1])box(room,white,cx,7.61,z,w,.12,.14);
+  box(room,white,r.minX+.1,7.61,cz,.14,.12,d);
   box(room,wood,cx,4.47,cz,w,.08,d);box(room,color,cx+.4,4.53,cz+.25,w*.62,.025,d*.55);
   box(room,cream,r.minX,6.05,cz,.16,3.3,d);box(room,cream,cx,6.05,r.minZ,w,3.3,.16);box(room,cream,cx,6.05,r.maxZ,w,3.3,.16);
   box(room,cream,r.maxX,6.05,(r.minZ+home.doorZ-.85)/2,.16,3.3,home.doorZ-.85-r.minZ);
@@ -31,7 +52,7 @@ export function buildLifeWorld(scene,colliders){
   for(const x of [deskX-.73,deskX+.73])box(room,brass,x,4.88,deskZ,.06,.7,.06);
   box(room,cream,deskX,5.35,deskZ,.45,.03,.3);
   // Framed skyline window painted in the room's palette.
-  sign(room,['47TH STREET','A QUIETER KIND OF NIGHT'],cx,6.4,r.minZ+.1,2.8,1.3,0,'#324957','#d4c49c');
+  skylineWindow(room,cx,6.4,r.minZ+.1,home.color);
   box(room,brass,cx,5.69,r.minZ+.16,2.95,.06,.06);
   // Reading chair and a low side table.
   box(room,color,r.minX+1.05,4.88,r.maxZ-1.1,1.3,.65,1.25);box(room,color,r.minX+.55,5.32,r.maxZ-1.1,.3,.95,1.25);

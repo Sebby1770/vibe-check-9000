@@ -33,6 +33,7 @@ let p=touchVisit(loadProgress(storage),'2026-09-14');p.night.commerce.life=s;p.n
 assert.deepEqual(loadProgress(storage).night.commerce.life,s);
 const next=touchVisit(loadProgress(storage),'2026-09-15');assert.deepEqual(next.night.commerce.life,s);assert.deepEqual(next.night.commerce.completed,[]);
 assert.equal(lifeColliders().filter(b=>b.homeGate).length,3);
+for(const b of lifeColliders().filter(b=>b.sightMaxY)) {assert.ok(b.maxY>=6.1,'beds block the player at eye height');assert.equal(b.sightMaxY,5.4,'players can still see over beds');}
 const boxes=buildColliders().boxes;
 function blocked(x,z,y){return boxes.some(b=>x>b.minX-.25&&x<b.maxX+.25&&z>b.minZ-.25&&z<b.maxZ+.25&&y>=b.minY&&y<=b.maxY);}
 for(const h of HOMES){assert.equal(getFloorY(h.doorX+1,h.doorZ,4.4),4.4);assert.equal(blocked(h.doorX+1,h.doorZ,6.1),false,`${h.number} doorstep reachable`);assert.ok(blocked(h.doorX,h.doorZ,6.1));}

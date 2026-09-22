@@ -135,28 +135,28 @@ export function buildStreetLife(scene) {
     hair: 0x201815,
     hairStyle: "short",
     color: "#667c82",
+    scarf: false,
+    mouth: false,
   });
   musician.position.set(0.6, 0.28, 0);
   stage.add(musician);
-  const horn = new THREE.Mesh(
-    new THREE.TorusGeometry(0.12, 0.045, 7, 12, Math.PI),
-    brass,
-  );
-  horn.position.set(0.77, 1.1, 0.38);
-  horn.rotation.z = Math.PI;
-  stage.add(horn);
-  const saxBody = new THREE.Mesh(
-    new THREE.CylinderGeometry(0.04, 0.06, 0.53, 8),
-    brass,
-  );
-  saxBody.position.set(0.65, 1.35, 0.38);
-  stage.add(saxBody);
-  const saxBell = new THREE.Mesh(
-    new THREE.CylinderGeometry(0.105, 0.04, 0.18, 10),
-    brass,
-  );
-  saxBell.position.set(0.89, 1.18, 0.38);
-  stage.add(saxBell);
+  // One connected brass instrument, attached to the moving torso rather than the stage.
+  const sax = new THREE.Group();musician.userData.joints.spine.add(sax);
+  const path = new THREE.CatmullRomCurve3([
+    new THREE.Vector3(0,.555,.14),new THREE.Vector3(0,.5,.24),
+    new THREE.Vector3(-.03,.33,.39),new THREE.Vector3(-.045,.02,.43),
+    new THREE.Vector3(-.03,-.17,.45),new THREE.Vector3(.1,-.22,.48),
+    new THREE.Vector3(.17,-.09,.5),new THREE.Vector3(.18,.02,.52),
+  ]);
+  sax.add(new THREE.Mesh(new THREE.TubeGeometry(path,28,.032,8,false),brass));
+  const bell = new THREE.Mesh(new THREE.CylinderGeometry(.12,.033,.19,16,1,true),brass);
+  bell.position.set(.18,.08,.52);bell.rotation.x=.2;sax.add(bell);
+  const bore=new THREE.Mesh(new THREE.CircleGeometry(.098,16),black);
+  bore.rotation.x=-Math.PI/2+.2;bore.position.set(.18,.166,.538);sax.add(bore);
+  const mouthpiece=new THREE.Mesh(new THREE.CylinderGeometry(.013,.018,.075,8),black);
+  mouthpiece.rotation.x=Math.PI/2;mouthpiece.position.set(0,.555,.14);sax.add(mouthpiece);
+  for(let i=0;i<6;i++){const key=new THREE.Mesh(new THREE.SphereGeometry(.024,8,6),cream);key.scale.set(1,.45,1);key.position.set(-.055,.27-i*.065,.465);sax.add(key);}
+  const strap=new THREE.Mesh(new THREE.TubeGeometry(new THREE.CatmullRomCurve3([new THREE.Vector3(-.075,.47,.12),new THREE.Vector3(-.05,.28,.2),new THREE.Vector3(.075,.47,.12)]),12,.008,5,false),black);sax.add(strap);
   box(stage, black, -0.35, 1.05, 0.42, 0.035, 1.65, 0.035);
   box(stage, black, -0.35, 1.8, 0.42, 0.22, 0.08, 0.12);
   const pads = [0x9cbba4, 0xdfba75, 0xb58d91].map((c, i) =>
@@ -331,6 +331,7 @@ export function buildStreetLife(scene) {
   }
   return {
     root,
+    musician,
     pads,
     seals,
     setState(s) {
@@ -339,7 +340,7 @@ export function buildStreetLife(scene) {
     update(t, reduced, position) {
       if (Math.hypot(position.x - 44, position.z - 14.2) < 28)
         animateHuman(musician, t, {
-          mode: reduced ? "idle" : "lean",
+          mode: "sax",
           bpm: 100,
         });
       if (Math.hypot(position.x + 44, position.z - 17.1) < 22)

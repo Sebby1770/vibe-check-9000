@@ -1,14 +1,15 @@
 {
   "name": "vibe-check-9000",
-  "version": "24.2.0",
+  "version": "25.0.0",
   "private": true,
   "type": "module",
   "description": "First-person 1954 Midtown: subway under 47th, a hotel floor, a picture that refuses the decade.",
   "scripts": {
-    "test": "node tests/people.test.js && node tests/engine.test.js && node tests/zones.test.js && node tests/night.test.js && node tests/progress.test.js && node tests/commerce.test.js && node tests/interactions.test.js && node tests/expansion.test.js && node tests/life.test.js && node tests/ads.test.js && node tests/traffic.test.js",
+    "test": "node tests/people.test.js && node tests/engine.test.js && node tests/zones.test.js && node tests/night.test.js && node tests/progress.test.js && node tests/commerce.test.js && node tests/interactions.test.js && node tests/expansion.test.js && node tests/life.test.js && node tests/ads.test.js && node tests/traffic.test.js && node tests/district.test.js",
     "start": "python3 -m http.server 8000",
     "test:browser": "node tests/browser.test.js",
     "test:life": "node tests/life-browser.test.js",
-    "test:expansion": "node tests/expansion-browser.test.js"
+    "test:expansion": "node tests/expansion-browser.test.js",
+    "test:district": "node tests/district-browser.test.js"
   }
 }

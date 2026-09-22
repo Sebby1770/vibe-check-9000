@@ -35,7 +35,7 @@ function geo() {
     GEO.lapel = new THREE.BoxGeometry(0.09, 0.24, 0.02);
     GEO.scarf = new THREE.BoxGeometry(0.1, 0.32, 0.06);
     GEO.umbShaft = new THREE.CylinderGeometry(0.012, 0.012, 0.92, 6);
-    GEO.umbCanopy = new THREE.ConeGeometry(0.36, 0.16, 10, 1, true);
+    GEO.umbCanopy = new THREE.ConeGeometry(0.54, 0.22, 12, 1, true);
     GEO.hatBand = new THREE.TorusGeometry(0.105, 0.012, 6, 14);
     GEO.lens = new THREE.CircleGeometry(0.022, 8);
     GEO.bridge = new THREE.BoxGeometry(0.04, 0.008, 0.008);
@@ -170,7 +170,7 @@ export function createHuman(spec = {}) {
         lapelR.rotation.z = -0.18;
         spine.add(lapelL, lapelR);
     }
-    if (o.hat === "fedora" || outfitName === "lady" || outfitName === "lounge") {
+    if (spec.scarf !== false && (o.hat === "fedora" || outfitName === "lady" || outfitName === "lounge")) {
         const scarf = new THREE.Mesh(G.scarf, accentM);
         scarf.position.set(0.02, 0.42, 0.08);
         scarf.rotation.z = 0.35;
@@ -223,7 +223,7 @@ export function createHuman(spec = {}) {
     head.add(nose);
     const mouth = new THREE.Mesh(new THREE.BoxGeometry(0.05, 0.012, 0.012), mat(0x5a2030, { roughness: 0.5 }));
     mouth.position.set(0, -0.045, 0.098);
-    head.add(mouth);
+    if (spec.mouth !== false) head.add(mouth);
     if (outfitName === "clerk" || outfitName === "pharmacist" || outfitName === "salesman") {
         const glassM = mat(0x1a1410, { roughness: 0.25, metalness: 0.6 });
         for (const s of [-1, 1]) {
@@ -383,13 +383,15 @@ export function createHuman(spec = {}) {
             G.umbCanopy,
             mat(spec.umbrellaColor || o.accent || 0x1a2438, { roughness: 0.55, side: THREE.DoubleSide }),
         );
-        canopy.position.y = 0.48;
+        shaft.position.y = 0.36;
+        canopy.position.y = 0.86;
         const umb = new THREE.Group();
         umb.add(shaft, canopy);
-        umb.position.set(0.02, 0.12, 0);
-        umb.rotation.set(0.15, 0, 0.25);
+        umb.position.set(0, 0, 0);
+        const handle = new THREE.Mesh(new THREE.TorusGeometry(0.045,0.012,6,10,Math.PI), mat(0x725038));
+        handle.position.set(0.045,-0.1,0);handle.rotation.z=Math.PI;umb.add(handle);
         lHand.add(umb);
-        root.userData.umbrella = true;
+        root.userData.umbrella = umb;
     }
 
     if (spec.name && spec.color) {
@@ -402,6 +404,7 @@ export function createHuman(spec = {}) {
     root.userData.phase = Math.random() * Math.PI * 2;
     root.userData.mode = spec.anim || "idle";
     root.userData.kind = "human";
+    if (spec.umbrella) animateHuman(root,0,{mode:root.userData.mode});
     return root;
 }
 
@@ -537,6 +540,28 @@ export function animateHuman(obj, t, ctx = {}) {
         j.rUpper.rotation.set(-0.58, 0, -0.1);
         j.lFore.rotation.set(-0.72, 0, 0);
         j.rFore.rotation.set(-0.68, 0, 0);
+    } else if (mode === "sax") {
+        j.hips.position.y = 0.95 + Math.sin(t * 1.4 + ph) * 0.006;
+        j.hips.rotation.set(0,0,0);j.spine.rotation.set(0,0,0);j.head.rotation.set(0,0,0);
+        if (!obj.userData.saxPose) {
+            // Two-bone reach: fingers rest on the key stack, with elbows bent out.
+            const pose=(upper,target,side)=>{
+                const shoulder=upper.parent.position,delta=target.clone().sub(shoulder),distance=delta.length();
+                const direction=delta.clone().normalize(),bend=new THREE.Vector3(side,-.4,0);
+                bend.addScaledVector(direction,-bend.dot(direction)).normalize();
+                const along=(.28**2-.26**2+distance**2)/(2*distance);
+                const elbow=shoulder.clone().addScaledVector(direction,along).addScaledVector(bend,Math.sqrt(Math.max(0,.28**2-along**2)));
+                const down=new THREE.Vector3(0,-1,0);
+                const arm=new THREE.Quaternion().setFromUnitVectors(down,elbow.clone().sub(shoulder).normalize());
+                const fore=new THREE.Quaternion().setFromUnitVectors(down,target.clone().sub(elbow).normalize());
+                return [arm,arm.clone().invert().multiply(fore)];
+            };
+            obj.userData.saxPose=[pose(j.lUpper,new THREE.Vector3(-.055,.27,.44),-1),pose(j.rUpper,new THREE.Vector3(.005,.15,.42),1)];
+        }
+        j.lUpper.quaternion.copy(obj.userData.saxPose[0][0]);j.lFore.quaternion.copy(obj.userData.saxPose[0][1]);
+        j.rUpper.quaternion.copy(obj.userData.saxPose[1][0]);j.rFore.quaternion.copy(obj.userData.saxPose[1][1]);
+        j.lThigh.rotation.set(0,0,.03);j.rThigh.rotation.set(0,0,-.03);
+        j.lShin.rotation.set(.03,0,0);j.rShin.rotation.set(.03,0,0);
     } else if (mode === "lean") {
         const breath = Math.sin(t * 1.25 + ph) * 0.008;
         j.hips.position.y = 0.95 + breath;
@@ -574,8 +599,11 @@ export function animateHuman(obj, t, ctx = {}) {
         }
     }
     if (obj.userData.umbrella && mode !== "sit") {
-        j.lUpper.rotation.set(-2.05, 0.12, 0.42);
-        j.lFore.rotation.set(-0.28, 0, 0.08);
+        j.lUpper.rotation.set(-0.32, 0, 0.1);
+        j.lFore.rotation.set(-1.22, 0, 0);
+        // Counter the arm hierarchy: the shaft passes through the grip and stays upright.
+        obj.userData.umbrella.quaternion.copy(j.hips.quaternion).multiply(j.spine.quaternion)
+            .multiply(j.lUpper.quaternion).multiply(j.lFore.quaternion).multiply(j.lHand.quaternion).invert();
     }
 }
 

@@ -4,6 +4,24 @@ All notable changes to VIBE CHECK 9000™ are documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
+## [25.0.0] - 2026-09-23
+
+### East side, proper instruments and a new soundtrack
+
+- Extend 47th Street into East Avenue and 48th Street, with twelve additional buildings, signed storefronts, crossings, streetlamps and pedestrians. Add Mercer Pocket Garden and Hawthorne Park, with fountains, trees, pergolas and four usable benches. Mark all four new destinations on the walking map.
+- Replace the Corner Set's detached horn shapes with a connected saxophone, bell, mouthpiece, keys and a fitted playing pose; remove the red scarf from the musician's face.
+- Anchor umbrellas at the hand, lift canopies above the head and compensate for arm movement to keep the shaft upright.
+- Replace the sparse noise-heavy score with an original electric-piano jazz-house arrangement: four changing harmonies, bass, melodic fills and swung drums. Give the street and parks a separate 96 BPM jazz quartet; remove looping shop hiss and soften rain and subway rumble.
+
+
+### Shops, work and a place of your own
+
+- Complete the Life on 47th progression: priced shop catalogs, a permanent wallet, eight repeatable jobs with raises, three purchasable Astoria apartments, seven shop furnishings, and four nightclub lighting scenes.
+- Give every homeware its own illustrated product card. Keep the current order slip above the illustration during paid shifts, with compact layouts for short screens.
+- Finish apartment interiors with ceilings, trim, curtains and framed skyline views. Purchased doors and installed furnishings reflect saved ownership.
+- Make workplace jobs available from Life while at the shop or club. Opening Life before entering the night returns safely to the welcome screen.
+- Keep the wallet and notebook controls accessible on narrow screens, and document prices, pay, ownership and daily save behavior.
+
 ## [24.2.0] - 2026-09-16
 
 The windows have rooms in them. The Checkers have opinions.

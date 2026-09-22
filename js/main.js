@@ -1,5 +1,5 @@
 import { createLifeUI } from './life-ui.js';
-import { credit, startShift, submitShift, buyHome, buyFurnishing, updateLife, money, HOMES } from './life.js';
+import { credit, startShift, submitShift, buyHome, buyFurnishing, updateLife, money, JOBS } from './life.js';
 import { LIFE_PROPS } from './life-world.js';
 import { createExpansionUI } from "./expansion-ui.js";
 import { finishCounter, followSignal, takeSnack, finishDuet, addPhoto, removePhoto, SIGNAL_SET, STREET_PLACES } from "./expansion.js";
@@ -7,7 +7,7 @@ import { STREET_PROPS } from "./street-life.js";
 import { framePhoto, drawPhotoPostcard } from "./postcards.js";
 import { downloadCard } from "./share.js";
 import { VRButton } from "three/addons/webxr/VRButton.js";
-import { Vector3 } from "three";
+import { Vector3, Quaternion } from "three";
 import { createWorld } from "./world.js";
 import { createAudio } from "./audio.js";
 import { createControls } from "./controls.js";
@@ -392,16 +392,17 @@ async function boot() {
 
     bindMobile(controls, hud);
 
-    function atWork(id){return !!id&&getZone(world.camera.position.x,world.camera.position.z,controls.floorY)===id;}
+    function atWork(id){return hud.run.entered&&!!id&&getZone(world.camera.position.x,world.camera.position.z,controls.floorY)===id;}
     function applyLife(result){
         if(result.ok){commerce={...commerce,life:result.state};persistCommerce();audio.playShopSound();}
         return result;
     }
     function openLife(page='wallet',context={}){
         shopUI?.close();activityUI?.close();stopPreview();hud.run.talkNpc=null;hud.setPhase('activity');
-        lifeUI.open(commerce.life,page,context);
+        const zone=getZone(world.camera.position.x,world.camera.position.z,controls.floorY);
+        lifeUI.open(commerce.life,page,{job:hud.run.entered&&JOBS.some(j=>j.id===zone)?zone:undefined,...context});
     }
-    function resumeStreet(){hud.setPhase("explore");if(!isTouch())controls?.lock();}
+    function resumeStreet(){hud.setPhase(hud.run.entered?"explore":"boot");if(hud.run.entered&&!isTouch())controls?.lock();}
     function applyExpansion(result){
         if(result.state){commerce={...commerce,expansion:result.state};persistCommerce();note(result.events||{});}
         return result;
@@ -504,7 +505,7 @@ async function boot() {
         ...STREET_PROPS,
         ...NPCS.map(n=>({...n,type:"npc",ref:n,aimY:n.kind==="cat"?.4:1.5,reach:3.1,prompt:`[E] TALK TO ${n.name}`})),
         ...PROPS.map(p=>({...p,type:"prop",aimY:1.05,reach:p.r||2.4})),
-        ...SIT_SPOTS.map(s=>({...s,type:"seat",ref:s,aimY:.62,reach:2.15})),
+        ...[...SIT_SPOTS,...world.district.seats].map(s=>({...s,type:"seat",ref:s,aimY:.62,reach:2.15})),
         {id:"cube",type:"cube",x:world.cube.position.x,z:world.cube.position.z,y:0,aimY:.5,reach:1.8,prompt:"[E] TOUCH THE CUBE"},
     ];
     function interactionTarget() {
@@ -686,6 +687,13 @@ async function boot() {
             advance(seconds){clock.tick(seconds);},
             traffic(){return world.city.traffic.map((c)=>({x:c.position.x,z:c.position.z,dir:c.userData.moving}));},
             airborne(){return !!controls.airborne;},
+            actors(){return [...world.city.peds,...world.district.peds,world.streetLife.musician].map(person=>{
+                const u=person.userData.umbrella,j=person.userData.joints;
+                person.updateWorldMatrix(true,true);
+                return {position:person.getWorldPosition(new Vector3()).toArray(),umbrella:!!u,
+                    gripError:u?u.getWorldPosition(new Vector3()).distanceTo(j.lHand.getWorldPosition(new Vector3())):null,
+                    upright:u?new Vector3(0,1,0).applyQuaternion(u.getWorldQuaternion(new Quaternion())).y:null};
+            });},
             snapshot(){return {homes:Object.fromEntries([...world.lifeWorld.doors].map(([id,door])=>[id,{locked:door.visible,furnishings:[...world.lifeWorld.decor.get(id)].filter(([,g])=>g.visible).map(([key])=>key)}])),commerce,progress,phase:hud.phase,night:clock.phase,zone:hud.run.zone,sitting:controls.sitting,airborne:!!controls.airborne,energy,filmVersion:world.city.film.material.map.version,audio:{preview:audio.previewing,muted:audio.muted,usingDeck:audio.usingDeck,bpm:audio.bpm},position:{x:world.camera.position.x,y:world.camera.position.y,z:world.camera.position.z},target:interactionTarget()?.id,set:activeSet,render:world.renderer.info.render,memory:world.renderer.info.memory};},
         };
     }

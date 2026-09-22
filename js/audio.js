@@ -1,15 +1,7 @@
-/* Club techno + lounge jazz + street rain. No sample files. */
+import { grooveStep, swungEighthDuration, playPiano, musicMix } from './music.js';
+/* Original jazz-house in the club, a swung electric-piano quartet outside. */
 
 const A_MIN_BASS = [55.0, 55.0, 65.41, 52.0, 43.65, 43.65, 49.0, 41.2];
-const STAB_FREQS = [220.0, 261.63, 329.63, 392.0];
-const WALK_BASS = [65.41, 82.41, 87.31, 82.41, 73.42, 82.41, 65.41, 98.0];
-const JAZZ_CHORDS = [
-    [261.63, 311.13, 392.0],
-    [220.0, 261.63, 329.63],
-    [174.61, 220.0, 261.63],
-    [196.0, 246.94, 293.66],
-];
-
 function makeNoiseBuffer(ctx, seconds = 1) {
     const n = Math.floor(ctx.sampleRate * seconds);
     const buf = ctx.createBuffer(1, n, ctx.sampleRate);
@@ -49,6 +41,7 @@ export function createAudio() {
     let timer = 0;
     let nextNote = 0;
     let step = 0;
+    let nextJazzNote = 0, jazzStep = 0;
     let started = false;
     let muted = false;
     let reduced = false;
@@ -65,14 +58,13 @@ export function createAudio() {
     let rumbleGain = null;
     let zone = "club";
     let nightPhase = "doors";
-    let jazzOn = false;
     let houseName = "HOUSE SYSTEM";
     let shopGain = null, shopFilter = null, previewGain = null;
     let previewNodes = [];
     let previewing = false;
 
     const state = {
-        bpm: 128,
+        bpm: 120,
         kickFlag: false,
         bassCutoff: 280,
         stereoWidth: 0.35,
@@ -138,7 +130,7 @@ export function createAudio() {
         panner.distanceModel = "inverse";
         panner.refDistance = 10;
         panner.maxDistance = 80;
-        panner.rolloffFactor = 0.45;
+        panner.rolloffFactor = 0;
         panner.coneInnerAngle = 360;
         panner.coneOuterAngle = 360;
         if (panner.positionX) {
@@ -155,7 +147,7 @@ export function createAudio() {
         bassFilter.type = "lowpass";
         bassFilter.frequency.value = state.bassCutoff;
         bassOsc = ctx.createOscillator();
-        bassOsc.type = "sawtooth";
+        bassOsc.type = "triangle";
         bassOsc.frequency.value = 55;
         bassGain = ctx.createGain();
         bassGain.gain.value = 0;
@@ -198,8 +190,7 @@ export function createAudio() {
         rainSrc.start();
         shopGain = ctx.createGain(); shopGain.gain.value = 0; shopGain.connect(master);
         shopFilter = ctx.createBiquadFilter(); shopFilter.type = "bandpass"; shopFilter.frequency.value = 900;
-        const roomNoise = ctx.createBufferSource(); roomNoise.buffer = noiseBuf; roomNoise.loop = true;
-        roomNoise.connect(shopFilter); shopFilter.connect(shopGain); roomNoise.start();
+        // Room identity comes from the score; no continuous fan-like noise bed.
         previewGain = ctx.createGain(); previewGain.gain.value = 0; previewGain.connect(muteGain);
     }
 
@@ -249,7 +240,7 @@ export function createAudio() {
     function kick(t) {
         const osc = ctx.createOscillator();
         osc.type = "sine";
-        const g = envGain(t, 1.05 * state.intensity, 0.18);
+        const g = envGain(t, 0.55 * state.intensity, 0.18);
         osc.frequency.setValueAtTime(150, t);
         osc.frequency.exponentialRampToValueAtTime(40, t + 0.08);
         osc.connect(g);
@@ -266,7 +257,7 @@ export function createAudio() {
         const hp = ctx.createBiquadFilter();
         hp.type = "highpass";
         hp.frequency.value = open ? 6000 : 9000;
-        const g = envGain(t, (open ? 0.12 : 0.07) * state.intensity, open ? 0.12 : 0.045);
+        const g = envGain(t, (open ? 0.045 : 0.025) * state.intensity, open ? 0.12 : 0.045);
         src.connect(hp);
         hp.connect(g);
         g.connect(clubGain);
@@ -291,30 +282,12 @@ export function createAudio() {
         bp.type = "bandpass";
         bp.frequency.value = 1800;
         bp.Q.value = 0.9;
-        const g = envGain(t, 0.22 * state.intensity, 0.09);
+        const g = envGain(t, 0.1 * state.intensity, 0.09);
         src.connect(bp);
         bp.connect(g);
         g.connect(clubGain);
         src.start(t);
         src.stop(t + 0.12);
-    }
-
-    function stab(t) {
-        const g = envGain(t, 0.09 * state.intensity, 0.22);
-        for (const f of STAB_FREQS) {
-            const osc = ctx.createOscillator();
-            osc.type = "square";
-            osc.frequency.value = f;
-            const lp = ctx.createBiquadFilter();
-            lp.type = "lowpass";
-            lp.frequency.value = 1400;
-            osc.connect(lp);
-            lp.connect(g);
-            osc.start(t);
-            osc.stop(t + 0.24);
-            osc.addEventListener("ended", () => { osc.disconnect(); lp.disconnect(); });
-        }
-        g.connect(clubGain);
     }
 
     function jazzWalk(t, freq) {
@@ -328,30 +301,13 @@ export function createAudio() {
         osc.stop(t + 0.3);
     }
 
-    function jazzChord(t, freqs) {
-        const g = envGain(t, 0.05, 1.4);
-        for (const f of freqs) {
-            const osc = ctx.createOscillator();
-            osc.type = "triangle";
-            osc.frequency.value = f;
-            const lp = ctx.createBiquadFilter();
-            lp.type = "lowpass";
-            lp.frequency.value = 1200;
-            osc.connect(lp);
-            lp.connect(g);
-            osc.start(t);
-            osc.stop(t + 1.5);
-        }
-        g.connect(jazzGain);
-    }
-
     function brush(t) {
         const src = ctx.createBufferSource();
         src.buffer = noiseBuf;
         const bp = ctx.createBiquadFilter();
         bp.type = "bandpass";
         bp.frequency.value = 2400;
-        const g = envGain(t, 0.08, 0.12);
+        const g = envGain(t, 0.025, 0.065);
         src.connect(bp);
         bp.connect(g);
         g.connect(jazzGain);
@@ -365,7 +321,7 @@ export function createAudio() {
         const hp = ctx.createBiquadFilter();
         hp.type = "highpass";
         hp.frequency.value = 7000;
-        const g = envGain(t, 0.04, 0.08);
+        const g = envGain(t, 0.018, 0.045);
         src.connect(hp);
         hp.connect(g);
         g.connect(jazzGain);
@@ -375,32 +331,30 @@ export function createAudio() {
 
     function schedule() {
         if (!ctx || !started) return;
-        const beat = 60 / state.bpm;
-        const stepDur = beat / 2;
-        const jazzBeat = 60 / state.jazzBpm;
         const horizon = ctx.currentTime + 0.18;
+        // Resume cleanly after a backgrounded tab without scheduling stale notes.
+        nextNote = Math.max(nextNote,ctx.currentTime);
+        nextJazzNote = Math.max(nextJazzNote,ctx.currentTime);
         while (nextNote < horizon) {
-            const t = nextNote;
-            const s = step % 8;
-            const barStep = step % 32;
+            const t=nextNote, note=grooveStep(step,state.tone,state.rhythm);
             if (!usingDeck) {
-                const peak = nightPhase === "peak";
-                const late = nightPhase === "lastcall" || nightPhase === "close";
-                if (s % 2 === 0 && (!late || s === 0 || s === 4)) kick(t);
-                if (s % 2 === 1 || (state.rhythm === 2 && s === 4)) hat(t, false);
-                if (s === 3 || s === 7) hat(t, true);
-                if (s === 2 || s === 6 || (peak && s === 0)) clap(t);
-                bassNote(t, A_MIN_BASS[(s + state.rhythm * 2) % 8] * 2 ** (state.tone / 12));
-                if (barStep === 0 || (peak && s === 0)) stab(t);
-                if (peak && s === 4) hat(t, true);
+                if(note.kick)kick(t);
+                if(note.clap)clap(t);
+                if(note.hat)hat(t,step%8===7);
+                if(note.bass)bassNote(t,note.bass);
+                if(note.chord)playPiano(ctx,clubGain,t,note.chord,.075*note.accent,.65);
+                if(note.melody)playPiano(ctx,clubGain,t,[note.melody],.055,.25);
             }
-            const js = step % 8;
-            if (js % 2 === 0) jazzWalk(t, WALK_BASS[js]);
-            if (js === 2 || js === 6) brush(t);
-            ride(t);
-            if (step % 16 === 0) jazzChord(t, JAZZ_CHORDS[(step / 16) % 4]);
-            nextNote += stepDur;
-            step += 1;
+            nextNote+=swungEighthDuration(step,state.bpm,.54);step++;
+        }
+        while (nextJazzNote < horizon) {
+            const t=nextJazzNote,note=grooveStep(jazzStep),s=jazzStep%8;
+            if(s%2===0)jazzWalk(t,grooveStep(jazzStep+(s===4?1:0)).bass||65.41);
+            if(s===2||s===6)brush(t);
+            if(s%2===0||s===3||s===7)ride(t);
+            if(note.chord)playPiano(ctx,jazzGain,t,note.chord,.07*note.accent,1.1);
+            if(note.melody)playPiano(ctx,jazzGain,t,[note.melody],.075,.42);
+            nextJazzNote+=swungEighthDuration(jazzStep,state.jazzBpm,.62);jazzStep++;
         }
         timer = window.setTimeout(schedule, 25);
     }
@@ -437,7 +391,7 @@ export function createAudio() {
 
     return {
         get previewing() { return previewing; },
-        get bpm() { return zone === "lounge" ? state.jazzBpm : state.bpm; },
+        get bpm() { return musicMix(zone)[1] > 0 ? state.jazzBpm : state.bpm; },
         get context() { return ctx; },
         get started() { return started; },
         get muted() { return muted; },
@@ -459,6 +413,7 @@ export function createAudio() {
             started = true;
             nextNote = ctx.currentTime + 0.05;
             step = 0;
+            nextJazzNote=nextNote; jazzStep=0;
             schedule();
         },
 
@@ -482,22 +437,7 @@ export function createAudio() {
             zone = z || "club";
             if (!ctx) return;
             const t = ctx.currentTime;
-            const mix = {
-                club: [1, 0.05, 0],
-                lounge: [0.18, 1, 0.02],
-                diner: [0.08, 0.22, 0.08],
-                hotel: [0.06, 0.18, 0.06],
-                records: [0.22, 0.35, 0.08],
-                pharmacy: [0.05, 0.12, 0.12],
-                florist: [0.04, 0.16, 0.1],
-                rivoli: [0.06, 0.28, 0.06],
-                liquor: [0.08, 0.2, 0.1],
-                barber: [0.05, 0.14, 0.08],
-                street: [0.1, 0.05, 0.45],
-                alley: [0.28, 0.04, 0.35],
-                subway: [0.04, 0.04, 0.12],
-                suite: [0.05, 0.16, 0.05],
-            }[zone] || [1, 0, 0];
+            const mix = musicMix(zone);
             const night = {
                 doors: [1, 1, 0.85],
                 heat: [1, 1, 1],
@@ -509,9 +449,9 @@ export function createAudio() {
             clubGain.gain.setTargetAtTime(mix[0] * night[0] * duck, t, 0.4);
             jazzGain.gain.setTargetAtTime(mix[1] * night[1] * duck, t, 0.4);
             rainGain.gain.setTargetAtTime(mix[2] * night[2], t, 0.45);
-            if (rumbleGain) rumbleGain.gain.setTargetAtTime(zone === "subway" ? 0.22 : 0, t, 0.35);
+            if (rumbleGain) rumbleGain.gain.setTargetAtTime(zone === "subway" ? 0.025 : 0, t, 0.35);
             const room = { records:[.012,1800], pharmacy:[.015,3100], florist:[.006,650], rivoli:[.016,340], liquor:[.005,800], barber:[.012,1600], diner:[.014,2400] }[zone];
-            shopGain?.gain.setTargetAtTime(room ? room[0] : 0,t,.4);
+            shopGain?.gain.setTargetAtTime(0,t,.4);
             if (room) shopFilter?.frequency.setTargetAtTime(room[1],t,.4);
         },
 
@@ -560,7 +500,8 @@ export function createAudio() {
         get trackName() {
             if (usingDeck && trackIndex >= 0 && playlist[trackIndex]) return playlist[trackIndex].name;
             if (zone === "lounge") return "VELMA'S TRIO";
-            if (zone === "street" || zone === "alley") return "RAIN ON 47TH";
+            if (["street","mercer","hawthorne","eastavenue","48th"].includes(zone)) return "SIDEWALK SWING · JAZZ QUARTET";
+            if (zone === "alley") return "AFTER HOURS · JAZZ HOUSE";
             if (zone === "diner") return "COUNTER RADIO";
             if (zone === "records") return "LISTENING BOOTH";
             if (zone === "pharmacy") return "SODA FOUNTAIN";
@@ -571,7 +512,7 @@ export function createAudio() {
             if (zone === "hotel") return "LOBBY CARPET";
             if (zone === "suite") return "4B CARPET";
             if (zone === "subway") return "THE 12:04";
-            return houseName;
+            return `${houseName} · JAZZ HOUSE`;
         },
         setHouseSet(set) {
             if (!set) return;
@@ -619,7 +560,7 @@ export function createAudio() {
             const set=item.set||{}, duration=8, beat=60/(set.bpm||128), start=ctx.currentTime+.02;
             for(let n=0;n*beat/2<duration;n++) {
                 const t=start+n*beat/2, freq=A_MIN_BASS[(n+(set.rhythm||0)*2)%8]*2**((set.tone||0)/12);
-                const osc=ctx.createOscillator(), gain=ctx.createGain(); osc.type=(set.rhythm===2?'sawtooth':'triangle');
+                const osc=ctx.createOscillator(), gain=ctx.createGain(); osc.type='triangle';
                 osc.frequency.value=freq*(n%2?4:2); gain.gain.setValueAtTime(0,t); gain.gain.linearRampToValueAtTime(.22,t+.012); gain.gain.exponentialRampToValueAtTime(.001,t+beat*.45);
                 osc.connect(gain);gain.connect(previewGain);osc.start(t);osc.stop(t+beat*.48);previewNodes.push(osc);
                 osc.onended=()=>{osc.disconnect();gain.disconnect();};

@@ -1,3 +1,4 @@
+import { DISTRICT_PLACES } from './district-layout.js';
 import { normalizeLife, PRICES, spend, LIFE_PLACES, HOMES } from './life.js';
 import { normalizeExpansion, STREET_PLACES, MYSTERY } from "./expansion.js";
 /* The things you carry, and the people you carry them to. Pure, saved per night. */
@@ -279,6 +280,7 @@ export const SHOPS_CATALOG = [
 export const findItem = (id) =>
   SHOPS_CATALOG.flatMap((s) => s.items).find((i) => i.id === id) || null;
 export const DESTINATIONS = [
+  ...DISTRICT_PLACES,
   ...LIFE_PLACES,
   ...HOMES.map(h=>({id:`home-${h.id}`,name:`${h.number} · ${h.name}`,x:h.doorX+1,z:h.doorZ,y:4.4})),
   ...STREET_PLACES,

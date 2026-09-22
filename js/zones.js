@@ -1,3 +1,4 @@
+import { DISTRICT_BOUNDS, districtColliders, districtZone } from './district-layout.js';
 import { lifeColliders } from './life.js';
 import { streetColliders } from "./expansion.js";
 import { posterCollider } from "./ads.js";
@@ -30,7 +31,7 @@ export const HOTEL_STAIRS = {
     zBottom: 9.55, zTop: 1.35,
 };
 
-export const BOUNDS = { minX: -52.5, maxX: 52.5, minZ: -29.4, maxZ: 40.15 };
+export const BOUNDS = { minX: -52.5, maxX: DISTRICT_BOUNDS.maxX, minZ: -29.4, maxZ: DISTRICT_BOUNDS.maxZ };
 
 export const SHOPS = [
     { id: "records", label: "REX'S RECORDS", minX: -38.2, maxX: -28.2, minZ: 32.05, maxZ: 40.0, doorX: -33.2 },
@@ -132,6 +133,8 @@ export function getZone(x, z, y = 0) {
         if (y > SECOND_Y * 0.42 && !inAtrium(x, z)) return "lounge";
         return "club";
     }
+    const eastZone = districtZone(x,z);
+    if (eastZone) return eastZone;
     if (z < CLUB.minZ) return "alley";
     return "street";
 }
@@ -145,6 +148,10 @@ export function zoneLabel(zone) {
         case "club": return "THE FLOOR";
         case "lounge": return "THE LOUNGE";
         case "alley": return "THE ALLEY";
+        case "mercer": return "MERCER GARDEN";
+        case "hawthorne": return "HAWTHORNE PARK";
+        case "eastavenue": return "EAST AVENUE";
+        case "48th": return "48TH STREET";
         case "street": return "47TH STREET";
         case "diner": return "DOTTIE'S DINER";
         case "hotel": return "HOTEL ASTORIA";
@@ -336,7 +343,7 @@ export function buildColliders() {
     wall(boxes, 30.55, 33.45, -9.45, -7.55, 4.2, 5.55);
     wall(boxes, 18.15, 24.15, 6.35, 8.25, 4.2, 5.45);
 
-    boxes.push(...streetColliders(), ...lifeColliders(), posterCollider());
+    boxes.push(...districtColliders(), ...streetColliders(), ...lifeColliders(), posterCollider());
     wall(boxes,28.15,29.65,8.5,9.1,-1,1.3).sightMaxY=1.1;
     wall(boxes,8.95,10.85,-9.5,-8.7,-1,1.3).sightMaxY=1.1;
     return { bounds: BOUNDS, boxes, getFloorY };

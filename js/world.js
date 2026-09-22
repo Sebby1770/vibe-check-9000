@@ -1,3 +1,4 @@
+import { buildDistrict } from './district.js';
 import { buildLifeWorld } from './life-world.js';
 import { CLUB_SCENES } from './life.js';
 import { buildStreetLife } from "./street-life.js";
@@ -67,6 +68,7 @@ export function createWorld(canvas, adConfig) {
 
     const club = buildClub(scene, env);
     const city = buildCity(scene, adConfig);
+    const district = buildDistrict(scene);
     const colliders = buildColliders();
     const streetLife = buildStreetLife(scene);
     const lifeWorld = buildLifeWorld(scene,colliders);
@@ -112,6 +114,7 @@ export function createWorld(canvas, adConfig) {
         club.dancers.forEach((d, i) => { d.visible = crowdOn && !close && (!thin || i % 2 === 1); });
         (club.barCrowd || []).forEach((p, i) => { p.visible = crowdOn && (!close || i % 2 === 0); });
         (club.loungeCrowd || []).forEach((p, i) => { p.visible = crowdOn && (!close || i % 3 !== 0); });
+        district.peds.forEach((p,i)=>{p.visible=crowdOn&&(!close||i%2===0);});
         (city.peds || []).forEach((p, i) => { p.visible = crowdOn && (!close || i % 2 === 0); });
         (city.shopCrowd || []).forEach((p, i) => { p.visible = crowdOn && (!close || i % 2 === 0); });
         (city.subwayCrowd || []).forEach((p, i) => { p.visible = crowdOn && (!close || i % 2 === 0); });
@@ -162,6 +165,7 @@ export function createWorld(canvas, adConfig) {
         city,
         club,
         streetLife,
+        district,
         lifeWorld,
 
         setShopState(state) { activities.setState(state); city.setShopState?.(state); streetLife.setState(state.expansion); lifeWorld.setState(state.life); clubScene=CLUB_SCENES.find(s=>s.id===state.life.scene)||CLUB_SCENES[0];sceneColor.set(clubScene.color);sceneAccent.set(clubScene.accent); },
@@ -220,6 +224,7 @@ export function createWorld(canvas, adConfig) {
             const outside = isOutside(p.x, p.z, p.y);
 
             streetLife.update(t, reduced, p);
+            district.update(t,reduced,p);
             const look = phaseLook(nightPhase);
             dusk.sky.visible = true;
             dusk.sun.visible = outside && look.sunOp > 0.05;
