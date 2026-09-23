@@ -114,7 +114,7 @@ export function touchVisit(progress, today) {
         streak,
         visits: (progress.visits || 0) + 1,
         dareDone: false,
-        night: {...emptyNight(), commerce: normalizeCommerce({life: progress.night?.commerce?.life})},
+        night: {...emptyNight(), commerce: normalizeCommerce({life: progress.night?.commerce?.life,neighborhood:progress.night?.commerce?.neighborhood})},
     };
 }
 

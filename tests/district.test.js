@@ -10,7 +10,15 @@ for(const [a,b] of [[[50,23],[170,23]],[[109,-27],[109,74]],[[96,56],[173,56]],[
   const count=Math.ceil(Math.hypot(b[0]-a[0],b[1]-a[1])*4);
   for(let i=0;i<=count;i++){const x=a[0]+(b[0]-a[0])*i/count,z=a[1]+(b[1]-a[1])*i/count;assert.ok(clear(x,z),`route blocked at ${x},${z}`);assert.equal(getFloorY(x,z,0),0);}
 }
-for(const b of DISTRICT_BUILDINGS)assert.ok(!clear(b.x,b.z),`${b.name} has solid walls`);
+for(const b of DISTRICT_BUILDINGS){
+  if(!b.id)assert.ok(!clear(b.x,b.z),`${b.name} has solid walls`);
+  else {
+    assert.ok(clear(b.x,b.z-b.d/2),`${b.name} has a walkable front door`);
+    assert.ok(!clear(b.x+b.w/2,b.z),`${b.name} has solid side walls`);
+    assert.ok(!clear(b.x,b.z+b.d/2),`${b.name} has a solid back wall`);
+    assert.equal(getZone(b.x,b.z-b.d/2+1),b.id);
+  }
+}
 for(const p of DISTRICT_PARKS)assert.equal(getZone(p.x,p.z+6),p.id);
 for(const p of DISTRICT_PLACES){assert.ok(clear(p.x,p.z));assert.ok(DESTINATIONS.some(d=>d.id===p.id));}
 for(const s of DISTRICT_SEATS)assert.ok(clear(s.x,s.z-1.2),`${s.id} can be approached`);

@@ -502,6 +502,9 @@ export function createAudio() {
             if (zone === "lounge") return "VELMA'S TRIO";
             if (["street","mercer","hawthorne","eastavenue","48th"].includes(zone)) return "SIDEWALK SWING · JAZZ QUARTET";
             if (zone === "alley") return "AFTER HOURS · JAZZ HOUSE";
+            if (zone === "books") return "PAPER & PIANO";
+            if (zone === "bakery") return "SUNRISE SWING";
+            if (zone === "arcade") return "EASTERN ELECTRIC · HOUSE";
             if (zone === "diner") return "COUNTER RADIO";
             if (zone === "records") return "LISTENING BOOTH";
             if (zone === "pharmacy") return "SODA FOUNTAIN";

@@ -1,3 +1,4 @@
+import { resolveMovement } from './collision.js';
 import { PointerLockControls } from "three/addons/controls/PointerLockControls.js";
 import { Euler, Vector3 } from "three";
 
@@ -85,28 +86,6 @@ export function createControls(camera, domElement, colliders) {
     window.addEventListener("pointermove", onPointerMove);
     window.addEventListener("pointerup", onPointerUp);
 
-    function resolve(pos) {
-        const b = colliders.bounds;
-        pos.x = Math.max(b.minX, Math.min(b.maxX, pos.x));
-        pos.z = Math.max(b.minZ, Math.min(b.maxZ, pos.z));
-        const py = pos.y;
-        for (const box of colliders.boxes) {
-            const minY = box.minY ?? -99;
-            const maxY = box.maxY ?? 99;
-            if (py < minY || py > maxY) continue;
-            if (pos.x > box.minX && pos.x < box.maxX && pos.z > box.minZ && pos.z < box.maxZ) {
-                const left = pos.x - box.minX;
-                const right = box.maxX - pos.x;
-                const near = pos.z - box.minZ;
-                const far = box.maxZ - pos.z;
-                const m = Math.min(left, right, near, far);
-                if (m === left) pos.x = box.minX;
-                else if (m === right) pos.x = box.maxX;
-                else if (m === near) pos.z = box.minZ;
-                else pos.z = box.maxZ;
-            }
-        }
-    }
 
     return {
         plc,
@@ -198,6 +177,7 @@ export function createControls(camera, domElement, colliders) {
         },
 
         update(dt, bpm, xrPresenting) {
+            const previous={x:camera.position.x,z:camera.position.z};
             if (cool > 0) cool -= dt;
             if (air) {
                 air.t += dt;
@@ -207,7 +187,7 @@ export function createControls(camera, domElement, colliders) {
                 camera.position.y += air.vy * dt;
                 air.vx *= 0.985;
                 air.vz *= 0.985;
-                resolve(camera.position);
+                resolveMovement(camera.position,previous,colliders);
                 floorY = colliders.getFloorY(camera.position.x, camera.position.z, floorY);
                 const ground = floorY + EYE;
                 _euler.setFromQuaternion(camera.quaternion);
@@ -270,7 +250,7 @@ export function createControls(camera, domElement, colliders) {
                 plc.moveForward(Math.sin(swayT * 0.38) * 0.28 * dt);
             }
 
-            resolve(camera.position);
+            resolveMovement(camera.position,previous,colliders);
             floorY = colliders.getFloorY(camera.position.x, camera.position.z, floorY);
 
             const moving = mag > 0.04 || keys.w || keys.a || keys.s || keys.d;
