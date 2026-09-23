@@ -685,6 +685,8 @@ async function boot() {
         window.__vibeInspect = {
             place(x,z,lookX,lookZ,y=0) {controls.sit({x,z,y,eye:1.7,lookX,lookZ});controls.stand();},
             advance(seconds){clock.tick(seconds);},
+            look(x,y,z){world.camera.lookAt(x,y,z);},
+            get world(){return world;},
             traffic(){return world.city.traffic.map((c)=>({x:c.position.x,z:c.position.z,dir:c.userData.moving}));},
             airborne(){return !!controls.airborne;},
             actors(){return [...world.city.peds,...world.district.peds,world.streetLife.musician].map(person=>{

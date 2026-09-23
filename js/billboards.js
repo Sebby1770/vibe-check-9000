@@ -66,7 +66,9 @@ export function paintPoster(creative, art, w = 2048, h = 1024) {
   const badge = creative.kind === "sponsor" ? "PAID PLACEMENT" : creative.kind === "available" ? "TO LET · MIDTOWN POSTER CO." : "47TH STREET";
   g.fillText(badge, w / 2, h * 0.945);
   g.globalAlpha = 1;
-  return texFromCanvas(c);
+  const tex = texFromCanvas(c);
+  tex.name = `board:${creative.brand || ""}`;
+  return tex;
 }
 
 function loadImage(src) {

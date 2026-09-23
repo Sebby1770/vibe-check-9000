@@ -38,7 +38,9 @@ export function printedCard(
       width - 36,
     );
   });
-  return texture(c);
+  const tex = texture(c);
+  tex.name = rows.join(" / ");
+  return tex;
 }
 
 export const RECORD_ART = [

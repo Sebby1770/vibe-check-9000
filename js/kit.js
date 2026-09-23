@@ -30,6 +30,7 @@ export function neonCanvas(text, color, w = 1024, h = 256, bg = "#08060a") {
     const tex = new THREE.CanvasTexture(c);
     tex.colorSpace = THREE.SRGBColorSpace;
     tex.anisotropy = 8;
+    tex.name = text;
     return tex;
 }
 
@@ -57,6 +58,7 @@ export function marqueeCanvas(line1, line2, w = 1024, h = 320) {
     g.fillText(line2, w / 2, h * 0.7);
     const tex = new THREE.CanvasTexture(c);
     tex.colorSpace = THREE.SRGBColorSpace;
+    tex.name = line1;
     return tex;
 }
 
