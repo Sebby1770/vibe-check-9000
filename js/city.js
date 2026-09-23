@@ -1,10 +1,11 @@
 import * as THREE from "three";
-import { addBox, unitBox, neonCanvas, marqueeCanvas } from "./kit.js";
+import { addBox, unitBox, neonCanvas, marqueeCanvas, verticalNeonCanvas, zipperCanvas } from "./kit.js";
 import { brickTex, darkBrickTex, asphaltTex, sidewalkTex, plasterTex, woodTex, checkerTex, gazetteTex, windowPaneTex, stoneTex } from "./textures.js";
 import { buildBillboards } from "./billboards.js";
 import { mergeAdConfig } from "./ads.js";
 import { randomPedestrian } from "./human.js";
-import { buildShops } from "./shops.js";
+import { buildShops, RIVOLI_ZIPPER } from "./shops.js";
+import { boxBatch } from "./interiors/batch.js";
 import { updateInteriors } from "./interiors/index.js";
 import { buildSubway, updateSubway } from "./under.js";
 import { SECOND_Y, HOTEL_STAIRS } from "./zones.js";
@@ -240,11 +241,19 @@ export function buildCity(scene, adConfig = mergeAdConfig()) {
         addBox(root, unitBox, glass, x, 1.7, 12.68, 2.6, 1.8, 0.08);
         addBox(root, unitBox, chrome, x, 1.7, 12.74, 2.8, 2.0, 0.04);
     }
-    const dottie = new THREE.Mesh(new THREE.PlaneGeometry(8.4, 1.5), new THREE.MeshBasicMaterial({ map: neonCanvas("DOTTIE'S", "#FF3355", 1024, 256, "#100808") }));
-    dottie.position.set(-27.6, 4.7, 12.85);
+    // Enamel sign board across the diner front, sitting on the chrome wall head: two rows of neon.
+    const signCan = new THREE.MeshStandardMaterial({ color: 0x15191c, roughness: 0.5, metalness: 0.45 });
+    const sb = boxBatch();
+    sb.box(signCan, -27.6, 4.83, 12.78, 15.6, 2.96, 0.08);
+    sb.box(chrome, -27.6, 6.34, 12.8, 15.8, 0.06, 0.12);
+    sb.box(chrome, -27.6, 3.32, 12.8, 15.8, 0.06, 0.12);
+    for (const x of [-35.44, -19.76]) sb.box(chrome, x, 4.83, 12.8, 0.08, 3.04, 0.12);
+    sb.box(neonRed, -27.6, 4.42, 12.85, 7.8, 0.035, 0.035);
+    const dottie = new THREE.Mesh(new THREE.PlaneGeometry(8.4, 1.5), new THREE.MeshBasicMaterial({ map: neonCanvas("DOTTIE'S", "#FF3355", 1024, 183, "#100808") }));
+    dottie.position.set(-27.6, 5.3, 12.832);
     root.add(dottie);
-    const dinerSub = new THREE.Mesh(new THREE.PlaneGeometry(6.2, 0.7), new THREE.MeshBasicMaterial({ map: neonCanvas("OPEN ALL NIGHT", "#66FFE0", 1024, 160, "#081010") }));
-    dinerSub.position.set(-27.6, 3.7, 12.85);
+    const dinerSub = new THREE.Mesh(new THREE.PlaneGeometry(6.2, 0.7), new THREE.MeshBasicMaterial({ map: neonCanvas("OPEN ALL NIGHT", "#66FFE0", 1024, 116, "#081010") }));
+    dinerSub.position.set(-27.6, 3.93, 12.832);
     root.add(dinerSub);
 
     // Diner interior: js/interiors/diner.js (built with the shop row)
@@ -271,13 +280,28 @@ export function buildCity(scene, adConfig = mergeAdConfig()) {
         addBox(root, unitBox, cream, 36.95, y + 0.09, z, 2.4, 0.02, 0.08);
     }
     // Lobby + 2F furnishings: js/interiors/hotel-lobby.js, hotel-upstairs.js
-    const hotelSign = new THREE.Mesh(new THREE.PlaneGeometry(2.2, 10), new THREE.MeshBasicMaterial({ map: neonCanvas("HOTEL", "#E0B25A", 256, 1024, "#120c08") }));
-    hotelSign.position.set(38.95, 8.2, 4);
-    hotelSign.rotation.y = -Math.PI / 2;
-    root.add(hotelSign);
-    const astoria = new THREE.Mesh(new THREE.PlaneGeometry(10, 1.3), new THREE.MeshBasicMaterial({ map: neonCanvas("ASTORIA", "#FFB25A", 1024, 256, "#120c08") }));
-    astoria.position.set(27.6, 10.4, 12.85);
+    // Vertical HOTEL blade projecting over the 47th St sidewalk on three steel arms, both faces lettered.
+    const hx = 36.6, hy = 8.6, hz = 14.0;
+    sb.box(signCan, hx, hy, hz, 0.2, 7.8, 2.2);
+    sb.box(chrome, hx, hy + 3.93, hz, 0.24, 0.06, 2.24);
+    sb.box(chrome, hx, hy - 3.93, hz, 0.24, 0.06, 2.24);
+    for (let y = hy - 3.7; y <= hy + 3.7; y += 0.3) sb.box(neonAmber, hx, y, hz + 1.13, 0.1, 0.08, 0.08);
+    for (const y of [hy - 3.4, hy, hy + 3.4]) {
+        sb.box(black, hx, y, 12.83, 0.1, 0.1, 0.16);
+        sb.box(black, hx, y, 12.78, 0.26, 0.26, 0.04);
+    }
+    const hotelTex = verticalNeonCanvas("HOTEL", "#E0B25A", 256, 960, "#120c08");
+    for (const side of [1, -1]) {
+        const hotelSign = new THREE.Mesh(new THREE.PlaneGeometry(2.0, 7.5), new THREE.MeshBasicMaterial({ map: hotelTex }));
+        hotelSign.position.set(hx + side * 0.112, hy, hz);
+        hotelSign.rotation.y = side * Math.PI / 2;
+        root.add(hotelSign);
+    }
+    sb.box(signCan, 27.6, 10.4, 12.8, 10.3, 1.55, 0.06);
+    const astoria = new THREE.Mesh(new THREE.PlaneGeometry(10, 1.3), new THREE.MeshBasicMaterial({ map: neonCanvas("ASTORIA", "#FFB25A", 1024, 133, "#120c08") }));
+    astoria.position.set(27.6, 10.4, 12.842);
     root.add(astoria);
+    sb.flush(root);
     addBox(root, unitBox, black, 25, 3.4, 12.78, 6.4, 0.2, 1.8);
     addBox(root, unitBox, neonAmber, 25, 3.35, 13.6, 6.6, 0.06, 0.08);
     addBox(root, unitBox, rusticated, 20.05, 1.15, 12.78, 7.1, 2.3, 0.22);
@@ -566,8 +590,9 @@ export function buildCity(scene, adConfig = mergeAdConfig()) {
     addBox(root, unitBox, wood, -11.85, 0.7, 16.1, 2.6, 1.4, 1.3);
     addBox(root, unitBox, black, -11.85, 1.5, 16.1, 2.7, 0.08, 1.4);
     const paper = new THREE.Mesh(new THREE.PlaneGeometry(0.7, 0.9), new THREE.MeshBasicMaterial({ map: gazetteTex() }));
-    paper.position.set(-11.2, 1.15, 16.78);
+    paper.position.set(-11.2, 0.95, 16.765);
     root.add(paper);
+    addBox(root, unitBox, chrome, -11.2, 1.41, 16.775, 0.74, 0.02, 0.02);
 
     // Phone booth
     addBox(root, unitBox, new THREE.MeshStandardMaterial({ color: 0x8b1e1e, metalness: 0.3, roughness: 0.45 }), 7.15, 1.2, 16.25, 0.9, 2.4, 0.9);
@@ -577,14 +602,18 @@ export function buildCity(scene, adConfig = mergeAdConfig()) {
     const under = buildSubway(root, scene, { wood, cream, black, chrome, neonAmber });
 
     const titles = ["NEON IN THE RAIN", "THE MIDNIGHT VISOR", "ALLEY CATS OF 47TH", "A PIE TO REMEMBER"];
-    const titlePlane = new THREE.Mesh(new THREE.PlaneGeometry(10, 1.1), new THREE.MeshBasicMaterial({ map: neonCanvas(titles[0], "#FFE7A8", 1024, 160, "#100808") }));
-    titlePlane.position.set(6.0, 6.55, 31.78);
+    // The news zipper on the Rivoli marquee (shops.js builds the marquee around it).
+    const Z = RIVOLI_ZIPPER;
+    const titlePlane = new THREE.Mesh(new THREE.PlaneGeometry(Z.w, Z.h), new THREE.MeshBasicMaterial({ map: zipperCanvas(titles[0]) }));
+    titlePlane.position.set(Z.x, Z.y, Z.z);
+    titlePlane.rotation.y = Math.PI;
     root.add(titlePlane);
 
     const shops = buildShops(root, scene, {
         wood, cream, black, chrome, brick, brickDark, neonRed, neonAmber, neonCyan, glass,
     });
-    for (const x of [-33.2, -21.8, -12.2, 6, 24.6, 35.8]) fireEscape(x, 31.32, 2, -1);
+    // Fire escapes hang between the shop sign bands and clear of the fascia billboards.
+    for (const x of [-27.5, -16.4, -8.3, 14.6, 30.5]) fireEscape(x, 31.32, 2, -1);
     addBox(root, unitBox, rusticated, 1.2, 3.92, 32.16, 80.4, 0.42, 0.4);
 
     // Manholes + steam
@@ -729,6 +758,7 @@ export function buildCity(scene, adConfig = mergeAdConfig()) {
         playFilm(id) { shops.film.userData.play(id); },
         setShopState(state) { if (state.film && this.currentFilm !== state.film.id) {this.currentFilm=state.film.id; shops.film.userData.play(state.film.id);} },
         barberPole: shops.pole,
+        rivoliChase: shops.chase,
         film: shops.film,
         signal,
         under,
@@ -740,7 +770,7 @@ export function buildCity(scene, adConfig = mergeAdConfig()) {
             if (old && old !== tex) old.dispose();
         },
         setRivoli(line) {
-            const tex = neonCanvas(String(line || "NOW SHOWING").slice(0, 28), "#FFE7A8", 1024, 160, "#100808");
+            const tex = zipperCanvas(String(line || "NOW SHOWING").slice(0, 44));
             const old = titlePlane.material.map;
             titlePlane.material.map = tex;
             if (old && old !== tex) old.dispose();
@@ -832,6 +862,10 @@ export function updateCity(city, dt, t, { outside, reduced, lampMul = 1, zone, p
     }
     if (city.alleyLight) city.alleyLight.intensity = 28 * Math.max(1, mul * 0.85);
     if (city.barberPole) city.barberPole.rotation.y += dt * 2.4;
+    if (city.rivoliChase) {
+        const k = reduced ? -1 : Math.floor(t * 7) % 3;
+        city.rivoliChase.forEach((m, i) => m.color.setHex(k < 0 || i === k ? 0xfff0c8 : 0x6a4a22));
+    }
     updateSubway(city.under, dt);
     updateInteriors(dt, t, { zone, reduced, outside, position, camera });
     for(const person of city.shopCrowd || []) {

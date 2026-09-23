@@ -47,7 +47,10 @@ export function buildStreetLife(scene) {
     );
     p.position.set(x, y, z);
     p.rotation.y = facing;
-    g.add(p);
+    // Each face gets its own holder so the stand or wall it is fixed to reads as its mounting, not its frame.
+    const holder = new THREE.Group();
+    holder.add(p);
+    g.add(holder);
     return p;
   }
   const cart = new THREE.Group();
@@ -67,11 +70,13 @@ export function buildStreetLife(scene) {
   }
   for (let i = 0; i < 9; i++)
     box(cart, i % 2 ? red : cream, -1.4 + i * 0.35, 2.8, 0, 0.35, 0.18, 1.5);
+  for (const x of [-1.3, 1.3]) box(cart, brass, x, 1.99, -0.44, 0.05, 1.46, 0.05);
+  box(cart, red, 0, 2.39, -0.43, 2.66, 0.68, 0.03);
   sign(
     cart,
     ["MABEL'S NIGHT CART", "CHESTNUTS · PRETZELS · COCOA"],
     0,
-    1.9,
+    2.38,
     -0.46,
     2.5,
     0.63,
@@ -118,6 +123,7 @@ export function buildStreetLife(scene) {
   root.add(stage);
   box(stage, wood, 0, 0.14, 0, 3.6, 0.28, 1.7);
   box(stage, green, 0, 1.45, -0.65, 3.7, 2.7, 0.1);
+  for (const x of [-1.9, 1.9]) box(stage, wood, x, 1.45, -0.65, 0.1, 2.9, 0.14);
   sign(
     stage,
     ["THE CORNER SET", "LISTEN. ANSWER. MAKE A LITTLE NOISE."],
@@ -177,6 +183,7 @@ export function buildStreetLife(scene) {
   box(kiosk, green, 0, 1.05, 0, 2.7, 2.1, 1.05);
   box(kiosk, cream, 0, 1.23, -0.65, 2.8, 0.12, 0.55);
   box(kiosk, wood, 0, 2.62, 0, 3.2, 0.2, 1.4);
+  box(kiosk, green, 0, 2.31, 0, 2.7, 0.42, 1.05);
   sign(
     kiosk,
     ["47TH CAMERA CLUB", "SIX FRAMES. ONE IMPOSSIBLE NIGHT."],
@@ -214,7 +221,10 @@ export function buildStreetLife(scene) {
   board.position.set(19, 0, 17.45);
   root.add(board);
   box(board, wood, 0, 1.7, 0, 2.6, 1.7, 0.16);
-  for (const x of [-1.03, 1.03]) box(board, wood, x, 1, 0, 0.1, 2, 0.1);
+  for (const x of [-1.03, 1.03]) {
+    box(board, wood, x, 1, 0, 0.1, 2, 0.1);
+    box(board, wood, x, 0.04, 0, 0.14, 0.08, 0.56);
+  }
   sign(
     board,
     ["TONIGHT ON 47TH", "COUNTERS · CAMERA · THE CORNER SET"],
@@ -248,10 +258,10 @@ export function buildStreetLife(scene) {
   sign(
     root,
     ["LOST PROPERTY", "ONE CASE. NO YEAR."],
-    30,
-    1.08,
-    9.65,
-    1.35,
+    30.2,
+    0.8,
+    9.663,
+    1.1,
     0.38,
     "#384c45",
     "#d7c7a3",
@@ -259,19 +269,7 @@ export function buildStreetLife(scene) {
   );
   box(root, black, 30, 1.27, 10.05, 0.78, 0.17, 0.44);
   box(root, brass, 30, 1.39, 10.05, 0.25, 0.07, 0.08);
-  box(root, wood, -29.2, 0.49, 36, 1.1, 0.98, 0.7);
-  sign(
-    root,
-    ["THE SILVER SLEEVE", "NO ARTIST · NO YEAR"],
-    -29.2,
-    1.44,
-    36,
-    0.63,
-    0.68,
-    "#283c42",
-    "#c3d0cf",
-    Math.PI,
-  );
+  // The Silver Sleeve fixture now lives in js/interiors/records.js (same spot, same target).
   const seals = new Map();
   const positions = [
     [-33.2, 37.51],

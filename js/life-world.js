@@ -8,7 +8,7 @@ export function buildLifeWorld(scene,colliders){
  const mat=c=>new THREE.MeshStandardMaterial({color:c,roughness:.72});
  const wood=mat('#694937'),cream=mat('#e0ceb0'),brass=mat('#c7a463'),dark=mat('#294146'),white=mat('#eadfc8'),leaf=mat('#537659');
  const box=(g,m,x,y,z,w,h,d)=>addBox(g,unitBox,m,x,y,z,w,h,d);
- const sign=(g,lines,x,y,z,w,h,rotation=0,paper='#e7d8b8',ink='#294c42')=>{const m=new THREE.Mesh(new THREE.PlaneGeometry(w,h),new THREE.MeshBasicMaterial({map:printedCard(lines,{paper,ink,width:768,height:384}),side:THREE.DoubleSide}));m.position.set(x,y,z);m.rotation.y=rotation;g.add(m);return m;};
+ const sign=(g,lines,x,y,z,w,h,rotation=0,paper='#e7d8b8',ink='#294c42')=>{const m=new THREE.Mesh(new THREE.PlaneGeometry(w,h),new THREE.MeshBasicMaterial({map:printedCard(lines,{paper,ink,width:768,height:384}),side:THREE.DoubleSide}));m.position.set(x,y,z);m.rotation.y=rotation;const holder=new THREE.Group();holder.add(m);g.add(holder);return m;};
  function skylineWindow(g,x,y,z,color) {
   const canvas=document.createElement('canvas');canvas.width=768;canvas.height=384;
   const ctx=canvas.getContext('2d'),sky=ctx.createLinearGradient(0,0,0,384);
@@ -22,8 +22,9 @@ export function buildLifeWorld(scene,colliders){
   ctx.strokeStyle='#a6b1b0';ctx.globalAlpha=.18;ctx.lineWidth=2;for(let i=0;i<28;i++){ctx.beginPath();ctx.moveTo(i*35,0);ctx.lineTo(i*35-110,384);ctx.stroke();}ctx.globalAlpha=1;
   const tex=new THREE.CanvasTexture(canvas);tex.colorSpace=THREE.SRGBColorSpace;
   const pane=new THREE.Mesh(new THREE.PlaneGeometry(2.8,1.3),new THREE.MeshBasicMaterial({map:tex}));pane.position.set(x,y,z);g.add(pane);
-  for(const dx of [-1.46,0,1.46])box(g,white,x+dx,y,z+.04,.06,1.45,.08);
-  for(const dy of [-.71,0,.71])box(g,white,x,y+dy,z+.04,2.98,.05,.08);
+  // Three-light sash: frame, two mullions and a transom rail, all proud of the painted view.
+  for(const dx of [-1.46,-.47,.47,1.46])box(g,white,x+dx,y,z+.07,.06,1.45,.08);
+  for(const dy of [-.71,.3,.71])box(g,white,x,y+dy,z+.07,2.98,.05,.08);
   const curtain=mat(color);for(const dx of [-1.7,1.7]){box(g,curtain,x+dx,y-.12,z+.12,.36,1.85,.12);box(g,brass,x+dx,y-.5,z+.2,.4,.055,.04);}
   box(g,wood,x,y+.87,z+.15,3.85,.08,.1);
  }
@@ -41,7 +42,7 @@ export function buildLifeWorld(scene,colliders){
   box(room,wood,r.maxX,7.4,home.doorZ,.24,.6,1.85);
   for(const z of [home.doorZ-.86,home.doorZ+.86])box(room,brass,r.maxX+.08,5.8,z,.08,2.8,.065);
   const door=box(room,wood,r.maxX,5.75,home.doorZ,.16,2.55,1.65);doors.set(home.id,door);
-  sign(room,[home.number,home.name.toUpperCase()],r.maxX+.15,7.35,home.doorZ,1.7,.55,Math.PI/2);
+  sign(room,[home.number,home.name.toUpperCase()],r.maxX+.132,7.4,home.doorZ,1.7,.55,Math.PI/2);
   // Bed, headboard and two pillows. West-side furniture leaves the entry aisle open.
   const bx=r.minX+1.6,bz=r.minZ+1.95;
   box(room,wood,bx,4.8,bz,2.2,.55,2.6);box(room,white,bx,5.1,bz,2.15,.25,2.5);box(room,color,bx,5.25,bz+.45,2.15,.12,1.55);
@@ -52,7 +53,7 @@ export function buildLifeWorld(scene,colliders){
   for(const x of [deskX-.73,deskX+.73])box(room,brass,x,4.88,deskZ,.06,.7,.06);
   box(room,cream,deskX,5.35,deskZ,.45,.03,.3);
   // Framed skyline window painted in the room's palette.
-  skylineWindow(room,cx,6.4,r.minZ+.1,home.color);
+  skylineWindow(room,cx,6.5,r.minZ+.1,home.color);
   box(room,brass,cx,5.69,r.minZ+.16,2.95,.06,.06);
   // Reading chair and a low side table.
   box(room,color,r.minX+1.05,4.88,r.maxZ-1.1,1.3,.65,1.25);box(room,color,r.minX+.55,5.32,r.maxZ-1.1,.3,.95,1.25);
@@ -71,15 +72,18 @@ export function buildLifeWorld(scene,colliders){
   decor.set(home.id,items);
  }
  // Lobby property stand; east stairs and the old 4B ice machine remain accessible.
- box(root,wood,28.9,.75,8.8,1.45,1.5,.55);sign(root,['ASTORIA RESIDENCES','OWN A LITTLE OF THE NIGHT'],28.9,1.65,8.49,1.7,.85,Math.PI);
- sign(root,['2A · 2B · 2C','RESIDENCES ←'],35.25,6.25,-.1,2,.75,Math.PI/2);
- sign(root,['RESIDENCES UPSTAIRS','EAST STAIR →'],31.5,2.7,11.9,3,.7,Math.PI);
+ box(root,wood,28.9,.75,8.8,1.45,1.5,.55);box(root,dark,28.9,1.72,8.51,1.8,.95,.03);sign(root,['ASTORIA RESIDENCES','OWN A LITTLE OF THE NIGHT'],28.9,1.72,8.483,1.7,.85,Math.PI);
+ // 2F directory stand beside the stair head: board on two brass posts with weighted feet.
+ box(root,wood,35.215,6.25,-.1,.05,.85,2.1);for(const z of [-1.1,.9]){box(root,brass,35.2,5.5,z,.05,2.2,.05);box(root,dark,35.2,4.44,z,.5,.08,.3);}
+ sign(root,['2A · 2B · 2C','RESIDENCES ←'],35.252,6.25,-.1,2,.75,Math.PI/2);
+ box(root,dark,31.5,2.7,12.465,3.1,.8,.03);sign(root,['RESIDENCES UPSTAIRS','EAST STAIR →'],31.5,2.7,12.438,3,.7,Math.PI);
  // Physical soundcheck station to the right of REXA's booth.
  box(root,dark,9.9,.6,-9.1,1.8,1.2,.8);box(root,brass,9.9,1.23,-9.1,1.9,.1,.86);
  for(let i=0;i<5;i++){box(root,dark,9.26+i*.31,1.3,-9.12,.055,.02,.45);box(root,cream,9.26+i*.31,1.34,-9.24+(i%3)*.12,.16,.045,.1);}
- sign(root,['LIGHTING & SOUNDCHECK','SET THE ROOM · PAID SHIFTS'],9.9,1.8,-9.45,2.3,.72);
- sign(root,['THE NIGHT IS YOURS','FLOOR · LOUNGE · AFTER HOURS'],6.4,2.6,11.9,3.2,.9,Math.PI,'#233840','#dfb677');
- const sceneLabel=sign(root,['ELECTRIC ORCHID','THE HOUSE PALETTE'],9.9,2.65,-9.45,2.3,.6);
+ box(root,dark,9.9,2.1,-9.49,2.4,1.8,.05);
+ sign(root,['LIGHTING & SOUNDCHECK','SET THE ROOM · PAID SHIFTS'],9.9,1.8,-9.453,2.3,.72);
+ box(root,dark,6.4,2.6,12.395,3.4,1.1,.03);sign(root,['THE NIGHT IS YOURS','FLOOR · LOUNGE · AFTER HOURS'],6.4,2.6,12.368,3.2,.9,Math.PI,'#233840','#dfb677');
+ const sceneLabel=sign(root,['ELECTRIC ORCHID','THE HOUSE PALETTE'],9.9,2.65,-9.453,2.3,.6);
  let palette='';
  return {root,doors,decor,setState(input){const s=normalizeLife(input);doors.forEach((d,id)=>d.visible=!s.properties.includes(id));
   for(const b of colliders.boxes)if(b.homeGate){const owned=s.properties.includes(b.homeGate);b.minY=owned?-100:4.4;b.maxY=owned?-99:7.7;}

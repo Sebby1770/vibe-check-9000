@@ -130,3 +130,61 @@ export function paintSky(dusk, stops) {
     g.fillRect(0, 0, dusk.canvas.width, h);
     if (dusk.tex) dusk.tex.needsUpdate = true;
 }
+
+// Neon letters stacked top-to-bottom for projecting blade signs (HOTEL, RIVOLI).
+export function verticalNeonCanvas(text, color, w = 256, h = 1024, bg = "#08060a") {
+    const c = document.createElement("canvas");
+    c.width = w;
+    c.height = h;
+    const g = c.getContext("2d");
+    g.fillStyle = bg;
+    g.fillRect(0, 0, w, h);
+    g.strokeStyle = color;
+    g.lineWidth = Math.max(4, w / 24);
+    g.strokeRect(10, 10, w - 20, h - 20);
+    const chars = [...text];
+    const step = (h - 60) / chars.length;
+    g.font = `800 ${Math.floor(Math.min(step * 0.86, w * 0.72))}px Georgia, serif`;
+    g.textAlign = "center";
+    g.textBaseline = "middle";
+    g.shadowColor = color;
+    g.shadowBlur = 20;
+    g.fillStyle = color;
+    chars.forEach((ch, i) => g.fillText(ch, w / 2, 30 + step * (i + 0.5)));
+    const tex = new THREE.CanvasTexture(c);
+    tex.colorSpace = THREE.SRGBColorSpace;
+    tex.anisotropy = 8;
+    tex.name = text;
+    return tex;
+}
+
+// One line of marquee lettering squeezed to fit a long, shallow panel (theatre zipper, marquee rows).
+export function zipperCanvas(text, color = "#FFE7A8", w = 1024, h = 96, bg = "#100808", dots = true) {
+    const c = document.createElement("canvas");
+    c.width = w;
+    c.height = h;
+    const g = c.getContext("2d");
+    g.fillStyle = bg;
+    g.fillRect(0, 0, w, h);
+    g.fillStyle = "rgba(255,214,140,0.55)";
+    for (let x = 10; dots && x < w; x += 18) {
+        g.fillRect(x, 5, 5, 5);
+        g.fillRect(x, h - 10, 5, 5);
+    }
+    let size = Math.floor(h * 0.62);
+    g.font = `800 ${size}px Georgia, serif`;
+    const fit = (w - 40) / Math.max(1, g.measureText(text).width);
+    if (fit < 1) size = Math.floor(size * fit);
+    g.font = `800 ${size}px Georgia, serif`;
+    g.textAlign = "center";
+    g.textBaseline = "middle";
+    g.shadowColor = color;
+    g.shadowBlur = 14;
+    g.fillStyle = color;
+    g.fillText(text, w / 2, h / 2 + 2);
+    const tex = new THREE.CanvasTexture(c);
+    tex.colorSpace = THREE.SRGBColorSpace;
+    tex.anisotropy = 8;
+    tex.name = text;
+    return tex;
+}

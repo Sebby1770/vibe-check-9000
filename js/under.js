@@ -49,12 +49,16 @@ export function buildSubway(root, scene, mats) {
     addBox(root, unitBox, new THREE.MeshStandardMaterial({ color: 0x1a4a32, roughness: 0.55 }), -23.85, 1.2, 28.6, 0.18, 2.4, 2.15);
     addBox(root, unitBox, new THREE.MeshStandardMaterial({ color: 0x1a4a32, roughness: 0.55 }), -20.95, 1.2, 28.6, 0.18, 2.4, 2.15);
     addBox(root, unitBox, new THREE.MeshStandardMaterial({ color: 0x1a4a32, roughness: 0.55 }), -22.4, 1.2, 29.75, 3.15, 2.4, 0.18);
-    const sign = new THREE.Mesh(
-        new THREE.PlaneGeometry(3.1, 0.55),
-        new THREE.MeshBasicMaterial({ map: neonCanvas("SUBWAY  ·  12:04", "#39FF14", 512, 128, "#051005") }),
-    );
-    sign.position.set(-22.4, 2.45, 29.86);
-    root.add(sign);
+    // Lettered header over the stair mouth, and the same plate on the kiosk's back wall for the shop side.
+    addBox(root, unitBox, new THREE.MeshStandardMaterial({ color: 0x1a4a32, roughness: 0.55 }), -22.4, 2.02, 27.5, 3.2, 0.76, 0.05);
+    addBox(root, unitBox, mats.chrome, -22.4, 2.42, 27.47, 3.24, 0.04, 0.06);
+    const subwayTex = neonCanvas("SUBWAY  ·  12:04", "#39FF14", 1024, 182, "#051005");
+    for (const [z, rot] of [[27.463, Math.PI], [29.852, 0]]) {
+        const sign = new THREE.Mesh(new THREE.PlaneGeometry(3.1, 0.55), new THREE.MeshBasicMaterial({ map: subwayTex }));
+        sign.position.set(-22.4, z > 29 ? 2.0 : 2.02, z);
+        sign.rotation.y = rot;
+        root.add(sign);
+    }
 
     addBox(root, unitBox, mats.wood, -8.4, y + 0.55, 28.15, 2.4, 1.1, 1.1);
     addBox(root, unitBox, mats.cream, -8.4, y + 1.12, 28.15, 2.2, 0.06, 0.95);

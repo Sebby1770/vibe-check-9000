@@ -69,6 +69,7 @@ export function buildClub(scene, env) {
     addBox(world, unitBox, concrete, -9.05, 4.1, 12.55, 15, 8.3, 0.28);
     addBox(world, unitBox, concrete, 9.05, 4.1, 12.55, 15, 8.3, 0.28);
     addBox(world, unitBox, concrete, 0, 6.35, 12.55, 3.2, 3.8, 0.28);
+    addBox(world, unitBox, concrete, 0, 3.845, 12.55, 3.2, 1.21, 0.28); // transom over the front door
     // back wall split
     addBox(world, unitBox, concrete, -9, 4.1, -16.55, 15.1, 8.3, 0.28);
     addBox(world, unitBox, concrete, 7.3, 4.1, -16.55, 11.8, 8.3, 0.28);
@@ -79,6 +80,7 @@ export function buildClub(scene, env) {
     addBox(world, unitBox, metal, 15.8, 5.9, -16.5, 0.1, 2.8, 0.18);
     addBox(world, unitBox, metal, 14.52, 7.35, -16.5, 2.7, 0.1, 0.18);
     addBox(world, unitBox, concrete, 0, 6.35, -16.55, 3.0, 3.8, 0.28);
+    addBox(world, unitBox, concrete, 0, 3.845, -16.55, 3.0, 1.21, 0.28); // transom over the back door
 
     // Door frames
     addBox(world, unitBox, metal, -1.55, 1.55, 12.52, 0.12, 3.1, 0.22);
@@ -89,7 +91,9 @@ export function buildClub(scene, env) {
     addBox(world, unitBox, emissiveLime, 0, 3.18, -16.48, 3.0, 0.08, 0.08);
 
     const exitSign = new THREE.Mesh(new THREE.PlaneGeometry(1.4, 0.35), new THREE.MeshBasicMaterial({ map: neonCanvas("EXIT", "#39FF14", 512, 128, "#051005") }));
-    exitSign.position.set(0, 3.55, -16.38);
+    // Lightbox on the back wall beside the LED wall (the wall covers the door head), under the rear mezzanine.
+    addBox(world, unitBox, metal, -5.4, 3.55, -16.385, 1.56, 0.5, 0.05);
+    exitSign.position.set(-5.4, 3.55, -16.348);
     scene.add(exitSign);
 
     // Columns
@@ -309,8 +313,10 @@ export function buildClub(scene, env) {
     }
 
     // Signs
-    const signVc = new THREE.Mesh(new THREE.PlaneGeometry(6.4, 1.15), new THREE.MeshBasicMaterial({ map: neonCanvas("VIBE CHECK 9000", "#00FFF7") }));
-    signVc.position.set(0, 3.55, 12.38);
+    // Plaque over the front door, between the door head and the lounge floor slab (y 4.31).
+    const signVc = new THREE.Mesh(new THREE.PlaneGeometry(5.6, 0.95), new THREE.MeshBasicMaterial({ map: neonCanvas("VIBE CHECK 9000", "#00FFF7", 1024, 174) }));
+    addBox(world, unitBox, metal, 0, 3.78, 12.395, 5.8, 1.05, 0.03);
+    signVc.position.set(0, 3.78, 12.368);
     signVc.rotation.y = Math.PI;
     scene.add(signVc);
 
