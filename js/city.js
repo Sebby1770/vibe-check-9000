@@ -5,6 +5,7 @@ import { buildBillboards } from "./billboards.js";
 import { mergeAdConfig } from "./ads.js";
 import { randomPedestrian } from "./human.js";
 import { buildShops } from "./shops.js";
+import { updateInteriors } from "./interiors/index.js";
 import { buildSubway, updateSubway } from "./under.js";
 import { SECOND_Y, HOTEL_STAIRS } from "./zones.js";
 
@@ -246,36 +247,7 @@ export function buildCity(scene, adConfig = mergeAdConfig()) {
     dinerSub.position.set(-27.6, 3.7, 12.85);
     root.add(dinerSub);
 
-    // Diner interior
-    addBox(root, unitBox, wood, -27.65, 0.02, -2, 21.8, 0.04, 28.4);
-    addBox(root, unitBox, chrome, -25.5, 0.55, 3.7, 16.4, 1.1, 2.4);
-    addBox(root, unitBox, cream, -25.5, 1.15, 3.7, 16.2, 0.08, 2.2);
-    addBox(root, unitBox, neonRed, -25.5, 0.08, 3.7, 16, 0.04, 2.2);
-    for (let i = 0; i < 7; i++) {
-        const z = -8 + i * 2.4;
-        addBox(root, unitBox, wood, -34.6, 0.45, z, 1.6, 0.12, 1.4);
-        addBox(root, unitBox, cream, -35.4, 0.85, z, 0.12, 0.9, 1.4);
-        addBox(root, unitBox, chrome, -33.6, 0.42, z, 0.28, 0.08, 0.28);
-    }
-    const pie = addBox(root, unitBox, new THREE.MeshStandardMaterial({ color: 0xc45c28, roughness: 0.5 }), -22.4, 1.35, 3.7, 0.7, 0.18, 0.7);
-    pie.material.emissive = new THREE.Color(0x401000);
-    pie.material.emissiveIntensity = 0.2;
-    addBox(root, unitBox, glass, -22.4, 1.7, 3.7, 1.1, 0.7, 1.1);
-    addBox(root, unitBox, chrome, -22.8, 0.7, 6.4, 8.4, 1.4, 1.6);
-    addBox(root, unitBox, neonRed, -22.8, 1.15, 6.4, 7.6, 0.06, 1.2);
-    addBox(root, unitBox, black, -19.4, 1.35, 6.4, 1.4, 0.35, 1.1);
-    addBox(root, unitBox, black, -36.4, 1.1, -8.2, 3.6, 2.2, 4.4);
-    addBox(root, unitBox, chrome, -36.4, 1.35, -8.2, 3.2, 0.08, 4.0);
-    addBox(root, unitBox, cream, -36.4, 2.35, -8.2, 3.5, 0.12, 4.3);
-    for (const z of [-9.4, -7.2, -5.1]) {
-        addBox(root, unitBox, new THREE.MeshStandardMaterial({ color: 0x3a2a22, roughness: 0.6 }), -37.4, 0.85, z, 0.7, 1.4, 0.7);
-        addBox(root, unitBox, neonAmber, -37.4, 1.6, z, 0.45, 0.08, 0.45);
-    }
-    addBox(root, unitBox, cream, -33.2, 1.4, -12.4, 2.2, 2.6, 0.18);
-    addBox(root, unitBox, wood, -33.2, 0.7, -11.4, 1.8, 1.2, 1.4);
-    addBox(root, unitBox, wood, -18.4, 1.6, -2, 0.12, 3.0, 12);
-    for (const z of [-8, -2, 4]) addBox(root, unitBox, cream, -18.55, 2.2, z, 0.08, 0.7, 1.6);
-    addBox(root, unitBox, neonRed, -27.6, 3.2, -16.35, 8.4, 0.5, 0.04);
+    // Diner interior: js/interiors/diner.js (built with the shop row)
 
     // Hotel shell — lobby is walkable
     addBox(root, unitBox, brickBrown, 20.05, 7.2, 12.62, 7.1, 14.5, 0.28);
@@ -298,40 +270,7 @@ export function buildCity(scene, adConfig = mergeAdConfig()) {
         addBox(root, unitBox, wood, 36.95, y + 0.04, z, 2.4, 0.08, 0.62);
         addBox(root, unitBox, cream, 36.95, y + 0.09, z, 2.4, 0.02, 0.08);
     }
-    addBox(root, unitBox, wood, 32.0, fy + 0.22, -8.4, 2.6, 0.12, 1.8);
-    addBox(root, unitBox, cream, 32.0, fy + 0.48, -9.1, 2.6, 0.4, 0.18);
-    addBox(root, unitBox, chrome, 32.0, fy + 0.7, -8.5, 1.1, 0.9, 0.7);
-    addBox(root, unitBox, cream, 32.0, fy + 1.05, -8.5, 0.9, 0.08, 0.55);
-    addBox(root, unitBox, new THREE.MeshBasicMaterial({ color: 0x88ccee }), 32.0, fy + 1.18, -8.5, 0.7, 0.16, 0.5);
-    addBox(root, unitBox, wood, 21.2, fy + 0.22, 7.3, 2.8, 0.14, 1.6);
-    addBox(root, unitBox, cream, 21.2, fy + 0.48, 7.9, 2.8, 0.38, 0.22);
-    addBox(root, unitBox, new THREE.MeshBasicMaterial({ color: 0xffc078, transparent: true, opacity: 0.35 }), 21.2, fy + 1.55, 12.35, 2.4, 1.5, 0.04);
-    const fourb = new THREE.Mesh(new THREE.PlaneGeometry(0.7, 0.4), new THREE.MeshBasicMaterial({ map: neonCanvas("4B", "#E0B25A", 256, 128, "#120c08") }));
-    fourb.position.set(30.2, fy + 1.55, -2.2);
-    fourb.rotation.y = Math.PI / 2;
-    root.add(fourb);
-    addBox(root, unitBox, black, 27.65, 0.02, -2, 21.8, 0.04, 28.4);
-    addBox(root, unitBox, wood, 25.2, 0.55, 5.9, 7.4, 1.1, 2.6);
-    addBox(root, unitBox, cream, 25.2, 1.2, 5.9, 7.2, 0.08, 2.4);
-    for (const [x, z] of [[21.8, -6.2], [21.8, 0.4], [21.8, 6.8], [33.4, -12.2], [33.4, -6.4], [33.4, 2.2], [29.2, -10.4], [29.2, 8.6]]) {
-        addBox(root, unitBox, wood, x, 0.42, z, 1.6, 0.12, 1.4);
-        addBox(root, unitBox, cream, x - 0.7, 0.85, z, 0.12, 0.9, 1.4);
-    }
-    addBox(root, unitBox, new THREE.MeshStandardMaterial({ color: 0x4a2030, roughness: 0.85 }), 27.6, 0.03, -2, 10, 0.03, 14);
-    addBox(root, unitBox, wood, 27.6, 0.38, -2, 1.4, 0.08, 1.4);
-    for (const z of [-12, -4, 4, 10]) {
-        addBox(root, unitBox, cream, 17.0, 2.4, z, 0.08, 1.1, 1.4);
-        addBox(root, unitBox, new THREE.MeshBasicMaterial({ color: 0xffe2a8 }), 17.05, 2.4, z, 0.04, 0.35, 0.35);
-    }
-    addBox(root, unitBox, cream, 29.4, fy + 0.02, -2, 8.4, 0.02, 18);
-    addBox(root, unitBox, new THREE.MeshStandardMaterial({ color: 0x5a2030, roughness: 0.85 }), 29.4, fy + 0.03, -2, 1.4, 0.02, 16);
-    for (const z of [-10.4, -4.2, 2.8, 8.4]) {
-        addBox(root, unitBox, wood, 22.4, fy + 0.55, z, 0.7, 0.9, 0.7);
-        addBox(root, unitBox, cream, 22.4, fy + 1.15, z, 0.18, 0.35, 0.18);
-    }
-    addBox(root, unitBox, chrome, 21.4, 0.45, 9.4, 1.1, 0.7, 0.7);
-    addBox(root, unitBox, cream, 21.4, 0.85, 9.4, 0.9, 0.12, 0.55);
-    addBox(root, unitBox, black, 21.4, 0.22, 9.85, 0.18, 0.18, 0.18);
+    // Lobby + 2F furnishings: js/interiors/hotel-lobby.js, hotel-upstairs.js
     const hotelSign = new THREE.Mesh(new THREE.PlaneGeometry(2.2, 10), new THREE.MeshBasicMaterial({ map: neonCanvas("HOTEL", "#E0B25A", 256, 1024, "#120c08") }));
     hotelSign.position.set(38.95, 8.2, 4);
     hotelSign.rotation.y = -Math.PI / 2;
@@ -643,7 +582,7 @@ export function buildCity(scene, adConfig = mergeAdConfig()) {
     root.add(titlePlane);
 
     const shops = buildShops(root, scene, {
-        wood, cream, black, chrome, brick, brickDark, neonRed, neonAmber, neonCyan,
+        wood, cream, black, chrome, brick, brickDark, neonRed, neonAmber, neonCyan, glass,
     });
     for (const x of [-33.2, -21.8, -12.2, 6, 24.6, 35.8]) fireEscape(x, 31.32, 2, -1);
     addBox(root, unitBox, rusticated, 1.2, 3.92, 32.16, 80.4, 0.42, 0.4);
@@ -894,8 +833,7 @@ export function updateCity(city, dt, t, { outside, reduced, lampMul = 1, zone, p
     if (city.alleyLight) city.alleyLight.intensity = 28 * Math.max(1, mul * 0.85);
     if (city.barberPole) city.barberPole.rotation.y += dt * 2.4;
     updateSubway(city.under, dt);
-    if (zone === "rivoli" && city.film?.userData.draw) city.film.userData.draw(reduced ? Math.floor(t) : t);
-    if (city.shopDetails && zone === "records") {city.shopDetails.disc.rotation.y+=dt*2;city.shopDetails.label.rotation.y+=dt*2;}
+    updateInteriors(dt, t, { zone, reduced, outside, position, camera });
     for(const person of city.shopCrowd || []) {
         const home=person.userData.home;if(!home||person.userData.mode==="sit")continue;
         const index=person.userData.shopIndex,cycle=(t+index*3)%18;

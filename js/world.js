@@ -11,6 +11,7 @@ import { buildClub } from "./club.js";
 import { buildCity, updateCity } from "./city.js";
 import { animateHuman } from "./human.js";
 import { buildColliders, getFloorY, getZone, isOutside } from "./zones.js";
+import { interiorColliders } from "./interiors/index.js";
 import { makeCubeEnv, makeDuskSky, paintSky } from "./kit.js";
 import { phaseLook } from "./night.js";
 import { createShopActivities } from "./shop-activities.js";
@@ -69,7 +70,7 @@ export function createWorld(canvas, adConfig) {
     const club = buildClub(scene, env);
     const city = buildCity(scene, adConfig);
     const district = buildDistrict(scene);
-    const colliders = buildColliders();
+    const colliders = buildColliders(interiorColliders());
     const streetLife = buildStreetLife(scene);
     const lifeWorld = buildLifeWorld(scene,colliders);
     let clubScene=CLUB_SCENES[0];
@@ -336,10 +337,12 @@ export function createWorld(canvas, adConfig) {
                     if (Math.hypot(p.x - ped.position.x, p.z - ped.position.z) > 36) continue;
                     animateHuman(ped, t, { mode: "walk", bpm: 96 });
                 }
-                if (zone === "records" || zone === "pharmacy" || zone === "florist" || zone === "rivoli" || zone === "liquor" || zone === "barber" || (outside && p.z > 28)) {
-                    for (const person of city.shopCrowd || []) {
-                        if (person.visible) animateHuman(person, t, { mode: person.userData.mode || "idle", bpm: 96 });
-                    }
+                const shopSide = zone === "records" || zone === "pharmacy" || zone === "florist" || zone === "rivoli" || zone === "liquor" || zone === "barber" || (outside && p.z > 28);
+                for (const person of city.shopCrowd || []) {
+                    // Interior NPCs carry userData.room (their zone); diner/hotel ones only animate while you're in that room.
+                    const room = person.userData.room;
+                    const near = room === "diner" || room === "hotel" || room === "suite" ? room === zone : shopSide;
+                    if (near && person.visible) animateHuman(person, t, { mode: person.userData.mode || "idle", bpm: 96 });
                 }
                 if (zone === "subway") {
                     for (const person of city.subwayCrowd || []) {

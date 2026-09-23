@@ -193,7 +193,8 @@ function wall(boxes, minX, maxX, minZ, maxZ, minY = -1, maxY = 8.6) {
     return box;
 }
 
-export function buildColliders() {
+// interiorBoxes: js/interiors/index.js interiorColliders() (kept out of this file so node tests need no three.js).
+export function buildColliders(interiorBoxes = []) {
     const boxes = [];
 
     // Club front wall, door gap at x [-1.5, 1.5] on the ground
@@ -234,9 +235,6 @@ export function buildColliders() {
     wall(boxes, -16.4, -13.55, -8.5, 8.5, -1, 2.9).sightMaxY = 1.2;
     wall(boxes, -8.95, -7.45, 10.0, 11.15, -1, 2.5);
     wall(boxes, 7.45, 8.85, 10.15, 10.75, -1, 2.2);
-    wall(boxes, -32.6, -18.4, 2.4, 5.1, -1, 1.8);
-    wall(boxes, -27.1, -18.6, 5.55, 7.25, -1, 1.85);
-    wall(boxes, 21.4, 28.6, 4.6, 7.4, -1, 1.6);
 
     // Atrium railings (second floor) — full rectangle
     wall(boxes, -7.7, 7.7, 5.28, 5.78, 4.2, 5.75);
@@ -302,15 +300,8 @@ export function buildColliders() {
     wall(boxes, SHOPS[SHOPS.length - 1].maxX + 0.2, 90, 32.05, 90, -1, 120);
     wall(boxes, -90, 90, 40.12, 90, -1, 120);
 
-    // Shop counters / booths / chairs
-    wall(boxes, -37.4, -29.0, 37.55, 39.35, -1, 1.5); // records counter
-    wall(boxes, -26.0, -17.6, 37.45, 39.2, -1, 1.5); // pharmacy counter
-    wall(boxes, -14.7, -9.7, 37.6, 39.15, -1, 1.35); // florist table
-    wall(boxes, 3.4, 8.6, 36.7, 39.15, -1, 1.7); // rivoli ticket
-    wall(boxes, 20.4, 28.8, 37.5, 39.25, -1, 1.5); // gin counter
-    wall(boxes, 32.4, 39.4, 37.15, 38.55, -1, 1.45); // barber back bar
-    wall(boxes, 33.35, 34.95, 34.85, 36.35, -1, 1.25); // barber chair
-    wall(boxes, 36.15, 37.75, 34.85, 36.35, -1, 1.25);
+    // Shop / diner / hotel furniture: each js/interiors/<room>.js colliders(), passed in by world.js
+    for (const b of interiorBoxes) boxes.push({ ...b });
 
     // Parked cars — parallel to the curb, out of the driving lanes
     wall(boxes, -22.1, -18.1, 18.05, 19.65, -1, 1.4);
@@ -337,11 +328,9 @@ export function buildColliders() {
     wall(boxes, PLATFORM.maxX - 0.15, PLATFORM.maxX + 0.2, PLATFORM.minZ, PLATFORM.maxZ, -7.2, -1.2);
     wall(boxes, PLATFORM.minX, PLATFORM.maxX, 29.85, 31.1, -4.35, -1.4); // don't walk the tracks
 
-    // Hotel stair rails + 2F
+    // Hotel stair rails
     wall(boxes, 35.5, 35.78, 1.5, 9.4, -1, 6.4);
     wall(boxes, 38.18, 38.45, 1.5, 9.4, -1, 6.4);
-    wall(boxes, 30.55, 33.45, -9.45, -7.55, 4.2, 5.55);
-    wall(boxes, 18.15, 24.15, 6.35, 8.25, 4.2, 5.45);
 
     boxes.push(...districtColliders(), ...streetColliders(), ...lifeColliders(), posterCollider());
     wall(boxes,28.15,29.65,8.5,9.1,-1,1.3).sightMaxY=1.1;
