@@ -10,7 +10,9 @@ A first-person dusk in Midtown. November 12, 1954. The visor is from later. The 
 
 Walk a packed floor, take the stairs to a candlelit supper-club lounge, step out onto 47th Street under a wall of towers, or slip out the back into the alley.
 
-Keep walking east past the Corner Set to discover Mercer Pocket Garden, East Avenue, Hawthorne Park and 48th Street. Twelve new buildings frame the new streets; four park benches offer a quiet seat. Find the new destinations in **Pockets → Map**. The club plays original jazz-house, while a swung electric-piano quartet follows your walk through the gardens.
+Keep walking east past the Corner Set to discover Mercer Pocket Garden, East Avenue, Hawthorne Park and 48th Street. Enter **Blue Note Books**, **Sunrise Bakery** and **Eastern Arcade**. Meet all three shopkeepers for a one-time $20 welcome gift, collect six keepsakes, or take Rosa’s repeatable $30 delivery rounds. Play **Signal Match** at the arcade for a saved personal best. Use **Pockets → The Block** for directions; unfinished deliveries and your collection survive across nights.
+
+The parks have four usable benches. The club plays original jazz-house, while a swung electric-piano quartet follows your walk through the gardens.
 
 No install. Click **ENTER THE NIGHT**.
 
@@ -114,7 +116,7 @@ npm test
 
 Needs HTTP because of ES modules. No build step. Three.js r160 is pinned locally in `vendor/three/`, including its MIT license. Fonts use browser fallbacks when unavailable.
 
-For browser regression checks, start the server, then run `npm run test:browser`. This uses `agent-browser@0.37.1` through npx; install its browser with `npx agent-browser@0.37.1 install` if needed. Set `VIBE_TEST_URL` for a different local port. The tests use an isolated browser session and a loopback-only `?inspect=1` API for scene positioning, then exercise the real catalog and dialogue controls. Screenshots are saved to `/tmp/vibe-check-browser`. Run `npm run test:expansion` for the counter, street, mystery, and photography journeys; those screenshots go to `/tmp/vibe-check-expansion`. Run `npm run test:life` for the purchase, pay, apartment, furnishing and nightclub journeys; screenshots go to `/tmp/vibe-check-life`. Run `npm run test:district` for the new streets, benches, umbrella grips, saxophone pose and offline music rendering; screenshots go to `/tmp/vibe-check-district`.
+For browser regression checks, start the server, then run `npm run test:browser`. This uses `agent-browser@0.37.1` through npx; install its browser with `npx agent-browser@0.37.1 install` if needed. Set `VIBE_TEST_URL` for a different local port. The tests use an isolated browser session and a loopback-only `?inspect=1` API for scene positioning, then exercise the real catalog and dialogue controls. Screenshots are saved to `/tmp/vibe-check-browser`. Run `npm run test:expansion` for the counter, street, mystery, and photography journeys; those screenshots go to `/tmp/vibe-check-expansion`. Run `npm run test:life` for the purchase, pay, apartment, furnishing and nightclub journeys; screenshots go to `/tmp/vibe-check-life`. Run `npm run test:district` for the new streets, benches, umbrella grips, saxophone pose and offline music rendering; screenshots go to `/tmp/vibe-check-district`. Run `npm run test:neighborhood` for the three enterable stores, collections, courier job, arcade game, save recovery and mobile layouts; screenshots go to `/tmp/vibe-neighborhood`.
 
 ## Stack
 

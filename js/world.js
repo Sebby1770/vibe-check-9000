@@ -271,8 +271,9 @@ export function createWorld(canvas, adConfig) {
                 hemi.intensity = 1.1;
                 dusk.sunLight.intensity = 0.15 * look.sunInt;
                 renderer.toneMappingExposure = 1.0;
-            } else if (zone === "records" || zone === "pharmacy" || zone === "florist" || zone === "rivoli" || zone === "liquor" || zone === "barber") {
+            } else if (["records","pharmacy","florist","rivoli","liquor","barber","books","bakery","arcade"].includes(zone)) {
                 const shopFog = {
+                    books:0x1b3037,bakery:0x39271c,arcade:0x201d35,
                     records: 0x241028, pharmacy: 0x102820, florist: 0x281018,
                     rivoli: 0x2a1810, liquor: 0x24180c, barber: 0x201818,
                 }[zone];

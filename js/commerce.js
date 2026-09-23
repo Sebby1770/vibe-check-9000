@@ -1,3 +1,5 @@
+import { normalizeNeighborhood } from './neighborhood.js';
+import { EAST_COUNTERS } from './district-layout.js';
 import { DISTRICT_PLACES } from './district-layout.js';
 import { normalizeLife, PRICES, spend, LIFE_PLACES, HOMES } from './life.js';
 import { normalizeExpansion, STREET_PLACES, MYSTERY } from "./expansion.js";
@@ -281,6 +283,7 @@ export const findItem = (id) =>
   SHOPS_CATALOG.flatMap((s) => s.items).find((i) => i.id === id) || null;
 export const DESTINATIONS = [
   ...DISTRICT_PLACES,
+  ...EAST_COUNTERS,
   ...LIFE_PLACES,
   ...HOMES.map(h=>({id:`home-${h.id}`,name:`${h.number} · ${h.name}`,x:h.doorX+1,z:h.doorZ,y:4.4})),
   ...STREET_PLACES,
@@ -325,6 +328,7 @@ export function normalizeCommerce(data = {}) {
     version: 1,
     expansion: normalizeExpansion(data.expansion),
     life: normalizeLife(data.life),
+    neighborhood: normalizeNeighborhood(data.neighborhood),
     playingRecord:
       findItem(playing?.id)?.kind === "record" ? findItem(playing.id) : null,
     inventory: Array.isArray(data.inventory)

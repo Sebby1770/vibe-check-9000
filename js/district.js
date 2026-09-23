@@ -1,3 +1,4 @@
+import { buildEastInterior } from './east-interiors.js';
 import * as THREE from 'three';
 import { addBox, unitBox } from './kit.js';
 import { printedCard } from './shop-art.js';
@@ -26,8 +27,13 @@ export function buildDistrict(scene) {
   // Shared instance batches keep the larger neighborhood inexpensive to draw.
   const windows=[],trim=[];
   DISTRICT_BUILDINGS.forEach((b,index)=>{
-    box(mat(b.color),b.x,b.h/2,b.z,b.w,b.h,b.d);
-    box(stone,b.x,2,b.z,b.w+.15,4,b.d+.15);
+    if(b.id){
+      box(mat(b.color),b.x,4+(b.h-4)/2,b.z,b.w,b.h-4,b.d);
+      buildEastInterior(root,b);
+    }else{
+      box(mat(b.color),b.x,b.h/2,b.z,b.w,b.h,b.d);
+      box(stone,b.x,2,b.z,b.w+.15,4,b.d+.15);
+    }
     box(cream,b.x,b.h,b.z,b.w+.55,.45,b.d+.55);
     for(let y=5;y<b.h-1;y+=3.1) {
       for(let x=b.x-b.w/2+1.5;x<b.x+b.w/2-1;x+=2.6) for(const side of [-1,1])windows.push([x,y,b.z+side*(b.d/2+.025),1.1,1.7,.04]);
@@ -36,8 +42,10 @@ export function buildDistrict(scene) {
     }
     for(const facing of b.z===40?[-1,1]:[b.z<10?1:-1]) {
     const front=b.z+facing*(b.d/2+.12);
-    box(iron,b.x,1.35,front,b.w-1.8,2.5,.12);
-    for(let x=b.x-b.w/2+1;x<b.x+b.w/2;x+=2.2)box(cream,x,1.4,front+facing*.1,.09,2.6,.08);
+    if(b.id&&facing===-1){
+      for(const side of [-1,1])box(iron,b.x+side*(b.w/4+.65),1.35,front,b.w/2-2.1,2.5,.12);
+    }else box(iron,b.x,1.35,front,b.w-1.8,2.5,.12);
+    for(let x=b.x-b.w/2+1;x<b.x+b.w/2;x+=2.2)if(!b.id||facing!==-1||Math.abs(x-b.x)>1.3)box(cream,x,1.4,front+facing*.1,.09,2.6,.08);
     const awning=mat([0x386058,0x8e5648,0xb0995e][index%3]);
     box(awning,b.x,3.35,front+facing*.6,b.w-.6,.25,1.7);
     sign([b.name,'EAST SIDE · MIDTOWN'],b.x,4.15,front+facing*.1,Math.min(b.w-1,9),1.1,facing<0?Math.PI:0);

@@ -6,13 +6,13 @@ export const DISTRICT_BUILDINGS = [
   { x:125,z:-20,w:16,d:16,h:20,name:'PARK VIEW',color:0x9a725e },
   { x:146,z:-20,w:20,d:16,h:27,name:'THE HAWTHORNE',color:0x716866 },
   { x:168,z:1,w:10,d:30,h:25,name:'GARDEN COURT',color:0x876b58 },
-  { x:124,z:40,w:12,d:16,h:20,name:'BLUE NOTE BOOKS',color:0x865d4b },
-  { x:138,z:40,w:12,d:16,h:28,name:'SUNRISE BAKERY',color:0x9c826a },
+  { id:'books',x:124,z:40,w:12,d:16,h:20,name:'BLUE NOTE BOOKS',color:0x865d4b },
+  { id:'bakery',x:138,z:40,w:12,d:16,h:28,name:'SUNRISE BAKERY',color:0x9c826a },
   { x:152,z:40,w:12,d:16,h:23,name:'PARKSIDE FLORAL',color:0x737867 },
   { x:166,z:40,w:12,d:16,h:34,name:'THE ATLAS',color:0x78645b },
   { x:123,z:70,w:14,d:10,h:32,name:'48TH STUDIOS',color:0x8b715e },
   { x:141,z:70,w:18,d:10,h:24,name:'THE EXCHANGE',color:0x785d51 },
-  { x:163,z:70,w:20,d:10,h:37,name:'EASTERN ARCADE',color:0x6f7472 },
+  { id:'arcade',x:163,z:70,w:20,d:10,h:37,name:'EASTERN ARCADE',color:0x6f7472 },
 ];
 export const DISTRICT_PARKS = [
   {id:'mercer',name:'Mercer Pocket Garden',x:77,z:2,w:36,d:22},
@@ -28,7 +28,18 @@ export const DISTRICT_SEATS = DISTRICT_PARKS.flatMap(p=>[-1,1].map((side,i)=>({
   id:`${p.id}-bench-${i}`,x:p.x+side*8,z:p.z+5,y:0,eye:1.18,
   lookX:p.x,lookZ:p.z,r:1.7,prompt:`[E] SIT IN ${p.name.toUpperCase()}`,
 })));
+export const EAST_COUNTERS = [
+  {id:'books',name:'Blue Note Books',x:124,z:35.5,y:0},
+  {id:'bakery',name:'Sunrise Bakery',x:138,z:35.5,y:0},
+  {id:'arcade',name:'Eastern Arcade',x:163,z:68,y:0},
+];
+export const EAST_FIXTURES = DISTRICT_BUILDINGS.filter(b=>b.id).flatMap(b=>[
+  {x:b.x,y:.65,z:EAST_COUNTERS.find(c=>c.id===b.id).z,w:3.3,h:1.3,d:.8},
+  ...[-1,1].map(side=>({x:b.x+side*(b.w/2-.65),y:1.1,z:b.z,w:1,h:2.2,d:b.d-3})),
+]);
 export function districtZone(x,z) {
+  const venue=DISTRICT_BUILDINGS.find(b=>b.id&&Math.abs(x-b.x)<b.w/2&&Math.abs(z-b.z)<b.d/2);
+  if(venue)return venue.id;
   for(const p of DISTRICT_PARKS) if(Math.abs(x-p.x)<=p.w/2 && Math.abs(z-p.z)<=p.d/2)return p.id;
   if(x>=96 && z>=49)return '48th';
   if(x>=96 && z<18)return 'eastavenue';
@@ -36,7 +47,14 @@ export function districtZone(x,z) {
 }
 export function districtColliders() {
   return [
-    ...DISTRICT_BUILDINGS.map(b=>({minX:b.x-b.w/2,maxX:b.x+b.w/2,minZ:b.z-b.d/2,maxZ:b.z+b.d/2,minY:-1,maxY:b.h})),
+    ...DISTRICT_BUILDINGS.flatMap(b=>{
+      const x0=b.x-b.w/2,x1=b.x+b.w/2,z0=b.z-b.d/2,z1=b.z+b.d/2;
+      const wall=(minX,maxX,minZ,maxZ,minY=-1,maxY=b.h)=>({minX,maxX,minZ,maxZ,minY,maxY});
+      if(!b.id)return [wall(x0,x1,z0,z1)];
+      return [wall(x0,x0+.18,z0,z1),wall(x1-.18,x1,z0,z1),wall(x0,x1,z1-.18,z1),
+        wall(x0,b.x-1.3,z0-.1,z0+.18),wall(b.x+1.3,x1,z0-.1,z0+.18),wall(b.x-1.3,b.x+1.3,z0-.1,z0+.18,3.2),wall(x0,x1,z0,z1,3.95)];
+    }),
+    ...EAST_FIXTURES.map(f=>({minX:f.x-f.w/2,maxX:f.x+f.w/2,minZ:f.z-f.d/2,maxZ:f.z+f.d/2,minY:-1,maxY:2.8,sightMaxY:f.h})) ,
     ...DISTRICT_PARKS.map(p=>({minX:p.x-2.3,maxX:p.x+2.3,minZ:p.z-2.3,maxZ:p.z+2.3,minY:-1,maxY:2.5,sightMaxY:1.1})),
   ];
 }

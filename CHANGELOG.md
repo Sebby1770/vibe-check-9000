@@ -4,6 +4,18 @@ All notable changes to VIBE CHECK 9000™ are documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
+## [26.0.0] - 2026-09-23
+
+### The east side opens its doors
+
+- Enter Blue Note Books, Sunrise Bakery and Eastern Arcade through actual storefront doors. Each has a distinct stocked interior, shopkeeper, counter, signage and collision layout.
+- Browse six permanent keepsakes in illustrated, mobile-friendly catalogs. Purchases appear in Pockets and survive new nights alongside wallet and home ownership.
+- Meet all three shopkeepers for a one-time $20 welcome gift. Take repeatable $30 bakery courier rounds through the bookshop and arcade; unfinished deliveries survive reloads and new nights, with no timer or duplicate payouts.
+- Play three rounds of free Signal Match at the arcade and save a personal best. Study the sequence again whenever needed; mistakes cost nothing.
+- Restore active delivery guidance on reload and direct walkers around the solid block via East Avenue. Add all three shops to the walking map and notebook.
+- Prevent slow frames from carrying the player through thin locked doors or counters, while preserving wall sliding and purchased apartment access.
+- Verify physical entry, counters, ownership, welcome pay, deliveries, arcade completion, mobile layout and save recovery in the neighborhood browser suite.
+
 ## [25.0.0] - 2026-09-23
 
 ### East side, proper instruments and a new soundtrack

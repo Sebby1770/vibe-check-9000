@@ -33,7 +33,7 @@ export function playPiano(ctx,target,t,frequencies,velocity=.07,duration=.7) {
 }
 export function musicMix(zone) {
   if(zone==='club')return [1,0,0];
-  if(zone==='records')return [.7,0,.008];
+  if(zone==='records'||zone==='arcade')return [.7,0,.008];
   if(zone==='alley')return [.4,0,.025];
   if(zone==='lounge')return [0,1,.003];
   if(['street','mercer','hawthorne','eastavenue','48th'].includes(zone))return [0,.8,.018];

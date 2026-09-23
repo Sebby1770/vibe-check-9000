@@ -91,6 +91,7 @@ export function shopAt(x, z) {
 
 export function isOutside(x, z, y = 0) {
     if (y < -1.2) return false;
+    if (["books","bakery","arcade"].includes(districtZone(x,z))) return false;
     if (inSubStairs(x, z) && y < 0.5) return false;
     return !inClubFootprint(x, z) && !inDiner(x, z) && !inHotel(x, z) && !shopAt(x, z);
 }
@@ -148,6 +149,9 @@ export function zoneLabel(zone) {
         case "club": return "THE FLOOR";
         case "lounge": return "THE LOUNGE";
         case "alley": return "THE ALLEY";
+        case "books": return "BLUE NOTE BOOKS";
+        case "bakery": return "SUNRISE BAKERY";
+        case "arcade": return "EASTERN ARCADE";
         case "mercer": return "MERCER GARDEN";
         case "hawthorne": return "HAWTHORNE PARK";
         case "eastavenue": return "EAST AVENUE";

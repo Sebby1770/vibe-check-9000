@@ -1,3 +1,7 @@
+import { neighborhoodWaypoint } from './neighborhood-navigation.js';
+import { createNeighborhoodUI } from './neighborhood-ui.js';
+import { LOCAL_VENUES, ROUTE_STOPS, visitNeighborhood, buyLocal, startRoute, completeRouteStop, recordArcade } from './neighborhood.js';
+import { EAST_COUNTERS } from './district-layout.js';
 import { createLifeUI } from './life-ui.js';
 import { credit, startShift, submitShift, buyHome, buyFurnishing, updateLife, money, JOBS } from './life.js';
 import { LIFE_PROPS } from './life-world.js';
@@ -114,6 +118,7 @@ async function boot() {
     let shopUI = null;
     let activityUI = null;
     let lifeUI = null;
+    let neighborhoodUI = null, neighborhoodVenue = null;
     let pendingPhoto = false;
     let previewTimer = null;
     let destination = null;
@@ -132,6 +137,7 @@ async function boot() {
     clock.tick(Math.max(0, Number(progress.night.elapsed) || 0));
     let activeSet = commerce.expansion.signalOn ? SIGNAL_SET : commerce.playingRecord?.set || bill.set;
     if(!commerce.expansion.camera && !commerce.expansion.mystery && !Object.keys(commerce.expansion.workshops).length) destination=STREET_PLACES.find(p=>p.id==="noticeboard");
+    if(commerce.neighborhood.active)destination=DESTINATIONS.find(d=>d.id===ROUTE_STOPS[commerce.neighborhood.active.stop]);
     let lastPhase = clock.phase;
     let peaked = false;
     let adConfig = mergeAdConfig();
@@ -235,6 +241,7 @@ async function boot() {
             if (shopUI?.isOpen) { shopUI.close(); stopPreview(); }
             if (activityUI?.isOpen) activityUI.close();
             if (lifeUI?.isOpen) lifeUI.close();
+            neighborhoodUI?.close();
             const n = audio.addFiles(files);
             if (n) {
                 hud.toast(`${n} TRACK${n > 1 ? "S" : ""} ON THE DECK`, "#00fff7");
@@ -300,6 +307,18 @@ async function boot() {
         onSignalPlay: () => {activeSet=SIGNAL_SET;audio.houseSystem();audio.setHouseSet(activeSet);world.setLedMessage(activeSet.name,"THE CITY ANSWERS");applyExpansion({state:{...commerce.expansion,signalOn:true},ok:true});},
         onNotebook: tab => openJournal(tab),
         onNavigate: id => {destination=DESTINATIONS.find(d=>d.id===id)||null;resumeStreet();},
+    });
+    neighborhoodUI = createNeighborhoodUI({
+        onNote: i=>audio.playStreetNote(i),
+        onArcadeScore: rounds=>{if(atWork('arcade'))applyNeighborhood(recordArcade(commerce,rounds));},
+        onClose: resumeStreet,
+        onBuy: id => {
+            if(!atWork(neighborhoodVenue)||!LOCAL_VENUES.find(v=>v.id===neighborhoodVenue)?.items.some(i=>i.id===id))return;
+            applyNeighborhood(buyLocal(commerce,id));
+        },
+        onStartRoute: () => {if(atWork('bakery'))applyNeighborhood(startRoute(commerce),true);},
+        onRouteStop: (id,token) => {if(atWork(id)&&id===neighborhoodVenue)applyNeighborhood(completeRouteStop(commerce,id,token),true);},
+        onNavigate: id => {destination=DESTINATIONS.find(d=>d.id===id)||null;neighborhoodUI.close();resumeStreet();},
     });
     lifeUI = createLifeUI({
         onClose: resumeStreet,
@@ -392,13 +411,25 @@ async function boot() {
 
     bindMobile(controls, hud);
 
+    function applyNeighborhood(result,markRoute=false){
+        if(result.ok){commerce=result.state;persistCommerce();audio.playShopSound();}
+        if(markRoute&&result.ok){const id=commerce.neighborhood.active?ROUTE_STOPS[commerce.neighborhood.active.stop]:'bakery';destination=DESTINATIONS.find(d=>d.id===id);}
+        neighborhoodUI.refresh(commerce,result.message);return result;
+    }
+    function openNeighborhood(id){
+        if(!atWork(id))return;
+        shopUI.close();activityUI.close();lifeUI.close();stopPreview();
+        neighborhoodVenue=id;const visit=visitNeighborhood(commerce,id);commerce=visit.state;persistCommerce();
+        hud.run.talkNpc=null;hud.setPhase('activity');neighborhoodUI.open(id,commerce);neighborhoodUI.refresh(commerce,visit.message);
+        audio.playShopSound();
+    }
     function atWork(id){return hud.run.entered&&!!id&&getZone(world.camera.position.x,world.camera.position.z,controls.floorY)===id;}
     function applyLife(result){
         if(result.ok){commerce={...commerce,life:result.state};persistCommerce();audio.playShopSound();}
         return result;
     }
     function openLife(page='wallet',context={}){
-        shopUI?.close();activityUI?.close();stopPreview();hud.run.talkNpc=null;hud.setPhase('activity');
+        neighborhoodUI?.close();shopUI?.close();activityUI?.close();stopPreview();hud.run.talkNpc=null;hud.setPhase('activity');
         const zone=getZone(world.camera.position.x,world.camera.position.z,controls.floorY);
         lifeUI.open(commerce.life,page,{job:hud.run.entered&&JOBS.some(j=>j.id===zone)?zone:undefined,...context});
     }
@@ -413,7 +444,7 @@ async function boot() {
         applyExpansion(result);return result;
     }
     function openActivity(type,context={}){
-        lifeUI?.close();shopUI.close();stopPreview();hud.run.talkNpc=null;hud.setPhase("activity");
+        neighborhoodUI?.close();lifeUI?.close();shopUI.close();stopPreview();hud.run.talkNpc=null;hud.setPhase("activity");
         activityUI.open(type,commerce.expansion,{seed:dayHash(today),...context});
     }
     function openStreet(place){
@@ -440,12 +471,14 @@ async function boot() {
     }
     function openJournal(section="pockets") {
         if(section==="life"){openLife();return;}
+        neighborhoodUI?.close();
         lifeUI?.close();
         activityUI?.close();
         stopPreview(); hud.run.talkNpc=null; hud.setPhase("journal");
         shopUI.openJournal(commerce,getErrands(commerce),hud.run.zone,section);
     }
     function openShop(id) {
+        neighborhoodUI?.close();
         lifeUI?.close();
         const shop=SHOPS_CATALOG.find(s=>s.id===id); if(!shop)return;
         stopPreview(); hud.run.talkNpc=null; hud.setPhase("shop");
@@ -499,6 +532,7 @@ async function boot() {
         return false;
     }
     const candidates=[
+        ...EAST_COUNTERS.map(p=>({...p,type:"neighborhood",aimY:1.45,reach:2.8,prompt:`[E] ${p.name.toUpperCase()}`})),
         ...LIFE_PROPS,
         POSTER_KIOSK,
         ...boardProps(adConfig),
@@ -637,6 +671,7 @@ async function boot() {
         const p = world.camera.position;
         const fy = controls.floorY;
         const target=interactionTarget();
+        if(target?.type==="neighborhood"){openNeighborhood(target.id);return;}
         if(target?.type==="npc") {
             const npc=target.ref;
             if(npc.id==="frank"){commerce=addLead(commerce,"ice");persistCommerce();}
@@ -834,7 +869,8 @@ async function boot() {
         const marker=document.getElementById("wayfinder");
         marker.hidden=!destination||hud.phase!=="explore";
         if(destination) {
-            let target=destination, hint="";
+            const guidance=neighborhoodWaypoint(p,destination);
+            let target=guidance?.target||destination, hint=guidance?.hint||"";
             if(destination.y>2 && fy<2) {
                 target=destination.id==="ice"?{x:37,z:9.5}:{x:14.6,z:9.7};
                 hint=destination.id==="ice"?"ASTORIA EAST STAIRS → 2F":"CLUB EAST STAIRS → LOUNGE";
