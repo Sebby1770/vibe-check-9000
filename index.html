@@ -28,8 +28,9 @@
     <link rel="stylesheet" href="expansion.css">
     <link rel="stylesheet" href="life.css">
     <link rel="stylesheet" href="ads.css">
+    <link rel="stylesheet" href="boot.css">
 </head>
-<body data-zone="club">
+<body data-zone="club" data-phase="boot" class="pre-night">
     <button id="cameraCapture" class="camera-trigger" type="button" hidden>CAMERA [C]</button>
     <canvas id="gl" aria-hidden="true"></canvas>
 
@@ -69,25 +70,20 @@
         </div>
         <div class="visor-reticle" aria-hidden="true"></div>
 
-        <section id="boot" class="overlay boot" aria-label="Doors">
-            <p class="boot-tag">v25.0.0 // TONIGHT'S BILL // <span id="bootSet">HOUSE SYSTEM</span></p>
-            <h1>VIBE CHECK <span>9000</span></h1>
-            <p class="boot-sub" id="bootSub">THE SUN IS STILL IN THE STREET</p>
-            <p class="boot-headline" id="bootHeadline"></p>
-            <p class="boot-bill" id="bootBill">the visor remembers who walked in</p>
-            <p class="boot-dare" id="bootDare"></p>
-            <p class="boot-sponsor" id="bootSponsor">TONIGHT'S BOARD · THE STREET STILL SELLS LIGHT</p>
-            <div class="boot-actions">
+        <section id="boot" class="overlay boot" aria-labelledby="bootTitle">
+            <div class="boot-card">
+                <p class="boot-kicker"><span>MIDTOWN</span><i aria-hidden="true"></i><span>NOV 12, 1954</span></p>
+                <h1 id="bootTitle" class="boot-logo"><span class="boot-logo-word">VIBE CHECK</span> <span class="boot-logo-num">9000</span></h1>
+                <p class="boot-line">Put on the visor. It's raining on 47th Street, and the floor is already moving.</p>
                 <button type="button" class="cta" id="enterBtn">ENTER THE NIGHT</button>
+                <p class="boot-keys">
+                    <span class="keys-desk"><kbd>ENTER</kbd> to begin · <kbd>WASD</kbd> walk · mouse look · <kbd>E</kbd> use · <kbd>ESC</kbd> menu</span>
+                    <span class="keys-touch">Stick to walk · drag to look · USE to talk</span>
+                </p>
+                <p class="boot-chip" id="bootDare"></p>
+                <div id="vr-slot" class="vr-slot"></div>
             </div>
-            <div id="vr-slot" class="vr-slot"></div>
-            <ul class="hints">
-                <li>WASD move · mouse look · SPACE dance</li>
-                <li>E use / talk · J pockets & map · front door 47th · back door alley · stairs lounge</li>
-                <li>Hail a Checker · shops across 47th · subway · Astoria 2F</li>
-                <li>ESC: deck, visor looks, night stamp, recap, tip the till</li>
-                <li class="mobile-only">Mobile: tap look + on-screen stick</li>
-            </ul>
+            <p class="boot-sponsor" id="bootSponsor">TONIGHT'S BOARD · THE STREET STILL SELLS LIGHT</p>
         </section>
 
         <section id="talk" class="overlay panel-wrap hidden" aria-live="polite">

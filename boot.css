@@ -1,0 +1,266 @@
+/* Opening title card + the quiet visor that sits around it before the night starts. */
+
+.boot {
+    --boot-cream: #fff2d8;
+    --boot-gold: #e6bd72;
+    --boot-pink: #ff4fd8;
+    --boot-cyan: #62fff5;
+    text-align: center;
+    padding: 64px 24px 56px;
+    background:
+        radial-gradient(ellipse 58% 46% at 50% 47%, rgba(5, 2, 12, 0.66), rgba(5, 2, 12, 0.38) 62%, rgba(5, 2, 12, 0) 100%),
+        radial-gradient(ellipse 110% 85% at 50% 45%, rgba(4, 2, 10, 0) 55%, rgba(4, 2, 10, 0.55) 100%),
+        linear-gradient(180deg, rgba(4, 2, 10, 0.82) 0%, rgba(4, 2, 10, 0.34) 30%, rgba(4, 2, 10, 0.42) 62%, rgba(4, 2, 10, 0.92) 100%);
+    backdrop-filter: blur(4px) saturate(0.85);
+    -webkit-backdrop-filter: blur(4px) saturate(0.85);
+}
+
+.boot-card {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    width: min(1240px, 100%);
+}
+.boot-card > * { animation: boot-rise 0.9s cubic-bezier(0.2, 0.7, 0.2, 1) both; }
+.boot-card > :nth-child(2) { animation-delay: 0.08s; }
+.boot-card > :nth-child(3) { animation-delay: 0.22s; }
+.boot-card > :nth-child(4) { animation-delay: 0.34s; }
+.boot-card > :nth-child(n+5) { animation-delay: 0.46s; }
+@keyframes boot-rise {
+    from { opacity: 0; transform: translateY(10px); }
+}
+
+.boot-kicker {
+    display: flex;
+    align-items: center;
+    gap: 14px;
+    color: var(--boot-gold);
+    font: 700 12px/1 "Space Mono", monospace;
+    letter-spacing: 0.34em;
+    text-shadow: 0 1px 8px rgba(0, 0, 0, 0.8);
+}
+.boot-kicker::before,
+.boot-kicker::after {
+    content: "";
+    width: 44px;
+    height: 1px;
+    background: linear-gradient(90deg, transparent, var(--boot-gold));
+}
+.boot-kicker::after { background: linear-gradient(90deg, var(--boot-gold), transparent); }
+.boot-kicker i {
+    width: 5px;
+    height: 5px;
+    background: var(--boot-gold);
+    transform: rotate(45deg);
+}
+
+.boot-logo {
+    margin: 22px 0 6px;
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: center;
+    align-items: baseline;
+    column-gap: 0.26em;
+    font-family: "Limelight", "Orbitron", serif;
+    font-weight: 400;
+    font-size: clamp(54px, 9vw, 116px);
+    line-height: 1;
+    letter-spacing: 0.01em;
+}
+.boot-logo-word {
+    color: var(--boot-cream);
+    text-shadow:
+        0 0 2px rgba(255, 255, 255, 0.7),
+        0 0 14px rgba(255, 79, 216, 0.85),
+        0 0 42px rgba(255, 0, 170, 0.5),
+        0 0 90px rgba(255, 0, 170, 0.25);
+    animation: boot-neon 1.6s steps(1, end) both;
+}
+.boot-logo-num {
+    color: #eafffd;
+    text-shadow:
+        0 0 2px rgba(255, 255, 255, 0.7),
+        0 0 14px rgba(98, 255, 245, 0.9),
+        0 0 42px rgba(0, 255, 247, 0.45),
+        0 0 90px rgba(0, 255, 247, 0.22);
+    animation: boot-neon 1.9s 0.25s steps(1, end) both;
+}
+@keyframes boot-neon {
+    0% { opacity: 0; }
+    12% { opacity: 0.85; }
+    16% { opacity: 0.15; }
+    24% { opacity: 1; }
+    30% { opacity: 0.4; }
+    36%, 100% { opacity: 1; }
+}
+.boot-logo::after {
+    content: "";
+    flex: 0 0 100%;
+    height: 1px;
+    margin-top: 0.2em;
+    background: linear-gradient(90deg, transparent 18%, rgba(255, 79, 216, 0.75) 42%, rgba(98, 255, 245, 0.75) 58%, transparent 82%);
+}
+
+.boot-line {
+    max-width: 46em;
+    margin: 14px 0 34px;
+    text-wrap: balance;
+    color: rgba(255, 242, 216, 0.86);
+    font: 17px/1.55 "Special Elite", "Space Mono", monospace;
+    letter-spacing: 0.02em;
+    text-shadow: 0 1px 10px rgba(0, 0, 0, 0.9);
+}
+
+.boot .cta {
+    position: relative;
+    min-width: 320px;
+    min-height: 64px;
+    padding: 20px 52px;
+    border: 2px solid var(--boot-pink);
+    border-radius: 2px;
+    background: linear-gradient(180deg, rgba(48, 6, 44, 0.62), rgba(12, 2, 18, 0.78));
+    color: #fff;
+    font: 900 18px/1 "Orbitron", sans-serif;
+    letter-spacing: 0.3em;
+    text-indent: 0.3em;
+    text-shadow: 0 0 12px rgba(255, 79, 216, 0.9);
+    cursor: pointer;
+    box-shadow:
+        0 0 0 1px rgba(255, 79, 216, 0.25),
+        0 0 26px rgba(255, 0, 200, 0.42),
+        inset 0 0 22px rgba(255, 0, 200, 0.22);
+    transition: background 160ms ease, color 160ms ease, box-shadow 160ms ease;
+    animation: boot-rise 0.9s 0.34s cubic-bezier(0.2, 0.7, 0.2, 1) both, boot-hum 3.2s 1.4s ease-in-out infinite alternate;
+}
+.boot .cta:hover {
+    background: var(--boot-pink);
+    color: #16001a;
+    text-shadow: none;
+    box-shadow: 0 0 40px rgba(255, 0, 200, 0.7);
+}
+.boot .cta:active { transform: translateY(1px); }
+.boot .cta:focus-visible {
+    outline: 1px solid rgba(255, 231, 168, 0.6);
+    outline-offset: 6px;
+}
+@keyframes boot-hum {
+    from { box-shadow: 0 0 0 1px rgba(255, 79, 216, 0.25), 0 0 22px rgba(255, 0, 200, 0.34), inset 0 0 18px rgba(255, 0, 200, 0.18); }
+    to { box-shadow: 0 0 0 1px rgba(255, 79, 216, 0.4), 0 0 38px rgba(255, 0, 200, 0.58), inset 0 0 26px rgba(255, 0, 200, 0.3); }
+}
+
+.boot-keys {
+    margin-top: 22px;
+    color: rgba(214, 222, 236, 0.62);
+    font: 11px/1.8 "Space Mono", monospace;
+    letter-spacing: 0.1em;
+    text-shadow: 0 1px 6px rgba(0, 0, 0, 0.9);
+}
+.boot-keys kbd {
+    font: inherit;
+    color: rgba(255, 242, 216, 0.9);
+    border: 1px solid rgba(255, 242, 216, 0.28);
+    border-radius: 3px;
+    padding: 1px 5px;
+}
+.keys-touch { display: none; }
+
+.boot-chip {
+    margin-top: 16px;
+    max-width: 100%;
+    padding: 6px 14px;
+    border: 1px solid rgba(230, 189, 114, 0.32);
+    border-radius: 16px;
+    background: rgba(18, 10, 4, 0.5);
+    text-wrap: balance;
+    color: rgba(255, 231, 168, 0.78);
+    font: 11px/1.5 "Space Mono", monospace;
+    letter-spacing: 0.06em;
+}
+.boot-chip:empty { display: none; }
+
+.vr-slot { margin-top: 14px; }
+.vr-slot:empty { display: none; }
+#VRButton, .vr-native {
+    position: relative !important;
+    left: auto !important;
+    bottom: auto !important;
+    display: inline-block !important;
+    opacity: 1 !important;
+    font-family: "Orbitron", sans-serif !important;
+}
+
+.boot > .boot-sponsor {
+    position: absolute;
+    left: 24px;
+    right: 24px;
+    bottom: max(20px, env(safe-area-inset-bottom));
+    margin: 0;
+    color: rgba(230, 189, 114, 0.5);
+    font: 10px/1.5 "Space Mono", monospace;
+    letter-spacing: 0.18em;
+    text-transform: uppercase;
+    text-wrap: balance;
+    animation: boot-rise 1.2s 0.6s ease both;
+}
+
+/* Before ENTER the visor is just glass: no telemetry, reticle, nav clutter or touch pads. */
+body.pre-night .visor-telemetry,
+body.pre-night .visor-reticle,
+body.pre-night .hud-bracket,
+body.pre-night .crosshair,
+body.pre-night .interact,
+body.pre-night .wayfinder,
+body.pre-night .mobile-actions,
+body.pre-night .mobile-controls,
+body.pre-night .camera-trigger,
+body.pre-night .visor-top .logo,
+body.pre-night .visor-top .status,
+body.pre-night .top-links > :not(#muteBtn):not(#settingsBtn) {
+    display: none !important;
+}
+/* Sits above the boot scrim so MUTE and settings stay clickable. */
+body.pre-night .visor-top { justify-content: flex-end; z-index: 3; }
+body.pre-night .top-links .icon-btn {
+    border-color: rgba(255, 242, 216, 0.18);
+    background: rgba(5, 2, 12, 0.35);
+    color: rgba(255, 242, 216, 0.62);
+}
+body.pre-night .top-links .icon-btn:hover {
+    border-color: var(--magenta);
+    background: var(--magenta);
+    color: #000;
+}
+
+@media (max-width: 720px), (pointer: coarse) {
+    .keys-desk { display: none; }
+    .keys-touch { display: inline; }
+}
+
+@media (max-width: 720px) {
+    .boot { padding: 60px 22px 64px; }
+    .boot-kicker { font-size: 10px; letter-spacing: 0.28em; gap: 10px; }
+    .boot-kicker::before, .boot-kicker::after { width: 26px; }
+    .boot-logo { margin-top: 18px; font-size: clamp(40px, 13.4vw, 64px); row-gap: 0.04em; }
+    .boot-logo-num { font-size: 1.22em; }
+    .boot-line { font-size: 15px; margin: 14px 0 28px; }
+    .boot .cta { width: 100%; max-width: 340px; min-width: 0; min-height: 68px; padding: 20px 16px; font-size: 16px; letter-spacing: 0.24em; text-indent: 0.24em; }
+    .boot-chip { font-size: 10px; }
+    .boot > .boot-sponsor { font-size: 9px; letter-spacing: 0.12em; left: 20px; right: 20px; }
+}
+
+@media (max-height: 560px) {
+    .boot { padding-top: 56px; padding-bottom: 44px; }
+    .boot-logo { font-size: clamp(40px, 6.4vw, 84px); margin-top: 14px; }
+    .boot-line { margin: 10px 0 20px; }
+    .boot-chip { display: none; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+    .boot-card > *, .boot-logo-word, .boot-logo-num, .boot .cta, .boot > .boot-sponsor { animation: none !important; }
+}
+html.reduced-fx .boot-card > *,
+html.reduced-fx .boot-logo-word,
+html.reduced-fx .boot-logo-num,
+html.reduced-fx .boot .cta,
+html.reduced-fx .boot > .boot-sponsor { animation: none !important; }
+html.reduced-fx .boot { backdrop-filter: none; -webkit-backdrop-filter: none; }

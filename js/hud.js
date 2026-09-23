@@ -60,6 +60,8 @@ export function createHud(hooks) {
         if ($("adsDesk")) $("adsDesk").classList.toggle("hidden", p !== "ads");
         $("crosshair").classList.toggle("hidden", p !== "explore");
         document.body.dataset.phase = p;
+        document.body.classList.toggle("pre-night", !run.entered);
+        if (p === "boot") requestAnimationFrame(() => { if (run.phase === "boot") $("enterBtn")?.focus({ preventScroll: true }); });
         const overlay = p !== "explore" && p !== "boot";
         if (p === "boot" || overlay) hooks.onOverlay?.(true);
         else hooks.onOverlay?.(false);
@@ -348,6 +350,15 @@ export function createHud(hooks) {
         });
 
         window.addEventListener("keydown", (e) => {
+            if (run.phase !== "boot" || e.repeat || (e.key !== "Enter" && e.key !== " ")) return;
+            if ($("modalBg")?.classList.contains("active")) return;
+            // A focused control (the button itself, MUTE, a form field) handles its own Enter/Space.
+            if (e.target instanceof Element && e.target.closest("button, a, input, textarea, select, [contenteditable]")) return;
+            e.preventDefault();
+            e.stopImmediatePropagation();
+            enterClub();
+        });
+        window.addEventListener("keydown", (e) => {
             if (e.repeat || run.phase === "shop" || run.phase === "journal" || run.phase === "activity") return;
             if (run.phase === "talk" && /^[1-9]$/.test(e.key)) {
                 hooks.onTalkChoice?.(Number(e.key) - 1);
@@ -509,10 +520,6 @@ export function createHud(hooks) {
         setBill(bill) {
             run.bill = bill;
             if (bill?.gazette) run.gazette = bill.gazette;
-            if ($("bootSet") && bill?.set) $("bootSet").textContent = bill.set.name;
-            if ($("bootBill") && bill?.tag) $("bootBill").textContent = bill.tag;
-            if ($("bootSub") && bill?.set) $("bootSub").textContent = bill.set.name;
-            if ($("bootHeadline") && bill?.gazette) $("bootHeadline").textContent = bill.gazette.headline;
             if (bill?.dare) {
                 run.dare = bill.dare;
                 fillDare($("bootDare"));

@@ -297,100 +297,6 @@ html.reduced-fx body.tipsy #gl {
 }
 body:not([data-phase="explore"]) .visor-reticle { display: none; }
 
-.boot {
-    background: radial-gradient(circle at 50% 40%, rgba(20, 0, 40, 0.28), rgba(0, 0, 0, 0.58));
-    text-align: center;
-}
-.stereo {
-    display: flex;
-    gap: 46vw;
-    justify-content: center;
-    margin-bottom: 18px;
-}
-.stereo span {
-    width: 8px;
-    height: 72px;
-    background: var(--cyan);
-    box-shadow: 0 0 18px var(--cyan);
-    animation: stereo 1.6s ease-in-out infinite alternate;
-}
-.stereo span:last-child {
-    background: var(--magenta);
-    box-shadow: 0 0 18px var(--magenta);
-    animation-delay: 0.2s;
-}
-@keyframes stereo {
-    from { transform: scaleY(0.7); opacity: 0.6; }
-    to { transform: scaleY(1.1); opacity: 1; }
-}
-.boot-tag {
-    color: var(--green);
-    font-size: 11px;
-    letter-spacing: 3px;
-    margin-bottom: 16px;
-    border: 1px solid var(--green);
-    padding: 6px 12px;
-}
-.boot h1 {
-    font-family: "Orbitron", sans-serif;
-    font-size: clamp(28px, 7vw, 92px);
-    font-weight: 900;
-    letter-spacing: 2px;
-    text-shadow: 2px 2px 0 var(--magenta), -2px -2px 0 var(--cyan);
-    display: flex;
-    flex-wrap: wrap;
-    justify-content: center;
-    gap: 0.18em;
-    padding: 0 12px;
-}
-.boot h1 span { color: inherit; }
-.boot-sub {
-    margin: 14px 0 28px;
-    color: var(--cyan);
-    letter-spacing: 8px;
-    font-family: "Orbitron", sans-serif;
-}
-.boot-actions { display: flex; flex-wrap: wrap; gap: 12px; justify-content: center; }
-.cta {
-    border: 2px solid var(--magenta);
-    background: transparent;
-    color: var(--text);
-    font-family: "Orbitron", sans-serif;
-    font-size: 20px;
-    font-weight: 900;
-    letter-spacing: 4px;
-    padding: 20px 42px;
-    cursor: pointer;
-    box-shadow: 0 0 22px rgba(255, 0, 255, 0.4);
-}
-.cta:hover {
-    background: var(--magenta);
-    color: #000;
-}
-.hints {
-    list-style: none;
-    margin-top: 28px;
-    color: var(--dim);
-    font-size: 12px;
-    letter-spacing: 1px;
-    line-height: 1.8;
-}
-.legal-line {
-    margin-top: 22px;
-    color: var(--red);
-    font-size: 10px;
-    letter-spacing: 2px;
-}
-.vr-slot { min-height: 20px; margin-top: 12px; position: relative; height: 48px; }
-#VRButton, .vr-native {
-    position: relative !important;
-    left: auto !important;
-    bottom: auto !important;
-    display: inline-block !important;
-    opacity: 1 !important;
-    font-family: "Orbitron", sans-serif !important;
-}
-
 .panel-wrap { background: rgba(0, 0, 0, 0.28); }
 .panel {
     width: min(720px, 100%);
@@ -733,7 +639,6 @@ body:not([data-phase="explore"]) .mobile-controls { display: none !important; }
 .toast.show { transform: translateX(-50%) translateY(0); }
 
 .hidden { display: none !important; }
-.mobile-only { display: none; }
 .footer-links { margin-top: 16px; display: flex; gap: 12px; flex-wrap: wrap; }
 .footer-links a { color: var(--cyan); text-decoration: none; font-size: 12px; }
 
@@ -751,17 +656,9 @@ body.rave .visor-mask { animation: rave 520ms infinite; }
 @media (max-width: 720px) {
     .visor-top { left: 18px; right: 18px; top: 10px; flex-wrap: wrap; }
     .status { display: none; }
-    .boot { padding-left: 28px; padding-right: 28px; }
-    .boot h1 { font-size: 20px; letter-spacing: 0; }
-    .boot-tag { font-size: 9px; letter-spacing: 1px; max-width: 100%; white-space: normal; }
-    .legal-line { white-space: normal; }
-    .boot-sub { letter-spacing: 3px; }
-    .legal-line { letter-spacing: 1px; padding: 0 12px; }
-    .cta { width: 100%; font-size: 16px; padding: 16px; }
     .side-grid { grid-template-columns: 1fr; }
     .result-row { flex-direction: column; }
     .row-val { text-align: left; }
-    .mobile-only { display: list-item; }
     .panel { padding: 18px; }
     .hud-bracket { width: 28px; height: 28px; }
     .visor-telemetry {
@@ -773,11 +670,6 @@ body.rave .visor-mask { animation: rave 520ms infinite; }
         gap: 6px 10px;
     }
     .visor-telemetry span:nth-child(n+5) { display: none; }
-    .boot-actions { width: min(360px, 100%); padding: 0 12px; }
-}
-
-@media (pointer: coarse) {
-    .mobile-only { display: list-item; }
 }
 
 @media (prefers-reduced-motion: reduce) {
@@ -821,13 +713,6 @@ body[data-zone="subway"] .hud-bracket { border-color: rgba(57, 255, 20, 0.85); }
 body[data-zone="subway"] .logo { color: #39ff14; text-shadow: 0 0 12px #39ff14; }
 body[data-zone="suite"] .hud-bracket { border-color: rgba(212, 196, 168, 0.85); }
 
-.boot h1 {
-    font-family: "Limelight", "Orbitron", serif;
-}
-.boot-sub {
-    font-family: "Special Elite", "Space Mono", monospace;
-    letter-spacing: 6px;
-}
 
 .paper-panel {
     background: #d8c9a4;
@@ -886,12 +771,6 @@ body[data-zone="suite"] .hud-bracket { border-color: rgba(212, 196, 168, 0.85); 
 
 .talk-panel h2 { font-family: "Limelight", "Orbitron", serif; }
 
-.boot-bill {
-    margin-top: 10px;
-    color: var(--visor);
-    letter-spacing: 3px;
-    font-size: 12px;
-}
 .bill-line {
     color: var(--green);
     letter-spacing: 3px;
@@ -943,16 +822,6 @@ body[data-zone="suite"] .hud-bracket { border-color: rgba(212, 196, 168, 0.85); 
     margin: 6px 0;
     letter-spacing: 1px;
     color: var(--text);
-}
-.boot-headline {
-    max-width: 720px;
-    margin: 8px auto 0;
-    font-family: "Limelight", Georgia, serif;
-    font-size: clamp(14px, 2.2vw, 22px);
-    color: #ffe7a8;
-    letter-spacing: 1px;
-    line-height: 1.35;
-    text-shadow: 0 0 18px rgba(224, 178, 90, 0.45);
 }
 body[data-night="peak"] .status-dot { background: #ff00ff; box-shadow: 0 0 10px #ff00ff; }
 body[data-night="lastcall"] .status-dot { background: #ff2e63; box-shadow: 0 0 10px #ff2e63; }
