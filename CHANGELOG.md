@@ -4,6 +4,16 @@ All notable changes to VIBE CHECK 9000™ are documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
+## [28.0.0] - 2026-09-24
+
+### Neighbors and homes opposite the park
+
+- Fill the empty 47th Street frontage opposite Mercer Garden with two adjoining apartment buildings, balconies, lit windows, planted window boxes and entrance halls.
+- Buy the $260 Mercer Garden Flat or $420 Parkview Residence from the street listings board or Life panel. Both are furnished ground-floor homes with kitchens and living areas; purchases unlock real doors and preserve the existing Astoria keys and savings.
+- Move purchased furnishings between all five homes, keep ownership across reloads, and guide players through the correct street entrance. Correct Astoria apartment guidance to use the hotel stairs.
+- Give people oval faces, narrower jaws, shaped hairlines, visible eyes behind wire glasses, blinking, tailored jackets, long sleeves, better skirt proportions and fingers. Bake hand detail into shared geometry to avoid extra draw calls per finger.
+- Verify affordability, physical entry, locked doors, both purchases, furniture transfer, old-save compatibility, reloads, mobile listings and character poses in browser tests.
+
 ## [27.0.0] - 2026-09-24
 
 ### Walk the whole block

@@ -1,3 +1,4 @@
+import { buildParkResidences } from './park-residences.js';
 import { buildBlockLoop } from './block-loop.js';
 import { buildDistrict } from './district.js';
 import { buildLifeWorld } from './life-world.js';
@@ -75,6 +76,7 @@ export function createWorld(canvas, adConfig) {
     const city = buildCity(scene, adConfig);
     const district = buildDistrict(scene);
     buildBlockLoop(scene);
+    buildParkResidences(scene);
     const colliders = buildColliders(interiorColliders());
     const streetLife = buildStreetLife(scene);
     const lifeWorld = buildLifeWorld(scene,colliders);
@@ -270,7 +272,7 @@ export function createWorld(canvas, adConfig) {
                 dusk.glow.visible = false;
                 renderer.toneMappingExposure = 0.82;
                 renderer.setClearColor(0x0c0a08, 1);
-            } else if (zone === "suite") {
+            } else if (zone === "suite" || zone === "mercerrow") {
                 scene.fog.color.set(0x2a2018);
                 scene.fog.density = 0.02;
                 hemi.color.set(0xffd0a0);

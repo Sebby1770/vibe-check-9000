@@ -1,10 +1,12 @@
 import { DISTRICT_BOUNDS, districtColliders, districtZone } from './district-layout.js';
-import { lifeColliders } from './life.js';
+import { lifeColliders, HOME_BOUNDS, HOMES } from './life.js';
 import { streetColliders } from "./expansion.js";
 import { posterCollider } from "./ads.js";
 /* 1954 Midtown layout. Meters. Club at origin, street +Z, alley -Z. */
 
 export const SECOND_Y = 4.4;
+const PARK_HOMES=HOMES.filter(h=>h.floorY===0);
+const inParkResidence=(x,z)=>z>=31.8&&z<=44.5&&PARK_HOMES.some(h=>x>=h.doorX-14&&x<=h.doorX+4);
 
 export const CLUB = { minX: -16.5, maxX: 16.5, minZ: -16.5, maxZ: 12.5 };
 export const DINER = { minX: -38.8, maxX: -16.5, minZ: -16.5, maxZ: 12.5 };
@@ -91,6 +93,7 @@ export function shopAt(x, z) {
 
 export function isOutside(x, z, y = 0) {
     if (y < -1.2) return false;
+    if(inParkResidence(x,z))return false;
     if (["books","bakery","arcade"].includes(districtZone(x,z))) return false;
     if (inSubStairs(x, z) && y < 0.5) return false;
     return !inClubFootprint(x, z) && !inDiner(x, z) && !inHotel(x, z) && !shopAt(x, z);
@@ -134,6 +137,7 @@ export function getZone(x, z, y = 0) {
         if (y > SECOND_Y * 0.42 && !inAtrium(x, z)) return "lounge";
         return "club";
     }
+    if(inParkResidence(x,z))return 'mercerrow';
     const eastZone = districtZone(x,z);
     if (eastZone) return eastZone;
     if (z < CLUB.minZ) return "alley";
@@ -152,6 +156,7 @@ export function zoneLabel(zone) {
         case "books": return "BLUE NOTE BOOKS";
         case "bakery": return "SUNRISE BAKERY";
         case "arcade": return "EASTERN ARCADE";
+        case "mercerrow": return "MERCER ROW RESIDENCES";
         case "mercer": return "MERCER GARDEN";
         case "hawthorne": return "HAWTHORNE PARK";
         case "eastavenue": return "EAST AVENUE";
@@ -306,9 +311,19 @@ export function buildColliders(interiorBoxes = []) {
         if (b.minX - a.maxX > 0.15) wall(boxes, a.maxX - 0.05, b.minX + 0.05, 32.05, 40.0);
     }
     wall(boxes, -90, SHOPS[0].minX - 0.2, 32.05, 90, -1, 120);
-    wall(boxes, SHOPS[SHOPS.length - 1].maxX + 0.2, 90, 32.05, 90, -1, 120);
-    wall(boxes, -90, 90, 40.12, 90, -1, 120);
+    wall(boxes, SHOPS[SHOPS.length - 1].maxX + 0.2, 53, 32.05, 90, -1, 120);
+    wall(boxes, 53, 90, 44.5, 90, -1, 120);
+    wall(boxes, -90, 53, 40.12, 90, -1, 120);
 
+    // Mercer Row entry halls: rooms use the same ownership gates as Astoria.
+    for(const h of HOMES.filter(h=>h.floorY===0)){
+      const r=HOME_BOUNDS.find(r=>r.id===h.id),right=h.doorX+4;
+      wall(boxes,r.minX-1.1,r.minX-.9,31.8,44.5,-1,24);
+      wall(boxes,right-.1,right+.1,31.8,44.5,-1,24);
+      wall(boxes,r.minX-1,right,44.3,44.5,-1,24);
+      wall(boxes,r.minX-1,h.entryX-1.1,31.7,31.9,-1,3.5);
+      wall(boxes,h.entryX+1.1,right,31.7,31.9,-1,3.5);
+    }
     // Shop / diner / hotel furniture: each js/interiors/<room>.js colliders(), passed in by world.js
     for (const b of interiorBoxes) boxes.push({ ...b });
 

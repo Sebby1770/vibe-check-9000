@@ -285,7 +285,7 @@ export const DESTINATIONS = [
   ...DISTRICT_PLACES,
   ...EAST_COUNTERS,
   ...LIFE_PLACES,
-  ...HOMES.map(h=>({id:`home-${h.id}`,name:`${h.number} · ${h.name}`,x:h.doorX+1,z:h.doorZ,y:4.4})),
+  ...HOMES.map(h=>({id:`home-${h.id}`,name:`${h.number} · ${h.name}`,x:h.doorX+1,z:h.doorZ,y:h.floorY??4.4})),
   ...STREET_PLACES,
   ...SHOPS_CATALOG.filter((s) => s.id !== "diner").map((s) => ({
     id: s.id,

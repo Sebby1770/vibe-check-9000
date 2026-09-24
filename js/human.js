@@ -1,3 +1,4 @@
+import { boxBatch } from './interiors/batch.js';
 import * as THREE from "three";
 
 const GEO = {};
@@ -15,33 +16,67 @@ function roundedBox(w,h,d,r) {
 function geo() {
     if (GEO.head) return GEO;
     GEO.head = new THREE.SphereGeometry(0.108, 20, 16);
+    // Oval cranium with cheekbones, a narrower jaw and a less spherical chin.
+    const face=GEO.head.attributes.position;
+    for(let i=0;i<face.count;i++){
+        const x=face.getX(i),y=face.getY(i),z=face.getZ(i),jaw=Math.max(0,-y/.108);
+        face.setXYZ(i,x*(1-.22*jaw),y*1.18,z*(1-.1*jaw));
+    }
+    GEO.head.computeVertexNormals();
     GEO.neck = new THREE.CylinderGeometry(0.038, 0.046, 0.09, 8);
-    GEO.torso = roundedBox(.34,.44,.18,.045);
+    GEO.torso = roundedBox(.35,.44,.2,.065);
+    GEO.coat = roundedBox(.39,.57,.235,.07);
+    // Jackets taper toward the waist instead of forming a rectangular block.
+    for(const shape of [GEO.torso,GEO.coat]){
+        const p=shape.attributes.position;
+        for(let i=0;i<p.count;i++)p.setX(i,p.getX(i)*(1-.13*Math.exp(-(((p.getY(i)+.05)/.16)**2))));
+        shape.computeVertexNormals();
+    }
     GEO.pelvis = new THREE.BoxGeometry(0.3, 0.16, 0.16);
-    GEO.upperArm = new THREE.CapsuleGeometry(0.042, 0.22, 3, 6);
-    GEO.forearm = new THREE.CapsuleGeometry(0.036, 0.2, 3, 6);
+    GEO.upperArm = new THREE.CapsuleGeometry(0.048, 0.22, 4, 10);
+    GEO.forearm = new THREE.CapsuleGeometry(0.038, 0.2, 4, 10);
     GEO.hand = roundedBox(.065,.09,.04,.017);
-    GEO.thigh = new THREE.CapsuleGeometry(0.058, 0.34, 3, 6);
-    GEO.shin = new THREE.CapsuleGeometry(0.046, 0.32, 3, 6);
+    GEO.thigh = new THREE.CapsuleGeometry(0.065, 0.34, 4, 10);
+    GEO.shin = new THREE.CapsuleGeometry(0.048, 0.32, 4, 10);
     GEO.foot = roundedBox(.08,.055,.2,.02);
     GEO.eye = new THREE.SphereGeometry(0.011, 10, 8);
     GEO.iris = new THREE.SphereGeometry(0.006, 10, 8);
-    GEO.brow = new THREE.BoxGeometry(0.046, 0.01, 0.012);
+    GEO.brow = roundedBox(.033,.006,.008,.002);
     GEO.nose = roundedBox(.024,.038,.038,.011);
     GEO.ear = new THREE.SphereGeometry(0.028, 6, 6);
-    GEO.hairShort = new THREE.SphereGeometry(0.112, 10, 8, 0, Math.PI * 2, 0, Math.PI / 1.7);
+    GEO.hairShort = new THREE.SphereGeometry(0.113, 18, 12, 0, Math.PI * 2, 0, Math.PI / 1.7);
+    const hp=GEO.hairShort.attributes.position;
+    for(let i=0;i<hp.count;i++){
+        const y=hp.getY(i),z=hp.getZ(i),front=Math.max(0,z/.113);
+        hp.setY(i,Math.max(y*1.18,-.035+front*.086));
+    }
+    GEO.hairShort.computeVertexNormals();
+    GEO.finger = new THREE.CapsuleGeometry(.007,.029,3,6);
+    GEO.thumb = new THREE.CapsuleGeometry(.01,.026,3,6);
+    // Bake fingers and thumb into each hand: detail adds no per-person draw calls.
+    const tempMaterial=new THREE.MeshBasicMaterial();
+    for(const side of [-1,1]){
+        const batch=boxBatch(),group=new THREE.Group();
+        batch.geo(tempMaterial,GEO.hand,0,0,0);
+        for(let i=0;i<4;i++)batch.geo(tempMaterial,GEO.finger,-.023+i*.015,-.048,.001);
+        batch.geo(tempMaterial,GEO.thumb,-side*.033,-.008,.003,1,1,1,0,0,side*.5);
+        GEO[side<0?'leftHand':'rightHand']=batch.flush(group)[0].geometry;
+    }
+    tempMaterial.dispose();
+    GEO.button = new THREE.SphereGeometry(.009,6,5);
+    GEO.rim = new THREE.TorusGeometry(.023,.0028,6,20);
     GEO.hairBun = new THREE.SphereGeometry(0.055, 8, 6);
     GEO.hatBrim = new THREE.CylinderGeometry(0.17, 0.17, 0.018, 16);
     GEO.hatCrown = new THREE.CylinderGeometry(0.1, 0.11, 0.1, 12);
     GEO.copHat = new THREE.CylinderGeometry(0.11, 0.12, 0.08, 10);
     GEO.newsboy = new THREE.SphereGeometry(0.12, 10, 8, 0, Math.PI * 2, 0, Math.PI / 2.2);
-    GEO.dress = new THREE.CylinderGeometry(0.28, 0.16, 0.7, 10);
+    GEO.dress = new THREE.CylinderGeometry(0.16, 0.27, 0.7, 20);
     GEO.tie = new THREE.BoxGeometry(0.04, 0.18, 0.012);
     GEO.glow = new THREE.BoxGeometry(0.03, 0.36, 0.03);
     GEO.headphone = new THREE.TorusGeometry(0.12, 0.018, 6, 16, Math.PI);
     GEO.badge = new THREE.CircleGeometry(0.03, 8);
-    GEO.coat = roundedBox(.40,.58,.24,.055);
-    GEO.collar = new THREE.BoxGeometry(0.24, 0.08, 0.18);
+
+    GEO.collar = roundedBox(.19,.045,.14,.015);
     GEO.lapel = new THREE.BoxGeometry(0.09, 0.24, 0.02);
     GEO.scarf = new THREE.BoxGeometry(0.1, 0.32, 0.06);
     GEO.umbShaft = new THREE.CylinderGeometry(0.012, 0.012, 0.92, 6);
@@ -140,10 +175,10 @@ export function createHuman(spec = {}) {
 
     const skinM = mat(skinC, { roughness: 0.76, metalness: 0, emissive: skinC, emissiveIntensity: 0.015 });
     const topM = mat(o.top, {
-        roughness: o.dress ? 0.4 : 0.65,
-        metalness: o.dress ? 0.25 : 0.08,
+        roughness: o.dress ? 0.68 : 0.85,
+        metalness: 0,
         emissive: o.accent,
-        emissiveIntensity: outfitName === "raver" || outfitName === "dj" ? 0.18 : 0.04,
+        emissiveIntensity: outfitName === "raver" || outfitName === "dj" ? 0.1 : 0,
     });
     const botM = mat(o.bottom);
     const hairM = mat(hairC, { roughness: 0.7 });
@@ -169,7 +204,7 @@ export function createHuman(spec = {}) {
         coat.position.y = 0.14;
         spine.add(coat);
         const collar = new THREE.Mesh(G.collar, topM);
-        collar.position.set(0, 0.46, 0.02);
+        collar.position.set(0, 0.445, 0.01);
         spine.add(collar);
         const lapelM = mat(0xe8dcc8, { roughness: 0.7 });
         const lapelL = new THREE.Mesh(G.lapel, lapelM);
@@ -179,6 +214,8 @@ export function createHuman(spec = {}) {
         lapelR.position.x = 0.08;
         lapelR.rotation.z = -0.18;
         spine.add(lapelL, lapelR);
+        for(const y of [.08,.18,.28]){const button=new THREE.Mesh(G.button,shoeM);button.position.set(.018,y,.124);spine.add(button);}
+        const pocket=new THREE.Mesh(roundedBox(.085,.045,.012,.004),topM);pocket.position.set(.11,.3,.122);spine.add(pocket);
     }
     if (spec.scarf !== false && (o.hat === "fedora" || outfitName === "lady" || outfitName === "lounge")) {
         const scarf = new THREE.Mesh(G.scarf, accentM);
@@ -214,11 +251,12 @@ export function createHuman(spec = {}) {
     const skull = new THREE.Mesh(G.head, skinM);
     head.add(skull);
 
+    const eyelids=[];
     const eyeW = mat(0xf2eee6, { roughness: 0.35 });
     const irisM = mat(0x1a120c, { roughness: 0.3 });
     for (const s of [-1, 1]) {
         const eye = new THREE.Mesh(G.eye, eyeW);
-        eye.position.set(s * 0.038, 0.02, 0.098);
+        eye.position.set(s * 0.038, 0.02, 0.099);
         eye.scale.set(1,.65,.42);
         const iris = new THREE.Mesh(G.iris, irisM);
         iris.position.set(s * 0.038, 0.02, 0.102);
@@ -228,23 +266,25 @@ export function createHuman(spec = {}) {
         const ear = new THREE.Mesh(G.ear, skinM);
         ear.position.set(s * 0.108, 0, 0);
         ear.scale.set(0.6, 1, 0.7);
-        head.add(eye, iris, brow, ear);
+        const eyeGroup=new THREE.Group();eyeGroup.position.set(s*.038,.02,0);
+        eye.position.x=iris.position.x=0;eye.position.y=iris.position.y=0;
+        eyeGroup.add(eye,iris);eyelids.push(eyeGroup);
+        ear.scale.set(.5,.8,.55);
+        head.add(eyeGroup,brow,ear);
     }
     const nose = new THREE.Mesh(G.nose, skinM);
     nose.position.set(0, -0.01, 0.1);
     head.add(nose);
     const mouth = new THREE.Mesh(new THREE.BoxGeometry(0.036, 0.006, 0.006), mat(0x5a2030, { roughness: 0.5 }));
-    mouth.position.set(0, -0.045, 0.098);
+    mouth.position.set(0, -0.052, 0.09);
     if (spec.mouth !== false) head.add(mouth);
     if (outfitName === "clerk" || outfitName === "pharmacist" || outfitName === "salesman") {
         const glassM = mat(0x1a1410, { roughness: 0.25, metalness: 0.6 });
         for (const s of [-1, 1]) {
-            const lens = new THREE.Mesh(G.lens, mat(0x88aacc, { roughness: 0.1, metalness: 0.4, side: THREE.DoubleSide }));
-            lens.position.set(s * 0.038, 0.02, 0.11);
-            const rim = new THREE.Mesh(G.lens, glassM);
-            rim.position.set(s * 0.038, 0.02, 0.109);
-            rim.scale.setScalar(1.15);
-            head.add(lens, rim);
+            // Open wire rims leave the eyes visible, rather than opaque blue discs.
+            const rim = new THREE.Mesh(G.rim, glassM);
+            rim.position.set(s * 0.038, 0.02, 0.115);
+            head.add(rim);
         }
         const bridge = new THREE.Mesh(G.bridge, glassM);
         bridge.position.set(0, 0.025, 0.11);
@@ -323,20 +363,20 @@ export function createHuman(spec = {}) {
     const lUpper = limb(G.upperArm, topM, 0.28);
     lUpper.rotation.z = 0.12;
     lClav.add(lUpper);
-    const lFore = limb(G.forearm, skinM, 0.24);
+    const lFore = limb(G.forearm, streetCoat ? topM : skinM, 0.24);
     lFore.position.y = -0.28;
     lUpper.add(lFore);
-    const lHand = new THREE.Mesh(G.hand, skinM);
+    const lHand = new THREE.Mesh(G.leftHand, skinM);
     lHand.position.y = -0.26;
     lFore.add(lHand);
 
     const rUpper = limb(G.upperArm, topM, 0.28);
     rUpper.rotation.z = -0.12;
     rClav.add(rUpper);
-    const rFore = limb(G.forearm, skinM, 0.24);
+    const rFore = limb(G.forearm, streetCoat ? topM : skinM, 0.24);
     rFore.position.y = -0.28;
     rUpper.add(rFore);
-    const rHand = new THREE.Mesh(G.hand, skinM);
+    const rHand = new THREE.Mesh(G.rightHand, skinM);
     rHand.position.y = -0.26;
     rFore.add(rHand);
 
@@ -413,6 +453,7 @@ export function createHuman(spec = {}) {
     const scale = spec.scale || 1;
     root.scale.setScalar(scale);
     root.userData.joints = { hips, spine, head, lUpper, rUpper, lFore, rFore, lThigh, rThigh, lShin, rShin, lHand, rHand };
+    root.userData.eyelids=eyelids;
     root.userData.phase = Math.random() * Math.PI * 2;
     root.userData.mode = spec.anim || "idle";
     root.userData.kind = "human";
@@ -464,6 +505,9 @@ export function animateHuman(obj, t, ctx = {}) {
     const mode = ctx.mode || obj.userData.mode || "idle";
     const bpm = ctx.bpm || 128;
     const ph = obj.userData.phase || 0;
+    // A short asynchronous blink keeps idle faces alive without moving instrument grips.
+    const blink=(t+ph)%4.7,openness=blink<.16?Math.max(.08,Math.abs(blink-.08)/.08):1;
+    for(const lid of obj.userData.eyelids||[])lid.scale.y=openness;
     const beat = t * (bpm / 60) * Math.PI * 2 + ph;
 
     if (mode === "walk") {

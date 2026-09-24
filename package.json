@@ -1,6 +1,6 @@
 {
   "name": "vibe-check-9000",
-  "version": "27.0.0",
+  "version": "28.0.0",
   "private": true,
   "type": "module",
   "description": "First-person 1954 Midtown: subway under 47th, a hotel floor, a picture that refuses the decade.",
@@ -12,6 +12,7 @@
     "test:expansion": "node tests/expansion-browser.test.js",
     "test:district": "node tests/district-browser.test.js",
     "test:neighborhood": "node tests/neighborhood-browser.test.js",
-    "test:block": "node tests/block-browser.test.js"
+    "test:block": "node tests/block-browser.test.js",
+    "test:park-homes": "node tests/park-homes-browser.test.js"
   }
 }

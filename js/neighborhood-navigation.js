@@ -1,6 +1,14 @@
+import { HOMES } from './life.js';
 import { DISTRICT_BUILDINGS, EAST_COUNTERS, districtZone } from './district-layout.js';
 // Guide deliveries around the solid block rather than pointing through its walls.
 export function neighborhoodWaypoint(position,destination) {
+  const home=HOMES.find(h=>h.floorY===0&&destination?.id===`home-${h.id}`);
+  if(home){
+    if(position.z>44.5)return {target:{x:109,z:29},hint:'EAST AVENUE → 47TH STREET'};
+    if(position.z<33||position.x>home.doorX+4||position.x<home.doorX-14)
+      return {target:{x:home.entryX,z:32.7},hint:'MERCER ROW · ENTER FROM 47TH STREET'};
+    return {target:destination,hint:'YOUR APARTMENT DOOR · GROUND FLOOR'};
+  }
   if(!EAST_COUNTERS.some(c=>c.id===destination?.id))return null;
   const {x,z}=position,zone=districtZone(x,z);
   if(zone===destination.id)return {target:destination,hint:'AT THE COUNTER'};

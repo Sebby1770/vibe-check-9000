@@ -12,6 +12,8 @@ export const FURNISHINGS = [
   {id:'breakfast',shop:'diner',name:'The breakfast corner',price:28,icon:'☕',color:'#b97963',detail:'Coffee, a pie plate and a little table for the morning after.'},
 ];
 export const HOMES = [
+  {id:'mercer',name:'The Mercer Garden Flat',number:'M1',price:260,x:61,z:37.7,doorX:67,doorZ:37.7,floorY:0,location:'Mercer Row · ground floor',entryX:69,entryZ:31,color:'#728b78',tag:'Your front garden belongs to the whole neighborhood.',detail:'A sage-green apartment opposite Mercer Garden, with a reading salon, walnut furniture and a private entrance hall.'},
+  {id:'parkview',name:'The Parkview Residence',number:'M2',price:420,x:82,z:37.7,doorX:88,doorZ:37.7,floorY:0,location:'Mercer Row · ground floor',entryX:90,entryZ:31,color:'#b98362',tag:'A warm home overlooking the park.',detail:'A terracotta apartment with a generous living room, a breakfast corner and room for every furnishing you collect.'},
   {id:'studio',name:'The Bluebird Studio',number:'2A',price:180,x:20.7,z:-3.3,doorX:24.5,doorZ:-3.3,color:'#638d9e',tag:'A small place. A very big first key.',detail:'Walnut bed, blue rug, writing desk and a quiet reading corner.'},
   {id:'loft',name:'The Magnolia Flat',number:'2B',price:340,x:20.7,z:-11.7,doorX:24.5,doorZ:-11.7,color:'#829b73',tag:'Room for records and a slower morning.',detail:'A garden-green salon with a double bed, seating and a dining nook.'},
   {id:'suite',name:'The Marigold Suite',number:'2C',price:560,x:30.2,z:-13,doorX:34.3,doorZ:-13,color:'#c29457',tag:'Your own golden hour, upstairs.',detail:'Amber upholstery, a broad writing desk and the best-dressed bedroom on the floor.'},
@@ -26,6 +28,7 @@ const soundcheck = {id:'club',owner:'REXA',title:'The club soundcheck',noun:'A b
 export const JOBS = [...WORKSHOPS.map(w=>({id:w.id,name:w.title,owner:w.owner,base:45})),{id:'club',name:'Soundcheck technician',owner:'REXA',base:55}];
 export const LIFE_PLACES = [
   {id:'property',name:'Astoria property desk',x:28.9,z:8.8,y:0,description:'Browse, buy and visit apartments upstairs.'},
+  {id:'parkproperty',name:'Mercer Row apartment listings',x:72.5,z:30.8,y:0,description:'Two homes opposite Mercer Garden. Enter from 47th Street.'},
   {id:'clubdesk',name:'Club lighting & soundcheck',x:9.9,z:-9.1,y:0,description:'Set the room’s look or take a soundcheck shift.'},
 ];
 const integer=(n,fallback=0,max=10000000)=>Number.isFinite(n)?Math.max(0,Math.min(max,Math.floor(n))):fallback;
@@ -85,7 +88,7 @@ export function buyHome(input,id) {
   if(!home)return {state,ok:false,message:'That apartment is unavailable.'};
   if(state.properties.includes(id))return {state,ok:false,message:'You already own these keys.'};
   const r=spend(state,home.price,`${home.number} · apartment purchase`);if(!r.ok)return r;
-  r.state.properties.push(id);r.state.home=id;return {...r,message:`The keys to ${home.name} are yours. Your front door is now open upstairs.`};
+  r.state.properties.push(id);r.state.home=id;return {...r,message:`The keys to ${home.name} are yours. ${home.floorY===0?'Your front door is open at Mercer Row, opposite the garden.':'Your front door is now open upstairs.'}`};
 }
 export function buyFurnishing(input,id) {
   const state=normalizeLife(input),item=FURNISHINGS.find(i=>i.id===id);
@@ -106,18 +109,26 @@ export function updateLife(input,action,id) {
   return {state,ok:true,message:action==='scene'?'The room has a new color.':action==='goal'?'Savings goal updated.':action==='home'?'Home set. Your furnishings have moved with you.':'Room updated.'};
 }
 export const HOME_BOUNDS = [
+  {id:'mercer',minX:54,maxX:67,minZ:33.4,maxZ:43.5},
+  {id:'parkview',minX:75,maxX:88,minZ:33.4,maxZ:43.5},
   {id:'studio',minX:17.1,maxX:24.5,minZ:-7.2,maxZ:0.4},
   {id:'loft',minX:17.1,maxX:24.5,minZ:-15.8,maxZ:-7.8},
   {id:'suite',minX:27.1,maxX:34.3,minZ:-15.8,maxZ:-10.4},
 ];
 export function lifeColliders() {
-  const boxes=[];
-  const wall=(a,b,c,d,id)=>boxes.push({minX:a,maxX:b,minZ:c,maxZ:d,minY:4.4,maxY:7.7,...(id?{homeGate:id}:{})});
-  for(const r of HOME_BOUNDS){const h=HOMES.find(h=>h.id===r.id),z=h.doorZ;
+  const boxes=[];let floor=4.4;
+  const wall=(a,b,c,d,id)=>boxes.push({minX:a,maxX:b,minZ:c,maxZ:d,minY:floor,maxY:floor+3.3,...(id?{homeGate:id}:{})});
+  for(const r of HOME_BOUNDS){const h=HOMES.find(h=>h.id===r.id),z=h.doorZ;floor=h.floorY??4.4;
     wall(r.minX-.08,r.minX+.08,r.minZ,r.maxZ);wall(r.minX,r.maxX,r.minZ-.08,r.minZ+.08);wall(r.minX,r.maxX,r.maxZ-.08,r.maxZ+.08);
     wall(r.maxX-.08,r.maxX+.08,r.minZ,z-.85);wall(r.maxX-.08,r.maxX+.08,z+.85,r.maxZ);wall(r.maxX-.08,r.maxX+.08,z-.85,z+.85,r.id);
     // Bed and desk footprints leave a broad central path.
     wall(r.minX+.5,r.minX+2.7,r.minZ+.65,r.minZ+3.25);
-    boxes.at(-1).sightMaxY=5.4;
+    boxes.at(-1).sightMaxY=floor+1;
+    if(floor===0){
+      const cx=(r.minX+r.maxX)/2,cz=(r.minZ+r.maxZ)/2;
+      for(const [x,z,w,d,top] of [[cx,r.maxZ-1.1,3,1,1.25],[cx,r.maxZ-2.8,1.6,.8,.65],[r.minX+.5,cz,1.1,2.6,1.2]]){
+        wall(x-w/2,x+w/2,z-d/2,z+d/2);boxes.at(-1).sightMaxY=top;
+      }
+    }
   }return boxes;
 }

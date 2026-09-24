@@ -872,8 +872,9 @@ async function boot() {
             const guidance=neighborhoodWaypoint(p,destination);
             let target=guidance?.target||destination, hint=guidance?.hint||"";
             if(destination.y>2 && fy<2) {
-                target=destination.id==="ice"?{x:37,z:9.5}:{x:14.6,z:9.7};
-                hint=destination.id==="ice"?"ASTORIA EAST STAIRS → 2F":"CLUB EAST STAIRS → LOUNGE";
+                const hotel=destination.id==="ice"||destination.id.startsWith("home-");
+                target=hotel?{x:37,z:9.5}:{x:14.6,z:9.7};
+                hint=hotel?"ASTORIA EAST STAIRS → 2F":"CLUB EAST STAIRS → LOUNGE";
             }
             const dx=target.x-p.x,dz=target.z-p.z,dist=Math.hypot(dx,dz),cross=_dir.x*dz-_dir.z*dx,dot=_dir.x*dx+_dir.z*dz;
             const arrow=dist<2?"●":dot<0?"↶":cross>1?"←":cross< -1?"→":"↑";
