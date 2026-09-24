@@ -1,3 +1,4 @@
+import { brickTex, windowPaneTex } from './textures.js';
 import { buildEastInterior } from './east-interiors.js';
 import * as THREE from 'three';
 import { addBox, unitBox } from './kit.js';
@@ -12,26 +13,29 @@ export function buildDistrict(scene) {
   const box=(m,x,y,z,w,h,d)=>addBox(root,unitBox,m,x,y,z,w,h,d);
   function sign(lines,x,y,z,w,h,rotation=0) {
     const texture=printedCard(lines,{ink:'#efe2bf',paper:'#274b49',width:768,height:256});
-    const mesh=new THREE.Mesh(new THREE.PlaneGeometry(w,h),new THREE.MeshBasicMaterial({map:texture,side:THREE.DoubleSide}));
+    texture.name=lines.join(' · ');
+    const backing=box(iron,x-Math.sin(rotation)*.085,y,z-Math.cos(rotation)*.085,w+.16,h+.16,.15);backing.rotation.y=rotation;
+    const mesh=new THREE.Mesh(new THREE.PlaneGeometry(w,h),new THREE.MeshBasicMaterial({map:texture}));
     mesh.position.set(x,y,z);mesh.rotation.y=rotation;root.add(mesh);return mesh;
   }
   // Continuous foundations; raised walks stay low enough for ground-level controls.
   box(stone,114,-.15,23,120,.25,106);
   box(road,132,-.005,22.8,84,.06,8.2);
   box(road,109,0,22,10,.065,104);
-  box(road,134,.005,56,80,.07,8);
+  box(road,141.5,.005,56,75,.07,8);
   for(let x=94;x<174;x+=7) if(x<102||x>116)box(cream,x,.05,22.8,3,.02,.12);
   for(let z=-25;z<74;z+=7)if(Math.abs(z-22.8)>6&&Math.abs(z-56)>6)box(cream,109,.05,z,.12,.02,3);
   for(let x=120;x<174;x+=7)box(cream,x,.06,56,3,.02,.12);
   for(const z of [17,29,50,62])for(let i=0;i<7;i++)box(cream,105+i*1.3,.06,z,.7,.02,2.2);
   // Shared instance batches keep the larger neighborhood inexpensive to draw.
-  const windows=[],trim=[];
+  const windows=[],trim=[],frames=[];
+  const masonry=brickTex();masonry.repeat.set(3,5);
   DISTRICT_BUILDINGS.forEach((b,index)=>{
     if(b.id){
-      box(mat(b.color),b.x,4+(b.h-4)/2,b.z,b.w,b.h-4,b.d);
+      box(mat(b.color,{map:masonry}),b.x,4+(b.h-4)/2,b.z,b.w,b.h-4,b.d);
       buildEastInterior(root,b);
     }else{
-      box(mat(b.color),b.x,b.h/2,b.z,b.w,b.h,b.d);
+      box(mat(b.color,{map:masonry}),b.x,b.h/2,b.z,b.w,b.h,b.d);
       box(stone,b.x,2,b.z,b.w+.15,4,b.d+.15);
     }
     box(cream,b.x,b.h,b.z,b.w+.55,.45,b.d+.55);
@@ -57,7 +61,15 @@ export function buildDistrict(scene) {
     items.forEach((p,i)=>{dummy.position.set(...p.slice(0,3));dummy.scale.set(...p.slice(3));dummy.updateMatrix();mesh.setMatrixAt(i,dummy.matrix);});
     mesh.instanceMatrix.needsUpdate=true;mesh.computeBoundingSphere();root.add(mesh);return mesh;
   }
-  const panes=batch(unitBox,mat(0xbba577,{emissive:0xe3b764,emissiveIntensity:.12}),windows);
+  for(const p of windows){
+    const [x,y,z,w,h,d]=p;
+    frames.push([x,y,z,w===.04?.16:w+.22,h+.22,d===.04?.16:d+.22]);
+    trim.push([x,y-h/2-.1,z,w===.04?.32:w+.35,.14,d===.04?.32:d+.35]);
+  }
+  batch(unitBox,iron,frames);
+  // Bring panes forward of their recessed dark surrounds.
+  windows.forEach(p=>{if(p[3]===.04)p[3]=.18;else p[5]=.18;});
+  const panes=batch(unitBox,mat(0xffffff,{map:windowPaneTex('warm'),emissive:0xe3b764,emissiveIntensity:.12}),windows);
   windows.forEach((_,i)=>panes.setColorAt(i,new THREE.Color(i%7<3?0x34484c:i%3===0?0xd8bc94:0xffe9bb)));
   panes.instanceColor.needsUpdate=true;
   batch(unitBox,cream,trim);
@@ -92,8 +104,9 @@ export function buildDistrict(scene) {
   sign(['EAST AVENUE','HAWTHORNE PARK →  ·  48TH ST ↑'],100,3,28,7,1.2,Math.PI);
   sign(['47TH STREET','← CLUB & SHOPS  ·  GARDENS →'],59,2.5,15,6,1.2);
   sign(['48TH STREET','THE EASTERN BLOCK'],118,3.4,62,6,1.2,Math.PI);
+  for(const [x,y,z] of [[100,3,28],[59,2.5,15],[118,3.4,62]])for(const side of [-1,1])box(iron,x+side*2,y/2-.2,z,.1,y-.4,.1);
   const peds=Array.from({length:8},(_,i)=>{
-    const person=createHuman({outfit:i%2?'lady':'salesman',color:i%2?'#947269':'#5c747a',umbrella:i%3===0,scale:.96});
+    const person=createHuman({outfit:i%2?'lady':'salesman',color:i%2?'#947269':'#5c747a',umbrella:i%3===0,scale:.94+(i%3)*.035,skin:[0xb87853,0xe2b899,0x744b38,0xc78e68][i%4],hair:[0x211b19,0x624332,0xa18b70][i%3]});
     person.position.set(65+i*13,0,i%2?29.6:16);person.rotation.y=i%2?Math.PI/2:-Math.PI/2;root.add(person);return person;
   });
   return {root,peds,seats:DISTRICT_SEATS,update(t,reduced,p){

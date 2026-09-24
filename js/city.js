@@ -523,10 +523,12 @@ export function buildCity(scene, adConfig = mergeAdConfig()) {
     root.add(wetRoad);
 
     // Alley back wall
-    addBox(root, unitBox, brickDark, 0, 8, -32.2, 80, 16, 4);
+    addBox(root, unitBox, brickDark, -22, 8, -32.2, 36, 16, 4);
+    addBox(root, unitBox, brickDark, 22, 8, -32.2, 36, 16, 4);
+    addBox(root, unitBox, brickDark, 0, 10.5, -32.2, 8, 11, 4);
     for (let i = 0; i < 18; i++) {
         const x = -28 + i * 3.2;
-        const y = 2 + (i % 5) * 2.4;
+        const y = Math.abs(x) < 4 ? 8 : 2 + (i % 5) * 2.4;
         addBox(root, unitBox, Math.random() > 0.4 ? winOn : winOff, x, y, -30.15, 0.9, 1.2, 0.06);
     }
 

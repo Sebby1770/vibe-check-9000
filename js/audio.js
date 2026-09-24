@@ -500,7 +500,7 @@ export function createAudio() {
         get trackName() {
             if (usingDeck && trackIndex >= 0 && playlist[trackIndex]) return playlist[trackIndex].name;
             if (zone === "lounge") return "VELMA'S TRIO";
-            if (["street","mercer","hawthorne","eastavenue","48th"].includes(zone)) return "SIDEWALK SWING · JAZZ QUARTET";
+            if (["street","mercer","hawthorne","eastavenue","48th","northloop","southloop","westavenue","riverside"].includes(zone)) return "SIDEWALK SWING · JAZZ QUARTET";
             if (zone === "alley") return "AFTER HOURS · JAZZ HOUSE";
             if (zone === "books") return "PAPER & PIANO";
             if (zone === "bakery") return "SUNRISE SWING";

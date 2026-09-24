@@ -24,8 +24,8 @@ export function build({ root, mats, shop, lamp, place, crowds }) {
     addBox(root, unitBox, velvet, x, 0.72, 34.05, 1.8, 0.48, 0.16);
   }
   const filmPlayer = createFilm();
-  const film = new THREE.Mesh(new THREE.PlaneGeometry(6.7, 3.2), new THREE.MeshBasicMaterial({ map: filmPlayer.texture }));
-  film.position.set(13.0, 2.12, 39.66);
+  const film = new THREE.Mesh(new THREE.PlaneGeometry(6.7, 2.8), new THREE.MeshBasicMaterial({ map: filmPlayer.texture }));
+  film.position.set(13.0, 2.0, 39.66);
   film.rotation.y = Math.PI;
   film.userData.draw = filmPlayer.draw;
   film.userData.play = filmPlayer.play;
@@ -40,7 +40,7 @@ export function build({ root, mats, shop, lamp, place, crowds }) {
   crowds.push(place(randomPedestrian(0.81, { outfit: "salesman", anim: "lean" }), 1.4, 33.6, 0.3, "lean"));
 
   shopRoom(root, mats, shop, 0x422936);
-  card(root, ["THE RIVOLI", "BOX OFFICE →"], 1.4, 2.9, 39.76, 5, 0.8, { ink: "#e2bd7d", paper: "#422936" });
+  card(root, ["THE RIVOLI", "BOX OFFICE →"], 2.6, 3.2, 39.76, 4.1, 0.55, { ink: "#e2bd7d", paper: "#422936" });
   const sleeves = sleeveMats();
   for (let i = 0; i < 3; i++) {
     const poster = new THREE.Mesh(new THREE.PlaneGeometry(1.4, 1.8), sleeves[i]);
@@ -52,7 +52,7 @@ export function build({ root, mats, shop, lamp, place, crowds }) {
   const curtain = new THREE.MeshStandardMaterial({ color: 0x702b3f, roughness: 1 });
   for (const x of [9.65, 16.9])
     for (let j = 0; j < 4; j++) addBox(root, unitBox, curtain, x + j * 0.12, 2.1, 39.5, 0.13, 3.5, 0.18 + (j % 2) * 0.1);
-  card(root, ["SCREEN ONE", "YOUR STUB IS YOUR INVITATION"], 13, 3.57, 39.4, 6.4, 0.35, { ink: "#d9c18c", paper: "#241e24" });
+  card(root, ["SCREEN ONE", "YOUR STUB IS YOUR INVITATION"], 13, 3.58, 39.76, 6.4, 0.2, { ink: "#d9c18c", paper: "#241e24" });
 
   addBox(root, unitBox, velvet, -2.2, 0.42, 35.2, 1.8, 0.18, 0.7);
   addBox(root, unitBox, velvet, -2.2, 0.72, 34.85, 1.8, 0.48, 0.16);

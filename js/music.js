@@ -36,6 +36,6 @@ export function musicMix(zone) {
   if(zone==='records'||zone==='arcade')return [.7,0,.008];
   if(zone==='alley')return [.4,0,.025];
   if(zone==='lounge')return [0,1,.003];
-  if(['street','mercer','hawthorne','eastavenue','48th'].includes(zone))return [0,.8,.018];
+  if(['street','mercer','hawthorne','eastavenue','48th','northloop','southloop','westavenue','riverside'].includes(zone))return [0,.8,.018];
   return [0,.55,zone==='subway'?.008:.004];
 }

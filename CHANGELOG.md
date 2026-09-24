@@ -4,6 +4,18 @@ All notable changes to VIBE CHECK 9000™ are documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
+## [27.0.0] - 2026-09-24
+
+### Walk the whole block
+
+- Connect West Avenue, Riverside Avenue, 46th Street and 49th Street into a continuous perimeter. Extend East Avenue and the existing cross streets to meet it, and open a covered passage from the rear alley onto 46th Street.
+- Frame the larger neighborhood with apartment facades, sidewalks, crossings, lamps and planted seating. Add north and south loop destinations to the notebook.
+- Integrate Claude's completed title card, modular interiors, mounted billboards and street signs, and violet listening-room redesign at Rex's Records.
+- Finish the other stores with distinct ceilings, sconces, apothecary globes, hanging flowers, cinema chandeliers, a copper tasting still and barber vanity lights. Add diner pendants, hotel brasswork, east-side wall panels, a bookshop reading alcove and a bakery display case.
+- Fix remaining cinema sign overlaps and mount the 4B plaque on its cabinet. Audit signs for physical backing, visibility and overlap, including signs on posts.
+- Improve facade materials and window surrounds, round clothing and hands, reduce oversized eyes and skin shine, and vary east-side pedestrians. Add multisample anti-aliasing on capable desktops and soften the scanline overlay.
+- Batch repeated architecture and interior decorations. Verify the road network with collision sweeps, scene raycasts and actual browser movement, alongside shop, neighborhood and Life journeys.
+
 ## [26.0.0] - 2026-09-23
 
 ### The east side opens its doors

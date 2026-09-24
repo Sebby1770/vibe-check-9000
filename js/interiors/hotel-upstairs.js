@@ -27,8 +27,10 @@ export function build({ root, mats }) {
   addBox(root, unitBox, cream, 21.2, fy + 0.48, 7.9, 2.8, 0.38, 0.22);
   addBox(root, unitBox, new THREE.MeshBasicMaterial({ color: 0xffc078, transparent: true, opacity: 0.35 }), 21.2, fy + 1.55, 12.35, 2.4, 1.5, 0.04);
   const fourb = new THREE.Mesh(new THREE.PlaneGeometry(0.7, 0.4), new THREE.MeshBasicMaterial({ map: neonCanvas("4B", "#E0B25A", 256, 128, "#120c08") }));
-  fourb.position.set(30.2, fy + 1.55, -2.2);
-  fourb.rotation.y = Math.PI / 2;
+  // A framed plaque fixed to the ice cabinet, facing the public corridor.
+  addBox(root, unitBox, wood, 32, fy + .75, -8.12, .8, .5, .08);
+  fourb.position.set(32, fy + .75, -8.075);
+  fourb.rotation.y = 0;
   root.add(fourb);
   addBox(root, unitBox, cream, 29.4, fy + 0.02, -2, 8.4, 0.02, 18);
   addBox(root, unitBox, new THREE.MeshStandardMaterial({ color: 0x5a2030, roughness: 0.85 }), 29.4, fy + 0.03, -2, 1.4, 0.02, 16);

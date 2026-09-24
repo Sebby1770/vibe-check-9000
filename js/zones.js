@@ -31,7 +31,7 @@ export const HOTEL_STAIRS = {
     zBottom: 9.55, zTop: 1.35,
 };
 
-export const BOUNDS = { minX: -52.5, maxX: DISTRICT_BOUNDS.maxX, minZ: -29.4, maxZ: DISTRICT_BOUNDS.maxZ };
+export const BOUNDS = { ...DISTRICT_BOUNDS };
 
 export const SHOPS = [
     { id: "records", label: "REX'S RECORDS", minX: -38.2, maxX: -28.2, minZ: 32.05, maxZ: 40.0, doorX: -33.2 },
@@ -155,6 +155,10 @@ export function zoneLabel(zone) {
         case "mercer": return "MERCER GARDEN";
         case "hawthorne": return "HAWTHORNE PARK";
         case "eastavenue": return "EAST AVENUE";
+        case "northloop": return "49TH STREET";
+        case "southloop": return "46TH STREET";
+        case "westavenue": return "WEST AVENUE";
+        case "riverside": return "RIVERSIDE AVENUE";
         case "48th": return "48TH STREET";
         case "street": return "47TH STREET";
         case "diner": return "DOTTIE'S DINER";
@@ -275,7 +279,8 @@ export function buildColliders(interiorBoxes = []) {
     wall(boxes, -2.2, 0.4, -22.4, -20.6, -1, 1.4);
 
     // Alley back wall + side fences + lots beside the block
-    wall(boxes, -55, 55, -30.2, -29.55);
+    wall(boxes, -55, -4, -34.2, -29.55);
+    wall(boxes, 4, 55, -34.2, -29.55);
     wall(boxes, -39.2, -38.7, -30, -16.5);
     wall(boxes, 38.7, 39.2, -30, -16.5);
     wall(boxes, 38.9, 55, -30, 12.5);

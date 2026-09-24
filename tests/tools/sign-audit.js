@@ -33,7 +33,7 @@ export function auditSigns(world, { maxGap = 0.35 } = {}) {
   const out = [];
   for (const m of signs) {
     // A board's own frame is not the wall it hangs on: ignore solids in a small dedicated group.
-    const own = m.parent && m.parent.children.length < 40 && m.parent.type === "Group" ? new Set(m.parent.children) : new Set();
+    const own = m.parent && !m.parent.userData.freestandingSign && m.parent.children.length < 40 && m.parent.type === "Group" ? new Set(m.parent.children) : new Set();
     const others = solids.filter((o) => !own.has(o));
     const g = m.geometry.parameters;
     m.matrixWorld.decompose(_p, _q, _s);

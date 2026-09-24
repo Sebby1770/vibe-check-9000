@@ -1,5 +1,5 @@
 // Shared footprints keep architecture, walking routes and map pins in agreement.
-export const DISTRICT_BOUNDS = { maxX: 174, maxZ: 76 };
+export const DISTRICT_BOUNDS = { minX: -110, maxX: 202, minZ: -60, maxZ: 106 };
 export const DISTRICT_BUILDINGS = [
   { x:64,z:-18,w:16,d:18,h:22,name:'THE MERCER',color:0x785b4f },
   { x:86,z:-18,w:18,d:18,h:30,name:'EASTSIDE ROOMS',color:0x8b7661 },
@@ -22,6 +22,8 @@ export const DISTRICT_PLACES = [
   {id:'mercer',name:'Mercer Pocket Garden',x:77,z:13,y:0},
   {id:'hawthorne',name:'Hawthorne Park',x:140,z:15,y:0},
   {id:'eastavenue',name:'East Avenue',x:109,z:30,y:0},
+  {id:'northloop',name:'49th Street · block promenade',x:109,z:96,y:0},
+  {id:'southloop',name:'46th Street · arcade passage',x:0,z:-48,y:0},
   {id:'48th',name:'48th Street · the new block',x:139,z:62,y:0},
 ];
 export const DISTRICT_SEATS = DISTRICT_PARKS.flatMap(p=>[-1,1].map((side,i)=>({
@@ -38,6 +40,10 @@ export const EAST_FIXTURES = DISTRICT_BUILDINGS.filter(b=>b.id).flatMap(b=>[
   ...[-1,1].map(side=>({x:b.x+side*(b.w/2-.65),y:1.1,z:b.z,w:1,h:2.2,d:b.d-3})),
 ]);
 export function districtZone(x,z) {
+  if(z>88)return 'northloop';
+  if(z< -40)return 'southloop';
+  if(x< -92)return 'westavenue';
+  if(x>180)return 'riverside';
   const venue=DISTRICT_BUILDINGS.find(b=>b.id&&Math.abs(x-b.x)<b.w/2&&Math.abs(z-b.z)<b.d/2);
   if(venue)return venue.id;
   for(const p of DISTRICT_PARKS) if(Math.abs(x-p.x)<=p.w/2 && Math.abs(z-p.z)<=p.d/2)return p.id;
@@ -54,7 +60,20 @@ export function districtColliders() {
       return [wall(x0,x0+.18,z0,z1),wall(x1-.18,x1,z0,z1),wall(x0,x1,z1-.18,z1),
         wall(x0,b.x-1.3,z0-.1,z0+.18),wall(b.x+1.3,x1,z0-.1,z0+.18),wall(b.x-1.3,b.x+1.3,z0-.1,z0+.18,3.2),wall(x0,x1,z0,z1,3.95)];
     }),
+    ...[-1,1].map(side=>({minX:124+side*2.6-1,maxX:124+side*2.6+1,minZ:46.05,maxZ:47.45,minY:-1,maxY:1.6})),
     ...EAST_FIXTURES.map(f=>({minX:f.x-f.w/2,maxX:f.x+f.w/2,minZ:f.z-f.d/2,maxZ:f.z+f.d/2,minY:-1,maxY:2.8,sightMaxY:f.h})) ,
     ...DISTRICT_PARKS.map(p=>({minX:p.x-2.3,maxX:p.x+2.3,minZ:p.z-2.3,maxZ:p.z+2.3,minY:-1,maxY:2.5,sightMaxY:1.1})),
   ];
 }
+
+// Every endpoint meets another road; shared with geometry and walking tests.
+export const BLOCK_ROADS = [
+  {name:'West Avenue',a:[-99,-48],b:[-99,96],width:10},
+  {name:'Riverside Avenue',a:[187,-48],b:[187,96],width:10},
+  {name:'49th Street',a:[-99,96],b:[187,96],width:8},
+  {name:'46th Street',a:[-99,-48],b:[187,-48],width:8},
+  {name:'47th Street',a:[-99,22.8],b:[187,22.8],width:8.2},
+  {name:'48th Street',a:[109,56],b:[187,56],width:8},
+  {name:'East Avenue',a:[109,-48],b:[109,96],width:10},
+  {name:'Arcade Passage',a:[0,-48],b:[0,-23],width:8},
+];

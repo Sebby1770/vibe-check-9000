@@ -15,5 +15,6 @@ export function detectQuality() {
     bloom: true,
     bloomScale: low ? 0.4 : 0.55,
     antialias: false,
+    samples: low ? 0 : 4,
   };
 }

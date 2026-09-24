@@ -2,22 +2,32 @@ import * as THREE from "three";
 
 const GEO = {};
 
+// Rounded seams give jackets and hands a tailored silhouette, shared by all people.
+function roundedBox(w,h,d,r) {
+    const g=new THREE.BoxGeometry(w,h,d,3,3,3),p=g.attributes.position;
+    const v=new THREE.Vector3(),c=new THREE.Vector3();
+    for(let i=0;i<p.count;i++){
+        v.fromBufferAttribute(p,i);c.set(Math.max(-w/2+r,Math.min(w/2-r,v.x)),Math.max(-h/2+r,Math.min(h/2-r,v.y)),Math.max(-d/2+r,Math.min(d/2-r,v.z)));
+        v.sub(c).normalize().multiplyScalar(r).add(c);p.setXYZ(i,v.x,v.y,v.z);
+    }
+    g.computeVertexNormals();return g;
+}
 function geo() {
     if (GEO.head) return GEO;
-    GEO.head = new THREE.SphereGeometry(0.108, 14, 12);
+    GEO.head = new THREE.SphereGeometry(0.108, 20, 16);
     GEO.neck = new THREE.CylinderGeometry(0.038, 0.046, 0.09, 8);
-    GEO.torso = new THREE.BoxGeometry(0.34, 0.44, 0.18);
+    GEO.torso = roundedBox(.34,.44,.18,.045);
     GEO.pelvis = new THREE.BoxGeometry(0.3, 0.16, 0.16);
     GEO.upperArm = new THREE.CapsuleGeometry(0.042, 0.22, 3, 6);
     GEO.forearm = new THREE.CapsuleGeometry(0.036, 0.2, 3, 6);
-    GEO.hand = new THREE.BoxGeometry(0.07, 0.09, 0.035);
+    GEO.hand = roundedBox(.065,.09,.04,.017);
     GEO.thigh = new THREE.CapsuleGeometry(0.058, 0.34, 3, 6);
     GEO.shin = new THREE.CapsuleGeometry(0.046, 0.32, 3, 6);
-    GEO.foot = new THREE.BoxGeometry(0.08, 0.055, 0.2);
-    GEO.eye = new THREE.SphereGeometry(0.018, 8, 6);
-    GEO.iris = new THREE.SphereGeometry(0.01, 8, 6);
+    GEO.foot = roundedBox(.08,.055,.2,.02);
+    GEO.eye = new THREE.SphereGeometry(0.011, 10, 8);
+    GEO.iris = new THREE.SphereGeometry(0.006, 10, 8);
     GEO.brow = new THREE.BoxGeometry(0.046, 0.01, 0.012);
-    GEO.nose = new THREE.BoxGeometry(0.028, 0.04, 0.04);
+    GEO.nose = roundedBox(.024,.038,.038,.011);
     GEO.ear = new THREE.SphereGeometry(0.028, 6, 6);
     GEO.hairShort = new THREE.SphereGeometry(0.112, 10, 8, 0, Math.PI * 2, 0, Math.PI / 1.7);
     GEO.hairBun = new THREE.SphereGeometry(0.055, 8, 6);
@@ -30,7 +40,7 @@ function geo() {
     GEO.glow = new THREE.BoxGeometry(0.03, 0.36, 0.03);
     GEO.headphone = new THREE.TorusGeometry(0.12, 0.018, 6, 16, Math.PI);
     GEO.badge = new THREE.CircleGeometry(0.03, 8);
-    GEO.coat = new THREE.BoxGeometry(0.42, 0.58, 0.24);
+    GEO.coat = roundedBox(.40,.58,.24,.055);
     GEO.collar = new THREE.BoxGeometry(0.24, 0.08, 0.18);
     GEO.lapel = new THREE.BoxGeometry(0.09, 0.24, 0.02);
     GEO.scarf = new THREE.BoxGeometry(0.1, 0.32, 0.06);
@@ -128,7 +138,7 @@ export function createHuman(spec = {}) {
     const hairStyle = spec.hairStyle || "short";
     const root = new THREE.Group();
 
-    const skinM = mat(skinC, { roughness: 0.48, emissive: skinC, emissiveIntensity: 0.04 });
+    const skinM = mat(skinC, { roughness: 0.76, metalness: 0, emissive: skinC, emissiveIntensity: 0.015 });
     const topM = mat(o.top, {
         roughness: o.dress ? 0.4 : 0.65,
         metalness: o.dress ? 0.25 : 0.08,
@@ -208,9 +218,11 @@ export function createHuman(spec = {}) {
     const irisM = mat(0x1a120c, { roughness: 0.3 });
     for (const s of [-1, 1]) {
         const eye = new THREE.Mesh(G.eye, eyeW);
-        eye.position.set(s * 0.038, 0.02, 0.092);
+        eye.position.set(s * 0.038, 0.02, 0.098);
+        eye.scale.set(1,.65,.42);
         const iris = new THREE.Mesh(G.iris, irisM);
-        iris.position.set(s * 0.038, 0.02, 0.106);
+        iris.position.set(s * 0.038, 0.02, 0.102);
+        iris.scale.set(1,1,.35);
         const brow = new THREE.Mesh(G.brow, hairM);
         brow.position.set(s * 0.04, 0.055, 0.1);
         const ear = new THREE.Mesh(G.ear, skinM);
@@ -221,7 +233,7 @@ export function createHuman(spec = {}) {
     const nose = new THREE.Mesh(G.nose, skinM);
     nose.position.set(0, -0.01, 0.1);
     head.add(nose);
-    const mouth = new THREE.Mesh(new THREE.BoxGeometry(0.05, 0.012, 0.012), mat(0x5a2030, { roughness: 0.5 }));
+    const mouth = new THREE.Mesh(new THREE.BoxGeometry(0.036, 0.006, 0.006), mat(0x5a2030, { roughness: 0.5 }));
     mouth.position.set(0, -0.045, 0.098);
     if (spec.mouth !== false) head.add(mouth);
     if (outfitName === "clerk" || outfitName === "pharmacist" || outfitName === "salesman") {

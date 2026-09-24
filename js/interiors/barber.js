@@ -36,7 +36,7 @@ export function build({ root, mats, shop, lamp, place, crowds }) {
   shopRoom(root, mats, shop, 0xb5bbb0);
   const barberTile = new THREE.MeshStandardMaterial({ map: checkerFloor("#38494a", "#e2d9c1", 16), roughness: 0.7 });
   addBox(root, unitBox, barberTile, 35.9, 0.055, 36, 9, 0.06, 7.6);
-  card(root, ["TONY'S", "THREE CUTS. ONE GOOD PORTRAIT."], 35.9, 2.95, 39.8, 6.5, 0.75, { ink: "#53453b" });
+  card(root, ["TONY'S", "THREE CUTS. ONE GOOD PORTRAIT."], 35.9, 3.32, 39.8, 6.5, 0.5, { ink: "#53453b" });
   for (let i = 0; i < 4; i++) {
     addBox(root, unitBox, paper, 32.8 + i * 0.4, 1.36, 37.7, 0.17, 0.18, 0.17);
     addBox(root, unitBox, black, 36 + i * 0.18, 1.32, 37.7, 0.08, 0.04, 0.3);

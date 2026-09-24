@@ -1,3 +1,4 @@
+import { buildBlockLoop } from './block-loop.js';
 import { buildDistrict } from './district.js';
 import { buildLifeWorld } from './life-world.js';
 import { CLUB_SCENES } from './life.js';
@@ -50,7 +51,10 @@ export function createWorld(canvas, adConfig) {
     camera.position.set(0, 1.7, 8);
     scene.add(camera);
 
-    const composer = new EffectComposer(renderer);
+    // Multisample the scene itself: canvas AA does not reach composer targets.
+    const target = new THREE.WebGLRenderTarget(window.innerWidth, window.innerHeight, { type: THREE.HalfFloatType });
+    target.samples = renderer.capabilities.isWebGL2 ? Math.min(quality.samples, renderer.capabilities.maxSamples) : 0;
+    const composer = new EffectComposer(renderer, target);
     composer.addPass(new RenderPass(scene, camera));
     const bloom = new UnrealBloomPass(
         new THREE.Vector2(window.innerWidth * quality.bloomScale, window.innerHeight * quality.bloomScale),
@@ -70,6 +74,7 @@ export function createWorld(canvas, adConfig) {
     const club = buildClub(scene, env);
     const city = buildCity(scene, adConfig);
     const district = buildDistrict(scene);
+    buildBlockLoop(scene);
     const colliders = buildColliders(interiorColliders());
     const streetLife = buildStreetLife(scene);
     const lifeWorld = buildLifeWorld(scene,colliders);
@@ -80,20 +85,27 @@ export function createWorld(canvas, adConfig) {
     function makeHand(side) {
         const g = new THREE.Group();
         const palm = new THREE.Mesh(
-            new THREE.BoxGeometry(0.08, 0.04, 0.12),
+            new THREE.SphereGeometry(1, 14, 10),
             new THREE.MeshStandardMaterial({ color: 0xc68642, roughness: 0.55 }),
         );
         const cuff = new THREE.Mesh(
-            new THREE.CylinderGeometry(0.035, 0.04, 0.16, 6),
+            new THREE.CylinderGeometry(0.035, 0.04, 0.16, 16),
             new THREE.MeshStandardMaterial({
                 color: 0x1a1410,
                 emissive: side < 0 ? 0xff00aa : 0x00fff7,
-                emissiveIntensity: 0.35,
+                emissiveIntensity: 0.055,
             }),
         );
+        g.add(palm, cuff); // Keep the cuff in slot 1 for visor-colour updates.
+        palm.scale.set(.04,.022,.065);
+        for(let i=0;i<4;i++){
+            const finger=new THREE.Mesh(new THREE.CapsuleGeometry(.008,.038,3,8),palm.material);
+            finger.rotation.x=Math.PI/2;finger.position.set(-.025+i*.017,-.001,-.057);g.add(finger);
+        }
+        const thumb=new THREE.Mesh(new THREE.CapsuleGeometry(.012,.026,3,8),palm.material);
+        thumb.rotation.set(Math.PI/2,0,side*.5);thumb.position.set(-side*.035,-.003,-.015);g.add(thumb);
         cuff.rotation.x = Math.PI / 2;
         cuff.position.z = 0.12;
-        g.add(palm, cuff);
         g.position.set(side * 0.28, -0.22, -0.42);
         g.rotation.set(-0.35, side * 0.18, side * 0.12);
         camera.add(g);

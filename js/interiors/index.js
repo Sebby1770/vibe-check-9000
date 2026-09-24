@@ -5,6 +5,7 @@
    shop = the SHOPS entry, or { id, minX, maxX, minZ, maxZ, doorX, floorY } for the diner / hotel rooms.
    place(human, x, z, yaw, mode, { sitHips }) + crowds.push(...) adds an NPC (animated only near its room).
    zones.js stays three-free for the node tests, so world.js feeds interiorColliders() into buildColliders(). */
+import { finishInterior } from './finishes.js';
 import * as THREE from "three";
 import { SHOPS, DINER, HOTEL, SECOND_Y } from "../zones.js";
 import * as records from "./records.js";
@@ -60,6 +61,7 @@ export function buildInteriors({ root, scene, mats }) {
   for (const room of ROOMS) {
     const start = crowds.length;
     const res = room.mod.build({ root, scene, mats, shop: room.rect, lamp, place, crowds }) || {};
+    finishInterior(root,room.id,room.rect);
     for (let i = start; i < crowds.length; i++) crowds[i].userData.room = room.zone;
     rooms[room.id] = res;
     if (res.update) live.push(res);
