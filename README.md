@@ -2,7 +2,7 @@
 
 **Play it in the browser:** [sebby1770.github.io/vibe-check-9000](https://sebby1770.github.io/vibe-check-9000/)
 
-Rent a board: [sponsor.html](sponsor.html) · till: [GitHub Sponsors](https://github.com/sponsors/Sebby1770) · planned domain `vibecheck9000.com` (see `MARKETING.md`). Paste Stripe Payment Links into `ads.config.json`.
+**Current mode:** single-player, with progress saved in this browser. Other visitors play separate worlds. See the [improvement, multiplayer and launch plan](MARKETING.md) for proposed next steps and optional supporter products. Sponsorship configuration exists, but no paid billboard placements or Stripe checkout links are currently configured.
 
 The night runs from doors to last call. Each calendar day has a dare. Earn visor looks. ESC → **STAMP** saves a card of the evening; **RECAP** is what the visor kept. The till is on the pause screen if you want the lights to stay on.
 
@@ -62,7 +62,7 @@ Press **L / LIFE** for your wallet and goals. This is fictional in-game money; i
 
 - **Earn:** each first nightly counter favor pays $20. Choose **Paid shifts** inside any shop, clock in, and match three customer order slips for a $45 paycheck. Shifts are repeatable, untimed and saved between visits. After three and six shifts with an employer, you earn $5 raises.
 - **Work the club:** the physical **Lighting & soundcheck** console beside REXA’s booth offers soundcheck jobs starting at $55, rising to $65. Visit the workplace to complete orders.
-- **Buy a home:** the Astoria property desk and **LIFE → MY HOME** list the Bluebird Studio ($180), Magnolia Flat ($340), and Marigold Suite ($560). Your purchased door opens on the hotel’s second floor. Take the east stairs and follow the room numbers; the notebook can mark your front door. No rent or upkeep.
+- **Buy a home:** **LIFE → MY HOME** lists five apartments. Bluebird Studio ($180), Magnolia Flat ($340), and Marigold Suite ($560) are on Astoria’s second floor, reached by the east stairs. Across Mercer Garden, the Mercer Garden Flat ($260) and Parkview Residence ($420) have ground-floor entrances in the new brownstones. Visit either property board or use the notebook to mark your front door. No rent or upkeep.
 - **Furnish it:** each shop’s **Home & keepsakes** department carries one permanent piece: a turntable, plant, reading lamp, bar cart, mirror, Rivoli poster, or breakfast table. Purchases appear in your active apartment. You can store/reinstall pieces or move them to another owned home. Buying before you own an apartment stores the item safely.
 - **Make the club yours:** choose Electric orchid, Blue velvet, or Golden hour to change the actual floor, washes and laser colors. A permanent $60 game-money patron pass adds Emerald afterparty.
 
