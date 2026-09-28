@@ -2,8 +2,10 @@ import { neighborhoodWaypoint } from './neighborhood-navigation.js';
 import { createNeighborhoodUI } from './neighborhood-ui.js';
 import { LOCAL_VENUES, ROUTE_STOPS, visitNeighborhood, buyLocal, startRoute, completeRouteStop, recordArcade } from './neighborhood.js';
 import { EAST_COUNTERS } from './district-layout.js';
+import {createSaveUI} from './save-ui.js';
+import {restoreBackup} from './save-backup.js';
 import { createLifeUI } from './life-ui.js';
-import { credit, startShift, submitShift, buyHome, buyFurnishing, updateLife, money, JOBS } from './life.js';
+import { credit, startShift, submitShift, prepareDiner, firstEvening, buyHome, buyFurnishing, updateLife, money, JOBS } from './life.js';
 import { LIFE_PROPS } from './life-world.js';
 import { createExpansionUI } from "./expansion-ui.js";
 import { finishCounter, followSignal, takeSnack, finishDuet, addPhoto, removePhoto, SIGNAL_SET, STREET_PLACES } from "./expansion.js";
@@ -123,6 +125,7 @@ async function boot() {
     let previewTimer = null;
     let destination = null;
     let savedAt = 0;
+    let restoringProgress = false;
     const cubeFound = { done: false };
     let energy = 0;
     let ride = null;
@@ -158,6 +161,7 @@ async function boot() {
     }
 
     function note(events = {}) {
+        if(restoringProgress)return;
         const { progress: next, freshly } = evaluateUnlocks(progress, events);
         const changed = freshly.length
             || next.talked.length !== progress.talked.length
@@ -320,7 +324,23 @@ async function boot() {
         onRouteStop: (id,token) => {if(atWork(id)&&id===neighborhoodVenue)applyNeighborhood(completeRouteStop(commerce,id,token),true);},
         onNavigate: id => {destination=DESTINATIONS.find(d=>d.id===id)||null;neighborhoodUI.close();resumeStreet();},
     });
+    const saveUI=createSaveUI({
+        snapshot:()=>({...progress,night:{...progress.night,commerce,elapsed:clock.elapsedReal}}),
+        onClose:resumeStreet,
+        onRestore:text=>{
+            restoreBackup(text,{...progress,night:{...progress.night,commerce,elapsed:clock.elapsedReal}},localStorage);
+            restoringProgress=true;
+            window.location.reload();
+        },
+    });
+    function openSave(){lifeUI?.close();shopUI?.close();activityUI?.close();neighborhoodUI?.close();stopPreview();hud.setPhase('activity');saveUI.open();}
+    document.getElementById('pauseBackupBtn').addEventListener('click',openSave);
+    const guideCard=document.createElement('button');guideCard.className='evening-hint';guideCard.onclick=()=>openLife();document.body.append(guideCard);
+    function updateGuide(){const guide=firstEvening(commerce.life);guideCard.hidden=guide.hidden||!guide.next;guideCard.textContent=guide.next?`FIRST EVENING · ${guide.completed}/4  —  ${guide.next.title} ↗`:'';}
+    updateGuide();
     lifeUI = createLifeUI({
+        onBackup:openSave,
+        onDiner:(action,value,token)=>atWork('diner')?applyLife(prepareDiner(commerce.life,action,value,token)):{state:commerce.life,ok:false,message:'Return to Dottie’s to prepare the tray.'},
         onClose: resumeStreet,
         onNavigate: id => {destination=DESTINATIONS.find(d=>d.id===id)||null;resumeStreet();hud.toast(destination?`Marked: ${destination.name}`:'Route cleared');},
         onStart: id => atWork(id)?applyLife(startShift(commerce.life,id,dayHash(today))):{state:commerce.life,ok:false,message:'Visit this workplace to clock in.'},
@@ -461,6 +481,7 @@ async function boot() {
 
     function stopPreview() { clearTimeout(previewTimer); audio.stopPreview(); }
     function persistCommerce() {
+        updateGuide();
         document.getElementById("lifeBtn").textContent=`LIFE [L] · ${money(commerce.life.wallet)}`;
         progress={...progress,night:{...progress.night,commerce,elapsed:clock.elapsedReal}};
         hud.run.commerce=commerce;
@@ -880,6 +901,7 @@ async function boot() {
             const arrow=dist<2?"●":dot<0?"↶":cross>1?"←":cross< -1?"→":"↑";
             marker.textContent=`${arrow} ${destination.name} · ${Math.round(dist)} m${hint?" · "+hint:""} · J notebook`;
         }
+        if(restoringProgress)return;
         savedAt+=dt;
         if(savedAt>10&&hud.run.entered){savedAt=0;progress={...progress,night:{...progress.night,elapsed:clock.elapsedReal,commerce}};saveProgress(progress);}
         if (xr) world.renderer.render(world.scene, world.camera);

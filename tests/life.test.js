@@ -1,5 +1,5 @@
 import assert from 'node:assert/strict';
-import {normalizeLife,spend,credit,startShift,shiftBrief,submitShift,wage,buyHome,buyFurnishing,updateLife,HOMES,FURNISHINGS,JOBS,lifeColliders} from '../js/life.js';
+import {normalizeLife,prepareDiner,firstEvening,spend,credit,startShift,shiftBrief,submitShift,wage,buyHome,buyFurnishing,updateLife,HOMES,FURNISHINGS,JOBS,lifeColliders} from '../js/life.js';
 import {normalizeCommerce,transact,SHOPS_CATALOG} from '../js/commerce.js';
 import {touchVisit,saveProgress,loadProgress} from '../js/progress.js';
 import {neighborhoodWaypoint} from '../js/neighborhood-navigation.js';
@@ -16,6 +16,12 @@ for(const job of JOBS){let s=normalizeLife({wallet:0});for(let round=0;round<7;r
  for(let order=0;order<3;order++){
   const a=s.active,token=`${a.serial}:${a.order}:${a.job}`,b=shiftBrief(s),wrong=b.recipe.map(n=>(n+1)%3);
   assert.equal(submitShift(s,wrong,token).ok,false);assert.equal(submitShift(s,b.recipe,'bad').ok,false);
+  if(job.id==='diner'){
+    b.recipe.forEach((n,i)=>{s=prepareDiner(s,['plate','drink','side'][i],n,token).state;});
+    assert.equal(submitShift(s,b.recipe,token).ok,false,'cold plate and empty cup cannot be served');
+    s=prepareDiner(s,'warm',0,token).state;
+    for(let pour=0;pour<3;pour++)s=prepareDiner(s,'pour',0,token).state;
+  }
   s=submitShift(s,b.recipe,token).state;
   assert.equal(submitShift(s,b.recipe,token).ok,false,'stale submissions cannot pay twice');
   assert.deepEqual(normalizeLife(JSON.parse(JSON.stringify(s))),s,'mid-shift saves resume');
@@ -49,3 +55,25 @@ for(const h of HOMES.filter(h=>h.floorY===0)){
   assert.deepEqual(neighborhoodWaypoint({x:h.entryX,z:35},dest).target,dest);
 }
 assert.equal(isOutside(72.5,35),true,'the gap between buildings remains outdoors');
+
+let tray=startShift(fresh,'diner',2).state;
+const token='0:0:diner';
+tray=prepareDiner(tray,'plate',0,token).state;
+tray=prepareDiner(tray,'warm',0,token).state;
+tray=prepareDiner(tray,'drink',1,token).state;
+tray=prepareDiner(tray,'pour',0,token).state;
+assert.deepEqual(normalizeLife(JSON.parse(JSON.stringify(tray))),tray);
+assert.equal(prepareDiner(tray,'pour',0,'stale').ok,false);
+assert.equal(prepareDiner(tray,'plate',2,token).state.active.tray.warm,false);
+assert.equal(prepareDiner(tray,'drink',2,token).state.active.tray.fill,0);
+assert.deepEqual(prepareDiner(tray,'clear',0,token).state.active.tray,{picks:[null,null,null],warm:false,fill:0});
+assert.equal(firstEvening(fresh).next.id,'shift');
+assert.equal(firstEvening({...fresh,shifts:1}).next.id,'goal');
+let guided=updateLife({...fresh,shifts:1},'goal','mercer').state;
+assert.equal(firstEvening(guided).next.id,'furnishing');
+guided=buyFurnishing(guided,'plant').state;
+assert.equal(firstEvening(guided).next.id,'keys');
+guided=buyHome(credit(guided,300,'pay'),'mercer').state;
+assert.equal(firstEvening(guided).next,null);
+assert.equal(firstEvening(updateLife(guided,'guide','hide').state).hidden,true);
+console.log('life: diner preparation, safe ingredient changes and first-evening progress pass');

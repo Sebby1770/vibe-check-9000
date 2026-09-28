@@ -2,6 +2,8 @@
 
 Updated 25 September 2026 against v28.0.0. This is a proposed roadmap; multiplayer, accounts, analytics and new paid products below are not implemented.
 
+**v29 implementation update, 28 September:** the first-evening checklist, interactive diner preparation, and save export/import with preview and recovery are now implemented. They are the first development slice below; the remaining roadmap and multiplayer targets are still proposals. New-player testing is still needed to measure the onboarding goal.
+
 **The pitch:** Make a life on a rainy 1954 city block. Work a shift, discover your favourite shop, furnish an apartment, and finish the night at a jazz club. Play straight in your browser.
 
 ## Where the game stands

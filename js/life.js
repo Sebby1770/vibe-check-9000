@@ -33,15 +33,20 @@ export const LIFE_PLACES = [
 ];
 const integer=(n,fallback=0,max=10000000)=>Number.isFinite(n)?Math.max(0,Math.min(max,Math.floor(n))):fallback;
 const ids=(v,valid)=>Array.isArray(v)?[...new Set(v)].filter(id=>valid.some(x=>x.id===id)):[];
+export function dinerTray(data={}) {
+  const picks=[0,1,2].map(i=>[0,1,2].includes(data?.picks?.[i])?data.picks[i]:null);
+  return {picks,warm:picks[0]!==null&&!!data?.warm,fill:picks[1]===null?0:integer(data?.fill,0,3)};
+}
 export function normalizeLife(data={}) {
   if(!data||typeof data!=='object') data={};
   const properties=ids(data.properties,HOMES), furnishings=ids(data.furnishings,FURNISHINGS);
   const active=data.active && JOBS.some(j=>j.id===data.active.job) ? {job:data.active.job,order:integer(data.active.order,0,2),serial:integer(data.active.serial),seed:integer(data.active.seed)} : null;
+  if(active?.job==='diner')active.tray=dinerTray(data.active.tray);
   return {version:1,wallet:integer(data.wallet,120),earned:integer(data.earned),spent:integer(data.spent),shifts:integer(data.shifts),
     experience:Object.fromEntries(JOBS.map(j=>[j.id,integer(data.experience?.[j.id])])),active,
     properties,home:properties.includes(data.home)?data.home:properties[0]||null,
     furnishings,installed:ids(data.installed,FURNISHINGS).filter(id=>furnishings.includes(id)),
-    goal:HOMES.some(h=>h.id===data.goal)?data.goal:'studio',patron:!!data.patron,
+    goal:HOMES.some(h=>h.id===data.goal)?data.goal:'studio',goalChosen:!!data.goalChosen,guideHidden:!!data.guideHidden,patron:!!data.patron,
     scene:CLUB_SCENES.some(s=>s.id===data.scene&&(!s.premium||data.patron))?data.scene:'electric',
     ledger:(Array.isArray(data.ledger)?data.ledger:[]).filter(l=>l&&typeof l.label==='string'&&Number.isFinite(l.amount)).slice(-24).map(l=>({label:l.label.slice(0,100),amount:Math.trunc(l.amount)}))};
 }
@@ -65,6 +70,7 @@ export function startShift(input,id,seed=0) {
   if(!JOBS.some(j=>j.id===id))return {state,ok:false,message:'That shift is unavailable.'};
   if(state.active)return {state,ok:state.active.job===id,message:'Your current shift is saved. Finish it before taking another.'};
   state.active={job:id,order:0,serial:state.shifts,seed:integer(seed)+state.shifts*7};
+  if(id==='diner')state.active.tray=dinerTray();
   return {state,ok:true,message:'Clocked in. Three orders, then your pay envelope. No timer.'};
 }
 export function shiftBrief(input) {
@@ -77,8 +83,13 @@ export function shiftBrief(input) {
 export function submitShift(input,picks,token) {
   let state=normalizeLife(input);const a=state.active,b=shiftBrief(state);
   if(!a||token!==`${a.serial}:${a.order}:${a.job}`)return {state,ok:false,message:'That order is already filed. Check the current slip.'};
+  if(a.job==='diner'){
+    const tray=a.tray;
+    if(!tray.warm||tray.fill!==3)return {state,ok:false,message:'Warm the plate and fill the cup before ringing the bell.'};
+    picks=tray.picks;
+  }
   if(!Array.isArray(picks)||picks.length!==3||!b.recipe.every((p,i)=>p===picks[i]))return {state,ok:false,message:'Not quite. Match all three lines on the order slip and try again.'};
-  if(a.order<2){state.active.order++;return {state,ok:true,message:'Order accepted. Here is your next customer.'};}
+  if(a.order<2){state.active.order++;if(a.job==='diner')state.active.tray=dinerTray();return {state,ok:true,message:'Order accepted. Here is your next customer.'};}
   const pay=wage(state,a.job);state.experience[a.job]++;state.shifts++;state.active=null;
   state=credit(state,pay,`${JOBS.find(j=>j.id===a.job).owner} · completed shift`);
   return {state,ok:true,paid:pay,message:`Shift complete. ${money(pay)} paid into your wallet. Come back for another whenever you like.`};
@@ -101,12 +112,39 @@ export function buyFurnishing(input,id) {
 export function updateLife(input,action,id) {
   const state=normalizeLife(input);
   if(action==='home'&&state.properties.includes(id))state.home=id;
-  else if(action==='goal'&&HOMES.some(h=>h.id===id))state.goal=id;
+  else if(action==='goal'&&HOMES.some(h=>h.id===id)){state.goal=id;state.goalChosen=true;}
+  else if(action==='guide')state.guideHidden=id==='hide';
   else if(action==='furnish'&&state.furnishings.includes(id))state.installed=state.installed.includes(id)?state.installed.filter(i=>i!==id):[...state.installed,id];
   else if(action==='scene'&&CLUB_SCENES.some(s=>s.id===id&&(!s.premium||state.patron)))state.scene=id;
   else if(action==='patron'&&!state.patron){const r=spend(state,60,'Club patron pass');if(!r.ok)return r;r.state.patron=true;return {...r,message:'Patron pass collected. Emerald afterparty is ready at the lighting desk.'};}
   else return {state,ok:false,message:'That option is not available yet.'};
-  return {state,ok:true,message:action==='scene'?'The room has a new color.':action==='goal'?'Savings goal updated.':action==='home'?'Home set. Your furnishings have moved with you.':'Room updated.'};
+  return {state,ok:true,message:action==='guide'?(state.guideHidden?'Guide tucked away. You can reopen it here.':'First-evening guide restored.'):action==='scene'?'The room has a new color.':action==='goal'?'Savings goal updated.':action==='home'?'Home set. Your furnishings have moved with you.':'Room updated.'};
+}
+
+export function prepareDiner(input,action,value,token) {
+  const state=normalizeLife(input),a=state.active;
+  if(a?.job!=='diner'||token!==`${a.serial}:${a.order}:diner`)return {state,ok:false,message:'Check the current order slip.'};
+  const tray=a.tray;
+  if(['plate','drink','side'].includes(action)&&[0,1,2].includes(value)){
+    const i={plate:0,drink:1,side:2}[action];
+    if(tray.picks[i]!==value){if(i===0)tray.warm=false;if(i===1)tray.fill=0;}
+    tray.picks[i]=value;
+  } else if(action==='warm'&&tray.picks[0]!==null)tray.warm=true;
+  else if(action==='pour'&&tray.picks[1]!==null&&tray.fill<3)tray.fill++;
+  else if(action==='clear')a.tray=dinerTray();
+  else return {state,ok:false,message:'Choose an item at this station first.'};
+  return {state,ok:true,message:action==='pour'?(tray.fill===3?'Cup filled. Ready for the tray.':`Cup ${tray.fill}/3 full. Pour again.`):action==='warm'?'Plate warmed. Ready to serve.':action==='clear'?'Fresh tray. Same order, no penalty.':'Tray updated. Match the customer’s slip.'};
+}
+
+export function firstEvening(input) {
+  const s=normalizeLife(input),goal=HOMES.find(h=>h.id===s.goal);
+  const steps=[
+    {id:'shift',done:s.shifts>0,title:'Earn your first paycheck',copy:s.active?'Your shift is saved. Return to your workplace to finish it.':'Dottie’s is hiring. Serve three customers for $45. No timer.',page:'jobs',destination:s.active?(s.active.job==='club'?'clubdesk':s.active.job):'diner'},
+    {id:'goal',done:s.goalChosen||s.properties.length>0,title:'Choose a place to call home',copy:'Compare five apartments and choose SAVE TOWARD THIS. The first key costs $180.',page:'homes'},
+    {id:'furnishing',done:s.furnishings.length>0,title:'Pick your first furnishing',copy:'A $24 plant from Lily’s is a good start. It stays in storage until you have a home.',destination:'florist'},
+    {id:'keys',done:s.properties.length>0,title:'Collect your apartment keys',copy:s.wallet>=goal.price?`${goal.name} is within reach. Buy it in My Home.`:`${money(Math.max(0,goal.price-s.wallet))} to go for ${goal.name}. Repeat paid shifts to save up.`,page:'homes'},
+  ];
+  return {steps,next:steps.find(s=>!s.done)||null,completed:steps.filter(s=>s.done).length,hidden:s.guideHidden};
 }
 export const HOME_BOUNDS = [
   {id:'mercer',minX:54,maxX:67,minZ:33.4,maxZ:43.5},

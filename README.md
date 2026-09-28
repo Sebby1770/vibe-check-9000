@@ -16,6 +16,14 @@ The parks have four usable benches. The club plays original jazz-house, while a 
 
 No install. Click **ENTER THE NIGHT**.
 
+## New in v29: your first evening
+
+Open **LIFE → WALLET** for a four-step guide: finish a paid shift, choose an apartment savings goal, buy a furnishing, and collect your keys. It recognises existing progress, marks the next workplace or shop, and can be tucked away and reopened. A small street prompt keeps the next step handy while exploring.
+
+**Dottie’s paid shift** now has its own illustrated serving tray. Match the customer’s plate, drink and side; warm the food, pour three measures and ring the bell. There is no timer or penalty for correcting an order. Even a half-filled cup survives leaving the diner or reloading. Three correctly prepared orders earn the usual wage and career experience.
+
+Use **LIFE → SAVE & BACKUP** or **ESC → SAVE & BACKUP** to download a portable `.json` save. Choose a backup to preview its wallet, homes and furnishings before replacing this browser’s progress. A successful restore reloads the game and keeps one previous save available for recovery. Invalid or unsupported files leave your current save unchanged. Cash, homes, furnishings and unfinished shifts persist across days; nightly activities and photographs follow the usual daily reset. Device settings and imported music files are not included.
+
 ## The night
 
 The clock starts at 10:00 PM and runs to after hours. Doors, heat, midnight drop, last call, 2am street. The sky, the crowd, and the house system move with it. Today's Gazette and today's set are not yesterday's.
@@ -115,6 +123,8 @@ npm test
 ```
 
 Needs HTTP because of ES modules. No build step. Three.js r160 is pinned locally in `vendor/three/`, including its MIT license. Fonts use browser fallbacks when unavailable.
+
+Run `npm run test:first-evening` against the local server to check guide progression, diner preparation, mid-order reloads, actual backup downloads/uploads, restore cancellation, recovery and mobile layouts. Screenshots and its report are written to `/tmp/vibe-first-evening`.
 
 For browser regression checks, start the server, then run `npm run test:browser`. This uses `agent-browser@0.37.1` through npx; install its browser with `npx agent-browser@0.37.1 install` if needed. Set `VIBE_TEST_URL` for a different local port. The tests use an isolated browser session and a loopback-only `?inspect=1` API for scene positioning, then exercise the real catalog and dialogue controls. Screenshots are saved to `/tmp/vibe-check-browser`. Run `npm run test:expansion` for the counter, street, mystery, and photography journeys; those screenshots go to `/tmp/vibe-check-expansion`. Run `npm run test:life` for the purchase, pay, apartment, furnishing and nightclub journeys; screenshots go to `/tmp/vibe-check-life`. Run `npm run test:district` for the new streets, benches, umbrella grips, saxophone pose and offline music rendering; screenshots go to `/tmp/vibe-check-district`. Run `npm run test:neighborhood` for the three enterable stores, collections, courier job, arcade game, save recovery and mobile layouts; screenshots go to `/tmp/vibe-neighborhood`.
 
