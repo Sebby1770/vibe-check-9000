@@ -857,8 +857,8 @@ export function updateCity(city, dt, t, { outside, reduced, lampMul = 1, zone, p
     for (const l of city.lampLights || []) {
         l.intensity = (l.userData.base || 16) * mul * (reduced ? 1 : 0.92 + Math.sin(t * 1.7 + l.position.x) * 0.08);
     }
-    if (city.winOn && !reduced && outside) {
-        const pulse = 0.86 + Math.sin(t * 0.55) * 0.08;
+    if (city.winOn) {
+        const pulse = (reduced?.9:.9+Math.sin(t*.55)*.035)*Math.max(.38,Math.min(1,mul));
         city.winOn.color.setRGB(1 * pulse, 0.89 * pulse, 0.66 * pulse);
         if (city.winWarm) city.winWarm.color.setRGB(1 * pulse, 0.75 * pulse, 0.47 * pulse);
     }

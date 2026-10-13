@@ -6,7 +6,7 @@
 
 The night runs from doors to last call. Each calendar day has a dare. Earn visor looks. ESC → **STAMP** saves a card of the evening; **RECAP** is what the visor kept. The till is on the pause screen if you want the lights to stay on.
 
-A first-person dusk in Midtown. November 12, 1954. The visor is from later. The sun is still in the street — until it isn't.
+A first-person day and night in Midtown. November 12, 1954. The visor is from later. The sun is still in the street — until it isn't.
 
 Walk a packed floor, take the stairs to a candlelit supper-club lounge, step out onto 47th Street under a wall of towers, or slip out the back into the alley.
 
@@ -15,6 +15,12 @@ Keep walking east past the Corner Set to discover Mercer Pocket Garden, East Ave
 The parks have four usable benches. The club plays original jazz-house, while a swung electric-piano quartet follows your walk through the gardens.
 
 No install. Click **ENTER THE NIGHT**.
+
+## New in v30: furnished interiors and a full day
+
+Hotel Astoria has a marble arrival hall, a fluted concierge desk, brass chandeliers, furnished lounges and a second-floor salon. Shop upgrades include stocked apothecary cabinets, a flower cooler, framed cinema posters, bottle shelving and barber workstations. Dottie’s has upholstered booths, counter stools and a decorative jukebox. Apartments have additional trim, lighting and window views that brighten with the day.
+
+The sun and moon move across the sky, outdoor lighting changes through dawn and sunset, and street lamps dim during daylight. Pause to wait until morning or the next evening; your chosen time is saved. All 20 interior views and the hotel’s public routes are covered by `npm run test:interiors` (local server on port 8128, muted browser).
 
 ## New in v29: your first evening
 
@@ -26,7 +32,7 @@ Use **LIFE → SAVE & BACKUP** or **ESC → SAVE & BACKUP** to download a portab
 
 ## The night
 
-The clock starts at 10:00 PM and runs to after hours. Doors, heat, midnight drop, last call, 2am street. The sky, the crowd, and the house system move with it. Today's Gazette and today's set are not yesterday's.
+The clock starts at 10:00 PM and keeps going through dawn, daytime, sunset and another evening. A full 24-hour cycle takes 90 minutes of active play; the clock pauses in menus. Use **ESC → WAIT UNTIL 7 AM / 10 PM** to skip ahead. Your wallet, keys and furnishings are preserved. The club still follows doors, heat, midnight drop and last call each evening. Calendar-day challenges and rewards continue to follow the real date, so waiting does not reset them. Today's Gazette and today's set are not yesterday's.
 
 1. Click **ENTER THE NIGHT** (pointer lock + house system).
 2. **WASD** to move, mouse to look, **SPACE** on the LED floor to dance. Stay off the asphalt — moving Checkers will throw you.

@@ -46,7 +46,7 @@ export function build({ root, mats, shop, lamp, place, crowds }) {
     }
     root.add(blooms, stems);
   }
-  card(root, ["LILY'S FLOWER STUDIO", "A LITTLE COLOR FOR THE PIANO"], -12.2, 2.6, 39.8, 4.8, 0.85, { ink: "#75404b" });
+  card(root, ["LILY'S FLOWER STUDIO", "A LITTLE COLOR FOR THE PIANO"], -12.2, 3.45, 39.8, 4.8, 0.4, { ink: "#75404b" });
   addBox(root, unitBox, paper, -12.2, 0.9, 38.3, 2.5, 0.02, 0.6);
   addBox(root, unitBox, brass, -11.1, 0.95, 38.0, 0.28, 0.055, 0.12);
   return {};

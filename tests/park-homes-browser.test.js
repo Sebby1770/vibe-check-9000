@@ -4,7 +4,7 @@ import {mkdirSync} from 'node:fs';
 const url=process.env.VIBE_TEST_URL||'http://127.0.0.1:8128',session='park-homes-28',out='/tmp/vibe-park-homes';mkdirSync(out,{recursive:true});
 const cli=(...args)=>execFileSync('npx',['--yes','agent-browser@0.37.1','--session',session,...args],{encoding:'utf8',timeout:90000});
 const ev=s=>JSON.parse(cli('eval',s).trim()),state=()=>ev('__vibeInspect.snapshot()');
-function enter(){cli('open',url+'/?inspect=1');cli('wait','--fn','!!window.__vibeInspect');ev("document.getElementById('enterBtn').click();window.testKey=(key,down=true)=>window.dispatchEvent(new KeyboardEvent(down?'keydown':'keyup',{key}));true");}
+function enter(){cli('open',url+'/?inspect=1');cli('wait','--fn','!!window.__vibeInspect');ev("if(document.getElementById('muteBtn').textContent==='MUTE')document.getElementById('muteBtn').click();document.getElementById('enterBtn').click();window.testKey=(key,down=true)=>window.dispatchEvent(new KeyboardEvent(down?'keydown':'keyup',{key}));true");}
 function place(x,z,lx,lz){ev(`(async()=>{__vibeInspect.place(${x},${z},${lx},${lz});await new Promise(r=>requestAnimationFrame(()=>requestAnimationFrame(r)));return true;})()`);}
 function close(){ev("document.querySelector('.life-overlay [data-close]')?.click();true");}
 function listings(){place(72.5,28.8,72.5,30.8);ev("testKey('e');testKey('e',false);true");assert.ok(ev("!document.querySelector('.life-overlay').hidden"));}

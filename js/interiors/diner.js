@@ -16,15 +16,9 @@ export function colliders() {
 export function build({ root, mats }) {
   const { wood, chrome, cream, black, neonRed, neonAmber, glass } = mats;
   addBox(root, unitBox, wood, -27.65, 0.02, -2, 21.8, 0.04, 28.4);
-  addBox(root, unitBox, chrome, -25.5, 0.55, 3.7, 16.4, 1.1, 2.4);
-  addBox(root, unitBox, cream, -25.5, 1.15, 3.7, 16.2, 0.08, 2.2);
-  addBox(root, unitBox, neonRed, -25.5, 0.08, 3.7, 16, 0.04, 2.2);
-  for (let i = 0; i < 7; i++) {
-    const z = -8 + i * 2.4;
-    addBox(root, unitBox, wood, -34.6, 0.45, z, 1.6, 0.12, 1.4);
-    addBox(root, unitBox, cream, -35.4, 0.85, z, 0.12, 0.9, 1.4);
-    addBox(root, unitBox, chrome, -33.6, 0.42, z, 0.28, 0.08, 0.28);
-  }
+  addBox(root, unitBox, chrome, -25.5, 0.55, 3.7, 14.2, 1.1, 2.4);
+  addBox(root, unitBox, cream, -25.5, 1.15, 3.7, 14.4, 0.08, 2.6);
+  addBox(root, unitBox, neonRed, -25.5, 0.08, 3.7, 14.2, 0.04, 2.2);
   const pie = addBox(root, unitBox, new THREE.MeshStandardMaterial({ color: 0xc45c28, roughness: 0.5 }), -22.4, 1.35, 3.7, 0.7, 0.18, 0.7);
   pie.material.emissive = new THREE.Color(0x401000);
   pie.material.emissiveIntensity = 0.2;
@@ -32,17 +26,6 @@ export function build({ root, mats }) {
   addBox(root, unitBox, chrome, -22.8, 0.7, 6.4, 8.4, 1.4, 1.6);
   addBox(root, unitBox, neonRed, -22.8, 1.15, 6.4, 7.6, 0.06, 1.2);
   addBox(root, unitBox, black, -19.4, 1.35, 6.4, 1.4, 0.35, 1.1);
-  addBox(root, unitBox, black, -36.4, 1.1, -8.2, 3.6, 2.2, 4.4);
-  addBox(root, unitBox, chrome, -36.4, 1.35, -8.2, 3.2, 0.08, 4.0);
-  addBox(root, unitBox, cream, -36.4, 2.35, -8.2, 3.5, 0.12, 4.3);
-  for (const z of [-9.4, -7.2, -5.1]) {
-    addBox(root, unitBox, new THREE.MeshStandardMaterial({ color: 0x3a2a22, roughness: 0.6 }), -37.4, 0.85, z, 0.7, 1.4, 0.7);
-    addBox(root, unitBox, neonAmber, -37.4, 1.6, z, 0.45, 0.08, 0.45);
-  }
-  addBox(root, unitBox, cream, -33.2, 1.4, -12.4, 2.2, 2.6, 0.18);
-  addBox(root, unitBox, wood, -33.2, 0.7, -11.4, 1.8, 1.2, 1.4);
-  addBox(root, unitBox, wood, -18.4, 1.6, -2, 0.12, 3.0, 12);
-  for (const z of [-8, -2, 4]) addBox(root, unitBox, cream, -18.55, 2.2, z, 0.08, 0.7, 1.6);
   addBox(root, unitBox, neonRed, -27.6, 3.2, -16.35, 8.4, 0.5, 0.04);
   return {};
 }

@@ -1,42 +1,37 @@
-/* HOTEL ASTORIA 2F public areas — floor y 4.4 (plates, stairs, roof at y 14.4 stay in city.js); zone "suite". Stairs arrive at
-   x 35.65..38.3, z 1.35 (rails in zones.js). Apartments 2A studio (x 17.1..24.5, z -7.2..0.4, door 24.5,-3.3), 2B loft
-   (z -15.8..-7.8, door 24.5,-11.7) and 2C suite (x 27.1..34.3, z -15.8..-10.4, door 34.3,-13) are life-world.js/life.js; keep
-   (36.9,0) (35.2,-5) (32,-6.5) (25.6,-3.3) (25.6,-9.8) walkable (life.test). Two x 22.4 side tables below sit inside 2A/2B.
-   Targets: NPC nellie (27.2, 0.8); prop ice (32.0, -8.5) = the ice machine; seat suite-bed (21.2, 7.15, looks at the window 21.2, 12.2).
-   Light: city.js hotelUp PointLight (27, 6.6, -2). Colliders: ice machine x 30.55..33.45, z -9.45..-7.55; bench x 18.15..24.15, z 6.35..8.25. */
-import * as THREE from "three";
-import { addBox, unitBox, neonCanvas } from "../kit.js";
-import { SECOND_Y } from "../zones.js";
-
-export function colliders() {
-  return [
-    { minX: 30.55, maxX: 33.45, minZ: -9.45, maxZ: -7.55, minY: 4.2, maxY: 5.55 },
-    { minX: 18.15, maxX: 24.15, minZ: 6.35, maxZ: 8.25, minY: 4.2, maxY: 5.45 },
-  ];
-}
-
-export function build({ root, mats }) {
-  const { wood, cream, chrome } = mats;
-  const fy = SECOND_Y;
-  addBox(root, unitBox, wood, 32.0, fy + 0.22, -8.4, 2.6, 0.12, 1.8);
-  addBox(root, unitBox, cream, 32.0, fy + 0.48, -9.1, 2.6, 0.4, 0.18);
-  addBox(root, unitBox, chrome, 32.0, fy + 0.7, -8.5, 1.1, 0.9, 0.7);
-  addBox(root, unitBox, cream, 32.0, fy + 1.05, -8.5, 0.9, 0.08, 0.55);
-  addBox(root, unitBox, new THREE.MeshBasicMaterial({ color: 0x88ccee }), 32.0, fy + 1.18, -8.5, 0.7, 0.16, 0.5);
-  addBox(root, unitBox, wood, 21.2, fy + 0.22, 7.3, 2.8, 0.14, 1.6);
-  addBox(root, unitBox, cream, 21.2, fy + 0.48, 7.9, 2.8, 0.38, 0.22);
-  addBox(root, unitBox, new THREE.MeshBasicMaterial({ color: 0xffc078, transparent: true, opacity: 0.35 }), 21.2, fy + 1.55, 12.35, 2.4, 1.5, 0.04);
-  const fourb = new THREE.Mesh(new THREE.PlaneGeometry(0.7, 0.4), new THREE.MeshBasicMaterial({ map: neonCanvas("4B", "#E0B25A", 256, 128, "#120c08") }));
-  // A framed plaque fixed to the ice cabinet, facing the public corridor.
-  addBox(root, unitBox, wood, 32, fy + .75, -8.12, .8, .5, .08);
-  fourb.position.set(32, fy + .75, -8.075);
-  fourb.rotation.y = 0;
-  root.add(fourb);
-  addBox(root, unitBox, cream, 29.4, fy + 0.02, -2, 8.4, 0.02, 18);
-  addBox(root, unitBox, new THREE.MeshStandardMaterial({ color: 0x5a2030, roughness: 0.85 }), 29.4, fy + 0.03, -2, 1.4, 0.02, 16);
-  for (const z of [-10.4, -4.2, 2.8, 8.4]) {
-    addBox(root, unitBox, wood, 22.4, fy + 0.55, z, 0.7, 0.9, 0.7);
-    addBox(root, unitBox, cream, 22.4, fy + 1.15, z, 0.18, 0.35, 0.18);
-  }
-  return {};
+/* Astoria public second floor. Apartment ownership and doors remain in life-world.js. */
+import * as THREE from 'three';
+import {roomDecor} from './decor.js';
+import {SECOND_Y} from '../zones.js';
+export function colliders(){return [
+ {minX:30.55,maxX:33.45,minZ:-9.45,maxZ:-7.55,minY:4.4,maxY:6.5,sightMaxY:5.95},
+ {minX:19.65,maxX:22.75,minZ:6.8,maxZ:8.2,minY:4.4,maxY:6.4,sightMaxY:5.65},
+ {minX:20.5,maxX:21.9,minZ:9.7,maxZ:10.6,minY:4.4,maxY:6.4,sightMaxY:5.1},
+ {minX:29.6,maxX:32.6,minZ:7.5,maxZ:8.65,minY:4.4,maxY:6.4,sightMaxY:5.7},
+ {minX:33.72,maxX:34.78,minZ:3.03,maxZ:4.27,minY:4.4,maxY:6.2,sightMaxY:5.75},
+ ];}
+export function build({root,lamp}){
+ const g=new THREE.Group();g.name='Astoria second-floor salon';root.add(g);
+ const d=roomDecor(g,{fabric:0x886251,wall:0xd9d1b9}),{m,b}=d,y=SECOND_Y;
+ b(m.wall,27.65,y+3.43,-2,21.8,.12,28.3);
+ for(const x of [16.74,38.45]){b(m.wall,x,y+1.7,-2,.15,3.3,28.2);b(m.wood,x+(x<25?.1:-.1),y+.55,-2,.1,1.05,28.2);b(m.brass,x+(x<25?.17:-.17),y+1.1,-2,.06,.05,28.2);}
+ b(m.ivory,27.65,y+.016,7,21.6,.025,10.5);
+ d.rug(29.4,y+.047,-3.6,2.15,20.3);d.rug(25.8,y+.051,5.0,17.4,1.7);d.rug(21.2,y+.053,8.9,6.2,5.7);
+ for(let z=-12.5;z<6;z+=1.25){b(m.brass,29.4,y+.061,z,.34,.012,.34,Math.PI/4);}
+ for(const z of [-14,-8,-2,4,10])b(m.ivory,27.65,y+3.28,z,21.5,.14,.15);
+ d.sofa(21.2,y,7.5,2.8);d.table(21.2,y,10.15,1.4,.9);d.sofa(31.1,y,8.1,2.8);
+ d.lamp(21.2,y+.66,10.15);d.plant(18,y,11,1.1);d.plant(33.5,y,11,1.15);
+ b(m.wall,27.65,y+1.7,12.49,21.8,3.3,.16);
+ d.frame(['ASTORIA RESIDENCES','A QUIETER KIND OF MIDTOWN'],25.8,y+2.1,12.36,5.4,1.45,Math.PI);
+ // Full-height ice cabinet in the existing alcove, with hopper, drip tray and frosted glass.
+ b(m.dark,32,y+.83,-8.5,1.25,1.65,.9);b(m.ivory,32,y+.96,-8.02,1.06,1.37,.06);
+ b(m.glow,32,y+1.38,-7.98,.84,.38,.025);b(m.dark,32,y+.83,-7.96,.64,.47,.035);
+ b(m.brass,32,y+.55,-7.89,.83,.07,.28);b(m.brass,32.44,y+.95,-7.97,.1,.14,.055);
+ d.frame(['4B · ICE','HELP YOURSELF'],32,y+1.4,-7.91,1.06,.32);
+ // Linen cart parked in the front salon, off the residential corridors.
+ for(const x of [33.8,34.7])for(const z of [3.1,4.2]){b(m.brass,x,y+.75,z,.045,1.2,.045);d.cyl(m.dark,x,y+.12,z,.1,.16);}
+ for(const h of [.25,.9])b(m.wood,34.25,y+h,3.65,1,.06,1.2);
+ for(let i=0;i<4;i++)b(m.ivory,34.25,y+1+i*.09,3.65,.8,.075,.6);
+ for(const z of [-11,-5,1]){b(m.wood,38.27,y+2.05,z,.09,.7,.22);d.lamp(38.03,y+1.5,z);}
+ const light=lamp(28,5,0xffe2b8,26);light.position.y=y+2.6;light.distance=18;
+ d.flush();return {root:g};
 }

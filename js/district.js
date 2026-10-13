@@ -100,7 +100,8 @@ export function buildDistrict(scene) {
   for(let z=-20;z<75;z+=15)for(const x of [101,117]){lamps.push([x,2.05,z,.1,4.1,.1]);bulbs.push([x,4.2,z,.38,.48,.38]);}
   for(let x=125;x<174;x+=15)for(const z of [50,62]){lamps.push([x,2.05,z,.1,4.1,.1]);bulbs.push([x,4.2,z,.38,.48,.38]);}
   batch(unitBox,trunk,stems);batch(new THREE.IcosahedronGeometry(1,1),leaf,trees);
-  batch(unitBox,iron,lamps);batch(unitBox,mat(0xffd69b,{emissive:0xffb856,emissiveIntensity:1.5}),bulbs);
+  const streetGlow=mat(0xffd69b,{emissive:0xffb856,emissiveIntensity:1.5});
+  batch(unitBox,iron,lamps);batch(unitBox,streetGlow,bulbs);
   sign(['EAST AVENUE','HAWTHORNE PARK →  ·  48TH ST ↑'],100,3,28,7,1.2,Math.PI);
   sign(['47TH STREET','← CLUB & SHOPS  ·  GARDENS →'],59,2.5,15,6,1.2);
   sign(['48TH STREET','THE EASTERN BLOCK'],118,3.4,62,6,1.2,Math.PI);
@@ -109,7 +110,8 @@ export function buildDistrict(scene) {
     const person=createHuman({outfit:i%2?'lady':'salesman',color:i%2?'#947269':'#5c747a',umbrella:i%3===0,scale:.94+(i%3)*.035,skin:[0xb87853,0xe2b899,0x744b38,0xc78e68][i%4],hair:[0x211b19,0x624332,0xa18b70][i%3]});
     person.position.set(65+i*13,0,i%2?29.6:16);person.rotation.y=i%2?Math.PI/2:-Math.PI/2;root.add(person);return person;
   });
-  return {root,peds,seats:DISTRICT_SEATS,update(t,reduced,p){
+  return {root,peds,seats:DISTRICT_SEATS,update(t,reduced,p,daylight=0){
+    streetGlow.emissiveIntensity=.08+(1-daylight)*1.42;
     peds.forEach((person,i)=>{if(!person.visible||person.position.distanceToSquared(p)>55*55)return;animateHuman(person,t,{mode:reduced?'idle':'walk',bpm:100});person.position.x=65+i*13+Math.sin(t*.12+i)*3;person.rotation.y=Math.cos(t*.12+i)>0?Math.PI/2:-Math.PI/2;});
     fountainWater.forEach(w=>{w.material.roughness=reduced?.25:.22+Math.sin(t*1.4)*.07;});
   }};

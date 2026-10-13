@@ -15,6 +15,7 @@ import { animateHuman } from "./human.js";
 import { buildColliders, getFloorY, getZone, isOutside } from "./zones.js";
 import { interiorColliders } from "./interiors/index.js";
 import { makeCubeEnv, makeDuskSky, paintSky } from "./kit.js";
+import {daylightAt} from './daylight.js';
 import { phaseLook } from "./night.js";
 import { createShopActivities } from "./shop-activities.js";
 import { detectQuality } from "./quality.js";
@@ -47,6 +48,10 @@ export function createWorld(canvas, adConfig) {
 
     const dusk = makeDuskSky(280);
     scene.add(dusk.sky, dusk.sun, dusk.glow, dusk.sunLight);
+    const moon=new THREE.Mesh(new THREE.SphereGeometry(5,16,12),new THREE.MeshBasicMaterial({color:0xdde6ee,fog:false,transparent:true,depthWrite:false}));
+    scene.add(moon);
+    let daylight=daylightAt(22*3600),skyTick=1;
+
 
     const camera = new THREE.PerspectiveCamera(82, window.innerWidth / window.innerHeight, 0.08, 420);
     camera.position.set(0, 1.7, 8);
@@ -136,17 +141,9 @@ export function createWorld(canvas, adConfig) {
     }
 
     function applySky() {
-        const look = phaseLook(nightPhase);
-        paintSky(dusk, look.stops);
-        dusk.sun.position.set(18, look.sunY, 210);
-        dusk.glow.position.copy(dusk.sun.position);
-        dusk.sun.material.opacity = look.sunOp;
-        dusk.glow.material.opacity = look.glowOp;
-        dusk.sun.visible = look.sunOp > 0.05;
-        dusk.glow.visible = look.glowOp > 0.04;
-        dusk.sunLight.color.setHex(look.sunColor);
-        dusk.sunLight.intensity = look.sunInt;
-        renderer.setClearColor(look.clear, 1);
+        paintSky(dusk,daylight.stops);
+        scene.background.setHex(daylight.clear);
+        renderer.setClearColor(daylight.clear,1);
     }
 
     function setVibeColor(hex) {
@@ -182,6 +179,7 @@ export function createWorld(canvas, adConfig) {
         streetLife,
         district,
         lifeWorld,
+        get daylight(){return {...daylight,sunVisible:dusk.sun.visible,moonVisible:moon.visible};},
 
         setShopState(state) { activities.setState(state); city.setShopState?.(state); streetLife.setState(state.expansion); lifeWorld.setState(state.life); clubScene=CLUB_SCENES.find(s=>s.id===state.life.scene)||CLUB_SCENES[0];sceneColor.set(clubScene.color);sceneAccent.set(clubScene.accent); },
         showPurchase(result) { activities.show(result); },
@@ -239,11 +237,23 @@ export function createWorld(canvas, adConfig) {
             const outside = isOutside(p.x, p.z, p.y);
 
             streetLife.update(t, reduced, p);
-            district.update(t,reduced,p);
-            const look = phaseLook(nightPhase);
+            district.update(t,reduced,p,daylight.daylight);
+            daylight=daylightAt(ctx.seconds??22*3600);
+            skyTick+=dt;if(skyTick>.2){applySky();skyTick=0;}
+            const look={...phaseLook(nightPhase),...daylight};
+            dusk.sky.position.set(p.x,0,p.z);
+            dusk.sun.position.set(p.x+look.sunX,look.sunY,p.z+look.sunZ);
+            dusk.glow.position.copy(dusk.sun.position);
+            dusk.sun.material.opacity=look.sunOp;dusk.glow.material.opacity=look.sunOp*.13;
+            dusk.sunLight.position.set(p.x+look.sunX,Math.max(10,look.sunY),p.z+look.sunZ);
+            dusk.sunLight.target.position.set(p.x,0,p.z);dusk.sunLight.target.updateMatrixWorld();
+            dusk.sunLight.color.setHex(look.sunColor);
+            moon.position.set(p.x+look.moonX,look.moonY,p.z+look.moonZ);
+            moon.visible=outside&&look.moonY>0&&look.moonOp>.05;moon.material.opacity=look.moonOp;
+            lifeWorld.setDaylight?.(look.daylight);
             dusk.sky.visible = true;
             dusk.sun.visible = outside && look.sunOp > 0.05;
-            dusk.glow.visible = outside && look.glowOp > 0.04;
+            dusk.glow.visible = outside && look.sunOp > 0.05;
             if (outside) {
                 scene.fog.color.setHex(look.fogOut);
                 scene.fog.density = reduced ? 0.006 : look.fogOutD;
@@ -276,13 +286,16 @@ export function createWorld(canvas, adConfig) {
                 scene.fog.color.set(0x2a2018);
                 scene.fog.density = 0.02;
                 hemi.color.set(0xffd0a0);
-                hemi.intensity = 1.05;
+                hemi.groundColor.set(0x837564);
+                hemi.intensity = 1.5;
                 dusk.sunLight.intensity = 0.2 * look.sunInt;
                 renderer.toneMappingExposure = 1.0;
             } else if (zone === "diner" || zone === "hotel") {
                 scene.fog.color.set(0x2a1810);
-                scene.fog.density = 0.018;
-                hemi.intensity = 1.1;
+                scene.fog.density = 0.006;
+                hemi.color.set(0xffefcf);
+                hemi.groundColor.set(0x837663);
+                hemi.intensity = 1.65;
                 dusk.sunLight.intensity = 0.15 * look.sunInt;
                 renderer.toneMappingExposure = 1.0;
             } else if (["records","pharmacy","florist","rivoli","liquor","barber","books","bakery","arcade"].includes(zone)) {
@@ -294,8 +307,8 @@ export function createWorld(canvas, adConfig) {
                 scene.fog.color.setHex(shopFog);
                 scene.fog.density = 0.02;
                 hemi.color.set(0xffd0a0);
-                hemi.groundColor.set(0x201018);
-                hemi.intensity = 1.25;
+                hemi.groundColor.set(0x756a59);
+                hemi.intensity = 1.45;
                 dusk.sunLight.intensity = 0.12 * look.sunInt;
                 renderer.toneMappingExposure = 1.02;
             } else {
@@ -318,7 +331,7 @@ export function createWorld(canvas, adConfig) {
             club.lights.bar.intensity = 70 * (nightPhase === "close" ? 0.55 : 1);
             club.lights.lounge.intensity = (48 + Math.sin(t * 1.5) * 8) * (nightPhase === "close" ? 0.62 : 1);
             if (club.lights.loungeWarm) club.lights.loungeWarm.intensity = (32 + Math.sin(t * 1.1) * 5) * (nightPhase === "close" ? 0.7 : 1);
-            if (club.lights.windowDusk) club.lights.windowDusk.intensity = 18 + Math.sin(t * 0.4) * 4;
+            if (club.lights.windowDusk) club.lights.windowDusk.intensity = 8 + daylight.daylight*22;
             const sweep = t * 0.25;
             club.lights.spotTarget.position.set(Math.sin(sweep) * 5.5, 0, Math.cos(sweep * 0.7) * 4);
 

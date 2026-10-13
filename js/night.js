@@ -1,3 +1,4 @@
+import {secondsUntilHour} from './daylight.js';
 /* In-game clock, daily bill, rotating gazette. No DOM. */
 
 export const NIGHT_START = 22 * 3600;
@@ -33,7 +34,7 @@ export const GAZETTES = [
             "Cabby on 47th: 'I stop for visors. I do not stop for dumpsters that have opinions.'",
             "Velma's trio added a chorus. The Gazette's typesetter has not recovered.",
             "A yellow cube was seen near the bar. The cube declined an interview.",
-            "Forecast: dusk all night. The sun is still in the street and refuses to leave.",
+            "Forecast: a rose-gold dawn after the rain. The city has a morning shift, too.",
         ],
     },
     {
@@ -83,7 +84,7 @@ export const GAZETTES = [
             "Marco seated a couple who had never been upstairs. He will never recover.",
             "ION's last call arrived on time, which offended several regulars.",
             "The yellow cube remains at large. Geometry, as ever, declines to comment.",
-            "Tomorrow's weather: dusk again. The sun is on a union schedule.",
+            "Tomorrow’s weather: morning light, a warm afternoon and neon after sunset.",
         ],
     },
 ];
@@ -181,6 +182,7 @@ export function formatClock(sec) {
 }
 
 export function phaseFromElapsed(elapsedGame) {
+    elapsedGame=((Math.max(0,elapsedGame)%86400)+86400)%86400;
     let id = "doors";
     for (const p of PHASE_AT) {
         if (elapsedGame >= p.t) id = p.id;
@@ -263,7 +265,8 @@ export function createClock(nowMs = Date.now()) {
     let elapsedReal = 0;
     const startMs = nowMs;
     return {
-        tick(dt) { elapsedReal += dt; },
+        tick(dt) { if(Number.isFinite(dt)&&dt>0)elapsedReal += dt; },
+        waitUntil(hour) { elapsedReal += secondsUntilHour(NIGHT_START+elapsedReal*GAME_PER_REAL,hour)/GAME_PER_REAL; },
         get elapsedReal() { return elapsedReal; },
         get elapsedGame() { return elapsedReal * GAME_PER_REAL; },
         get seconds() { return NIGHT_START + elapsedReal * GAME_PER_REAL; },

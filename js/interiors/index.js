@@ -5,6 +5,7 @@
    shop = the SHOPS entry, or { id, minX, maxX, minZ, maxZ, doorX, floorY } for the diner / hotel rooms.
    place(human, x, z, yaw, mode, { sitHips }) + crowds.push(...) adds an NPC (animated only near its room).
    zones.js stays three-free for the node tests, so world.js feeds interiorColliders() into buildColliders(). */
+import {polishShop,shopPolishColliders} from './shop-polish.js';
 import { finishInterior } from './finishes.js';
 import * as THREE from "three";
 import { SHOPS, DINER, HOTEL, SECOND_Y } from "../zones.js";
@@ -48,7 +49,7 @@ let live = [];
 export function buildInteriors({ root, scene, mats }) {
   const crowds = [];
   const lights = [];
-  // Tracked lamp: city.js updateCity culls it beyond 24 m and dims it in the Rivoli. Budget: no new lights.
+  // Tracked lamps are culled beyond 24 m; only nearby rooms use their light budget.
   function lamp(x, z, color, intens = 22) {
     const l = new THREE.PointLight(color, intens, 11, 2);
     l.position.set(x, 2.6, z);
@@ -62,6 +63,7 @@ export function buildInteriors({ root, scene, mats }) {
     const start = crowds.length;
     const res = room.mod.build({ root, scene, mats, shop: room.rect, lamp, place, crowds }) || {};
     finishInterior(root,room.id,room.rect);
+    polishShop(root,room.id,room.rect);
     for (let i = start; i < crowds.length; i++) crowds[i].userData.room = room.zone;
     rooms[room.id] = res;
     if (res.update) live.push(res);
@@ -75,7 +77,7 @@ export function buildInteriors({ root, scene, mats }) {
 }
 
 export function interiorColliders() {
-  return ROOMS.flatMap((room) => room.mod.colliders?.() || []);
+  return [...ROOMS.flatMap((room) => room.mod.colliders?.() || []),...shopPolishColliders()];
 }
 
 export function updateInteriors(dt, t, env = {}) {

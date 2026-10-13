@@ -15,6 +15,7 @@ import { downloadCard } from "./share.js";
 import { VRButton } from "three/addons/webxr/VRButton.js";
 import { Vector3, Quaternion } from "three";
 import { createWorld } from "./world.js";
+import { daylightAt } from "./daylight.js";
 import { createAudio } from "./audio.js";
 import { createControls } from "./controls.js";
 import { createHud } from "./hud.js";
@@ -367,6 +368,9 @@ async function boot() {
     document.getElementById("lifeBtn").addEventListener('click',()=>openLife());
     window.addEventListener('keydown',e=>{if(e.key.toLowerCase()==='l'&&!e.repeat&&hud.phase==='explore'){e.preventDefault();openLife();}});
     document.getElementById("journalBtn").addEventListener("click",()=>openJournal());
+    for(const [id,hour] of [['waitMorningBtn',7],['waitEveningBtn',22]])document.getElementById(id).addEventListener('click',()=>{
+        clock.waitUntil(hour);recapShown=true;persistCommerce();resumeStreet();hud.toast(hour===7?'Morning on 47th. Your keys and wallet are safe.':'The lights are coming on. Welcome to another evening.');
+    });
     document.getElementById("pauseJournalBtn").addEventListener("click",()=>openJournal());
     window.addEventListener("keydown",e=>{if(e.key.toLowerCase()==="j"&&!e.repeat&&hud.phase==="explore"){e.preventDefault();openJournal();}});
     hud.setBill(bill);
@@ -741,6 +745,7 @@ async function boot() {
         window.__vibeInspect = {
             place(x,z,lookX,lookZ,y=0) {controls.sit({x,z,y,eye:1.7,lookX,lookZ});controls.stand();},
             advance(seconds){clock.tick(seconds);},
+            waitUntil(hour){clock.waitUntil(hour);},
             look(x,y,z){world.camera.lookAt(x,y,z);},
             get world(){return world;},
             traffic(){return world.city.traffic.map((c)=>({x:c.position.x,z:c.position.z,dir:c.userData.moving}));},
@@ -752,7 +757,7 @@ async function boot() {
                     gripError:u?u.getWorldPosition(new Vector3()).distanceTo(j.lHand.getWorldPosition(new Vector3())):null,
                     upright:u?new Vector3(0,1,0).applyQuaternion(u.getWorldQuaternion(new Quaternion())).y:null};
             });},
-            snapshot(){return {homes:Object.fromEntries([...world.lifeWorld.doors].map(([id,door])=>[id,{locked:door.visible,furnishings:[...world.lifeWorld.decor.get(id)].filter(([,g])=>g.visible).map(([key])=>key)}])),commerce,progress,phase:hud.phase,night:clock.phase,zone:hud.run.zone,sitting:controls.sitting,airborne:!!controls.airborne,energy,filmVersion:world.city.film.material.map.version,audio:{preview:audio.previewing,muted:audio.muted,usingDeck:audio.usingDeck,bpm:audio.bpm},position:{x:world.camera.position.x,y:world.camera.position.y,z:world.camera.position.z},target:interactionTarget()?.id,set:activeSet,render:world.renderer.info.render,memory:world.renderer.info.memory};},
+            snapshot(){return {homes:Object.fromEntries([...world.lifeWorld.doors].map(([id,door])=>[id,{locked:door.visible,furnishings:[...world.lifeWorld.decor.get(id)].filter(([,g])=>g.visible).map(([key])=>key)}])),commerce,progress,daylight:world.daylight,clock:clock.clock,elapsed:clock.elapsedReal,phase:hud.phase,night:clock.phase,zone:hud.run.zone,sitting:controls.sitting,airborne:!!controls.airborne,energy,filmVersion:world.city.film.material.map.version,audio:{preview:audio.previewing,muted:audio.muted,usingDeck:audio.usingDeck,bpm:audio.bpm},position:{x:world.camera.position.x,y:world.camera.position.y,z:world.camera.position.z},target:interactionTarget()?.id,set:activeSet,render:world.renderer.info.render,memory:world.renderer.info.memory};},
         };
     }
 
@@ -837,7 +842,7 @@ async function boot() {
         const zone = getZone(p.x, p.z, fy);
         audio.setZone(zone);
         hud.setZone(zone, zoneLabel(zone));
-        hud.setNight({ clock: clock.clock, phase, copy: PHASE_COPY[phase] });
+        hud.setNight({ clock: clock.clock, phase, copy: PHASE_COPY[phase], daylight: daylightAt(clock.seconds).label });
         if (zone !== lastZone) {
             lastZone = zone;
             if (SHOPS_CATALOG.some(s=>s.id===zone))audio.playShopSound();
@@ -852,6 +857,7 @@ async function boot() {
             bass, mid, bpm: audio.bpm, reduced: hud.reducedFx, energy,
             talkId: hud.talkNpc && hud.talkNpc.id,
             clock: clock.clock,
+            seconds:clock.seconds,
             phase,
             dancing: move.dancing && onFloor,
         });

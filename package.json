@@ -1,11 +1,11 @@
 {
   "name": "vibe-check-9000",
-  "version": "29.0.0",
+  "version": "30.0.0",
   "private": true,
   "type": "module",
   "description": "First-person 1954 Midtown: subway under 47th, a hotel floor, a picture that refuses the decade.",
   "scripts": {
-    "test": "node tests/people.test.js && node tests/engine.test.js && node tests/zones.test.js && node tests/night.test.js && node tests/progress.test.js && node tests/commerce.test.js && node tests/interactions.test.js && node tests/expansion.test.js && node tests/life.test.js && node tests/ads.test.js && node tests/traffic.test.js && node tests/district.test.js && node tests/neighborhood.test.js && node tests/collision.test.js && node tests/block-loop.test.js && node tests/save-backup.test.js",
+    "test": "node tests/people.test.js && node tests/engine.test.js && node tests/zones.test.js && node tests/night.test.js && node tests/progress.test.js && node tests/commerce.test.js && node tests/interactions.test.js && node tests/expansion.test.js && node tests/life.test.js && node tests/ads.test.js && node tests/traffic.test.js && node tests/district.test.js && node tests/neighborhood.test.js && node tests/collision.test.js && node tests/block-loop.test.js && node tests/save-backup.test.js && node tests/daylight.test.js",
     "start": "python3 -m http.server 8000",
     "test:browser": "node tests/browser.test.js",
     "test:life": "node tests/life-browser.test.js",
@@ -14,6 +14,7 @@
     "test:neighborhood": "node tests/neighborhood-browser.test.js",
     "test:block": "node tests/block-browser.test.js",
     "test:park-homes": "node tests/park-homes-browser.test.js",
-    "test:first-evening": "node tests/first-evening-browser.test.js"
+    "test:first-evening": "node tests/first-evening-browser.test.js",
+    "test:interiors": "node tests/interiors-browser.test.js"
   }
 }

@@ -5,7 +5,7 @@ import { checkerFloor } from '../shop-art.js';
 // Architectural finishes are separate from interactive counters and furniture.
 // Everything stays on walls, ceilings or existing counters so aisles remain usable.
 export function finishInterior(root,id,rect) {
-  if(id==='records')return; // The listening room already has its own complete finish.
+  if(['records','hotel-lobby'].includes(id))return; // These rooms supply their own complete architectural finishes.
   const m=(color,extra={})=>new THREE.MeshStandardMaterial({color,roughness:.72,...extra});
   const brass=m(0xbe9758,{metalness:.6,roughness:.32}),ivory=m(0xe6d7b7),walnut=m(0x51372d),dark=m(0x283b3b);
   const light=m(0xffdcab,{emissive:0xffc686,emissiveIntensity:.65});
@@ -61,7 +61,7 @@ export function finishInterior(root,id,rect) {
   if(id==='liquor'){
     for(const z of [33.6,36.2,38.8]){
       b(walnut,24.6,3.59,z,9.3,.25,.2);
-      for(const x of [22,27.2])mesh(new THREE.SphereGeometry(.14,10,8),light,x,3.3,z);
+      for(const x of [20.6,28.6])mesh(new THREE.SphereGeometry(.14,10,8),light,x,3.3,z);
     }
     // Small copper tasting still stays entirely on the existing back counter.
     const copper=m(0xb97445,{metalness:.72,roughness:.3});
@@ -86,16 +86,6 @@ export function finishInterior(root,id,rect) {
         mesh(new THREE.SphereGeometry(.17,10,8),light,x,2.98,z);
       }
     }
-  }
-  if(id==='hotel-lobby'){
-    // A ceiling rosette, inlaid rug border and desk lamp warm up the lobby.
-    for(const x of [22.3,32.9])b(brass,x,.057,-2,.08,.02,14.5);
-    for(const z of [-9.25,5.25])b(brass,27.6,.057,z,10.6,.02,.08);
-    const ring=mesh(new THREE.TorusGeometry(1.2,.055,8,32),brass,26,3.48,1);ring.rotation.x=Math.PI/2;
-    b(brass,26,3.83,1,.05,.7,.05);
-    for(let i=0;i<10;i++){const a=i*Math.PI/5;mesh(new THREE.SphereGeometry(.13,10,8),light,26+Math.cos(a)*1.2,3.38,1+Math.sin(a)*1.2);}
-    b(brass,27.7,1.57,5.9,.04,.62,.04);
-    mesh(new THREE.ConeGeometry(.3,.22,16),dark,27.7,1.89,5.9);
   }
   for(const o of details)batch.geo(o.material,o.geometry,o.position.x,o.position.y,o.position.z,o.scale.x,o.scale.y,o.scale.z,o.rotation.y,o.rotation.x,o.rotation.z);
   batch.flush(root);

@@ -1,4 +1,5 @@
 import * as THREE from 'three';
+import {roomDecor} from './interiors/decor.js';
 import {addBox,unitBox} from './kit.js';
 import {printedCard} from './shop-art.js';
 import {HOMES,HOME_BOUNDS,LIFE_PLACES,CLUB_SCENES,normalizeLife} from './life.js';
@@ -9,18 +10,22 @@ export function buildLifeWorld(scene,colliders){
  const wood=mat('#694937'),cream=mat('#e0ceb0'),brass=mat('#c7a463'),dark=mat('#294146'),white=mat('#eadfc8'),leaf=mat('#537659');
  const box=(g,m,x,y,z,w,h,d)=>addBox(g,unitBox,m,x,y,z,w,h,d);
  const sign=(g,lines,x,y,z,w,h,rotation=0,paper='#e7d8b8',ink='#294c42')=>{const m=new THREE.Mesh(new THREE.PlaneGeometry(w,h),new THREE.MeshBasicMaterial({map:printedCard(lines,{paper,ink,width:768,height:384}),side:THREE.DoubleSide}));m.position.set(x,y,z);m.rotation.y=rotation;const holder=new THREE.Group();holder.add(m);g.add(holder);return m;};
+ const windowPainters=[];let lastDaylight=-1;
  function skylineWindow(g,x,y,z,color) {
   const canvas=document.createElement('canvas');canvas.width=768;canvas.height=384;
-  const ctx=canvas.getContext('2d'),sky=ctx.createLinearGradient(0,0,0,384);
-  sky.addColorStop(0,'#273e58');sky.addColorStop(1,'#c19579');ctx.fillStyle=sky;ctx.fillRect(0,0,768,384);
-  ctx.fillStyle='#eddaad';ctx.beginPath();ctx.arc(610,80,29,0,Math.PI*2);ctx.fill();
+  const ctx=canvas.getContext('2d');
+  const tex=new THREE.CanvasTexture(canvas);tex.colorSpace=THREE.SRGBColorSpace;
+  const blend=(night,day,t)=>new THREE.Color(night).lerp(new THREE.Color(day),t).getStyle();
+  const repaint=day=>{const sky=ctx.createLinearGradient(0,0,0,384);
+  sky.addColorStop(0,blend('#17253c','#769fba',day));sky.addColorStop(1,blend('#627086','#dce4d1',day));ctx.fillStyle=sky;ctx.fillRect(0,0,768,384);
+  ctx.fillStyle=blend('#d8e6eb','#fff0bf',day);ctx.beginPath();ctx.arc(610,80,29,0,Math.PI*2);ctx.fill();
   for(let i=0;i<13;i++){const bx=i*64-20,top=110+(i*73)%133;
    ctx.fillStyle=i%2?'#344758':'#2a3d4c';ctx.fillRect(bx,top,60,384-top);
-   for(let wx=bx+9;wx<bx+52;wx+=16)for(let wy=top+15;wy<370;wy+=26){ctx.fillStyle=(wx+wy+i)%5<2?'#cfb884':'#5a6c74';ctx.fillRect(wx,wy,7,10);}
+   for(let wx=bx+9;wx<bx+52;wx+=16)for(let wy=top+15;wy<370;wy+=26){ctx.fillStyle=blend((wx+wy+i)%5<2?'#cfb884':'#344751','#819ba5',day);ctx.fillRect(wx,wy,7,10);}
    if(i%3===0){ctx.fillStyle='#293d49';ctx.fillRect(bx+17,top-18,26,18);ctx.fillRect(bx+29,top-50,3,32);}
   }
   ctx.strokeStyle='#a6b1b0';ctx.globalAlpha=.18;ctx.lineWidth=2;for(let i=0;i<28;i++){ctx.beginPath();ctx.moveTo(i*35,0);ctx.lineTo(i*35-110,384);ctx.stroke();}ctx.globalAlpha=1;
-  const tex=new THREE.CanvasTexture(canvas);tex.colorSpace=THREE.SRGBColorSpace;
+  tex.needsUpdate=true;};repaint(0);windowPainters.push(repaint);
   const pane=new THREE.Mesh(new THREE.PlaneGeometry(2.8,1.3),new THREE.MeshBasicMaterial({map:tex}));pane.position.set(x,y,z);g.add(pane);
   // Three-light sash: frame, two mullions and a transom rail, all proud of the painted view.
   for(const dx of [-1.46,-.47,.47,1.46])box(g,white,x+dx,y,z+.07,.06,1.45,.08);
@@ -83,6 +88,15 @@ export function buildLifeWorld(scene,colliders){
   g=item('poster');sign(g,['RIVOLI PICTURES','NEON IN THE RAIN'],r.minX+3.8,6.25,r.maxZ-.12,1.3,1.7,Math.PI,'#293e49','#d9bb78');
   const breakfastX=cx+(home.floorY===0?3:.3);
   g=item('breakfast');box(g,wood,breakfastX,5.1,r.maxZ-1.1,1.15,.09,.85);box(g,brass,breakfastX,4.8,r.maxZ-1.1,.1,.6,.1);box(g,white,breakfastX+.2,5.25,r.maxZ-1.1,.16,.22,.16);box(g,cream,breakfastX-.28,5.17,r.maxZ-1.1,.4,.035,.35);
+  const trim=roomDecor(room,{fabric:home.color,wall:0xe0ceb0}),tm=trim.m;
+  // Panelled headboard, bedside light, framed textile and cornice give every home a finished identity.
+  for(const z of [r.minZ+.15,r.maxZ-.15])trim.b(tm.wood,cx,4.69,z,w-.2,.27,.075);
+  for(const x of [r.minX+.15,r.maxX-.15])trim.b(tm.ivory,x,7.53,cz,.12,.08,d-.2);
+  for(let x=bx-.9;x<=bx+.91;x+=.3)trim.b(tm.brass,x,5.46,bz-1.23,.022,.92,.035);
+  trim.lamp(deskX+.55,5.31,deskZ);
+  trim.frame(['MIDTOWN STUDIES',home.number+' · A PLACE OF YOUR OWN'],r.minX+.18,6.6,cz,1.5,1.15,Math.PI/2,{paper:home.color,ink:'#eadabd'});
+  trim.b(tm.wood,cx,7.39,cz,.035,.6,.035);trim.cyl(tm.ivory,cx,7.06,cz,.38,.16,.5);trim.cyl(tm.glow,cx,6.98,cz,.36,.015);
+  trim.flush();
   decor.set(home.id,items);
  }
  // Street listings board is backed and mounted on two posts, outside the entry halls.
@@ -103,7 +117,7 @@ export function buildLifeWorld(scene,colliders){
  box(root,dark,6.4,2.6,12.395,3.4,1.1,.03);sign(root,['THE NIGHT IS YOURS','FLOOR · LOUNGE · AFTER HOURS'],6.4,2.6,12.368,3.2,.9,Math.PI,'#233840','#dfb677');
  const sceneLabel=sign(root,['ELECTRIC ORCHID','THE HOUSE PALETTE'],9.9,2.65,-9.453,2.3,.6);
  let palette='';
- return {root,doors,decor,setState(input){const s=normalizeLife(input);doors.forEach((d,id)=>d.visible=!s.properties.includes(id));
+ return {root,doors,decor,setDaylight(value){if(Math.abs(value-lastDaylight)<.08)return;lastDaylight=value;windowPainters.forEach(paint=>paint(value));},setState(input){const s=normalizeLife(input);doors.forEach((d,id)=>d.visible=!s.properties.includes(id));
   for(const b of colliders.boxes)if(b.homeGate){const owned=s.properties.includes(b.homeGate);const floor=HOMES.find(h=>h.id===b.homeGate)?.floorY??4.4;b.minY=owned?-100:floor;b.maxY=owned?-99:floor+3.3;}
   decor.forEach((items,id)=>items.forEach((g,key)=>g.visible=id===s.home&&s.installed.includes(key)));
   if(palette!==s.scene){palette=s.scene;const c=CLUB_SCENES.find(c=>c.id===s.scene);sceneLabel.material.map.dispose();sceneLabel.material.map=printedCard([c.name.toUpperCase(),'THE HOUSE PALETTE'],{paper:'#22353a',ink:c.color,width:768,height:384});sceneLabel.material.needsUpdate=true;}

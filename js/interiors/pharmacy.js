@@ -20,8 +20,8 @@ export function build({ root, mats, shop, lamp, place, crowds }) {
   addBox(root, unitBox, green, -21.8, 0.55, 38.3, 8.4, 1.1, 1.5);
   addBox(root, unitBox, marble, -21.8, 1.14, 38.3, 8.2, 0.08, 1.35);
   for (const x of [-25.4, -18.2]) {
-    addBox(root, unitBox, cream, x, 1.35, 35.8, 0.22, 2.4, 4.8);
-    for (let i = 0; i < 5; i++) addBox(root, unitBox, green, x, 0.55 + i * 0.42, 35.8, 0.18, 0.05, 4.6);
+    addBox(root, unitBox, cream, x+(x < -21.8 ? -.3 : .3), 1.35, 35.8, 0.08, 2.4, 4.8);
+    for (let i = 0; i < 5; i++) addBox(root, unitBox, green, x, 0.55 + i * 0.42, 35.8, 0.6, 0.05, 4.6);
   }
   addBox(root, unitBox, chrome, -24.2, 0.55, 33.6, 1.6, 1.1, 0.7);
   lamp(-21.8, 35.2, 0x88ffe0, 24);

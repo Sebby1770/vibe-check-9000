@@ -20,7 +20,7 @@ export function build({ root, mats, shop, lamp, place, crowds }) {
   addBox(root, unitBox, wood, 24.6, 0.55, 38.3, 8.4, 1.1, 1.5);
   addBox(root, unitBox, marble, 24.6, 1.14, 38.3, 8.2, 0.08, 1.35);
   for (const x of [21.2, 28.0]) {
-    addBox(root, unitBox, wood, x, 1.4, 35.8, 0.22, 2.5, 4.8);
+    addBox(root, unitBox, wood, x+(x<24.6?-.3:.3), 1.4, 35.8, 0.08, 2.5, 4.8);
     for (let i = 0; i < 12; i++) {
       const b = new THREE.Mesh(bottleG, new THREE.MeshStandardMaterial({
         color: bottleColors[i % bottleColors.length], roughness: 0.25, metalness: 0.4,
@@ -35,7 +35,7 @@ export function build({ root, mats, shop, lamp, place, crowds }) {
 
   shopRoom(root, mats, shop, 0x887553);
   bottleRows(root, wood, 24.6, 39.75, 7.3, 4, 16, 0x827b38);
-  card(root, ["THE SMOOTH CENTURY", "SEALED BOTTLES • HONEST COMPANY"], 24.6, 3.36, 39.8, 6.3, 0.5, { ink: "#4f4933" });
+  card(root, ["THE SMOOTH CENTURY", "SEALED BOTTLES • HONEST COMPANY"], 24.6, 3.32, 39.8, 6.3, 0.3, { ink: "#4f4933" });
   for (let i = 0; i < 3; i++) {
     addBox(root, unitBox, wood, 21 + i * 1.1, 0.35, 33.5, 0.85, 0.7, 0.65);
     card(root, ["MIDTOWN", "RESERVE"], 21 + i * 1.1, 0.39, 33.15, 0.63, 0.42, { ink: "#5d4933", paper: "#bc9c68" });
