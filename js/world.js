@@ -10,6 +10,7 @@ import { RenderPass } from "three/addons/postprocessing/RenderPass.js";
 import { UnrealBloomPass } from "three/addons/postprocessing/UnrealBloomPass.js";
 import { OutputPass } from "three/addons/postprocessing/OutputPass.js";
 import { GTAOPass } from "three/addons/postprocessing/GTAOPass.js";
+import { RoundedBoxGeometry } from "three/addons/geometries/RoundedBoxGeometry.js";
 import { SMAAPass } from "three/addons/postprocessing/SMAAPass.js";
 import { createSky } from "./render/sky.js";
 import { createEnvironment } from "./render/environment.js";
@@ -146,30 +147,37 @@ export function createWorld(canvas, adConfig) {
         finally { for (const o of hiddenNow) o.visible = true; hiddenNow.length = 0; }
     };
 
+    // First-person hands: a wool suit sleeve, a shirt cuff, and the visor's thin wristband (slot 1, tinted by the look).
+    const handSkin = new THREE.MeshStandardMaterial({ color: 0xc68642, roughness: 0.6 });
+    const sleeveWool = new THREE.MeshStandardMaterial({ color: 0x23242b, roughness: 0.88 });
+    const shirtCotton = new THREE.MeshStandardMaterial({ color: 0xe9e4d8, roughness: 0.75 });
     function makeHand(side) {
         const g = new THREE.Group();
-        const palm = new THREE.Mesh(
-            new THREE.SphereGeometry(1, 14, 10),
-            new THREE.MeshStandardMaterial({ color: 0xc68642, roughness: 0.55 }),
-        );
-        const cuff = new THREE.Mesh(
-            new THREE.CylinderGeometry(0.035, 0.04, 0.16, 16),
-            new THREE.MeshStandardMaterial({
-                color: 0x1a1410,
-                emissive: side < 0 ? 0xff00aa : 0x00fff7,
-                emissiveIntensity: 0.055,
-            }),
-        );
-        g.add(palm, cuff); // Keep the cuff in slot 1 for visor-colour updates.
-        palm.scale.set(.04,.022,.065);
-        for(let i=0;i<4;i++){
-            const finger=new THREE.Mesh(new THREE.CapsuleGeometry(.008,.038,3,8),palm.material);
-            finger.rotation.x=Math.PI/2;finger.position.set(-.025+i*.017,-.001,-.057);g.add(finger);
-        }
-        const thumb=new THREE.Mesh(new THREE.CapsuleGeometry(.012,.026,3,8),palm.material);
-        thumb.rotation.set(Math.PI/2,0,side*.5);thumb.position.set(-side*.035,-.003,-.015);g.add(thumb);
+        const hand = new THREE.Group();
+        const palm = new THREE.Mesh(new RoundedBoxGeometry(0.078, 0.028, 0.092, 3, 0.012), handSkin);
+        palm.position.z = -0.045;
+        hand.add(palm);
+        [0.04, 0.046, 0.043, 0.034].forEach((len, i) => {
+            const finger = new THREE.Mesh(new THREE.CapsuleGeometry(0.0085, len, 3, 8), handSkin);
+            finger.rotation.x = Math.PI / 2 - 0.35;
+            finger.position.set(-0.027 + i * 0.018, -0.008, -0.094 - len / 2);
+            hand.add(finger);
+        });
+        const thumb = new THREE.Mesh(new THREE.CapsuleGeometry(0.011, 0.034, 3, 8), handSkin);
+        thumb.rotation.set(Math.PI / 2, 0, side * 0.6);
+        thumb.position.set(-side * 0.042, -0.006, -0.03);
+        hand.add(thumb);
+        const band = new THREE.Mesh(new THREE.TorusGeometry(0.037, 0.0055, 8, 28), new THREE.MeshStandardMaterial({
+            color: 0x15151a, roughness: 0.3, metalness: 0.6, emissive: side < 0 ? 0xff00aa : 0x00fff7, emissiveIntensity: 0.4,
+        }));
+        band.position.z = 0.03;
+        const cuff = new THREE.Mesh(new THREE.CylinderGeometry(0.039, 0.04, 0.03, 18), shirtCotton);
         cuff.rotation.x = Math.PI / 2;
-        cuff.position.z = 0.12;
+        cuff.position.z = 0.05;
+        const sleeve = new THREE.Mesh(new THREE.CylinderGeometry(0.045, 0.05, 0.34, 18), sleeveWool);
+        sleeve.rotation.x = Math.PI / 2;
+        sleeve.position.z = 0.23;
+        g.add(hand, band, cuff, sleeve); // Keep the band in slot 1 for visor-colour updates.
         g.position.set(side * 0.28, -0.22, -0.42);
         g.rotation.set(-0.35, side * 0.18, side * 0.12);
         camera.add(g);
@@ -267,8 +275,8 @@ export function createWorld(canvas, adConfig) {
         setCuffs(left, right) {
             const lc = leftHand.children[1]?.material;
             const rc = rightHand.children[1]?.material;
-            if (lc && left) { lc.emissive.set(left); lc.emissiveIntensity = 0.55; }
-            if (rc && right) { rc.emissive.set(right); rc.emissiveIntensity = 0.55; }
+            if (lc && left) { lc.emissive.set(left); lc.emissiveIntensity = 0.9; }
+            if (rc && right) { rc.emissive.set(right); rc.emissiveIntensity = 0.9; }
         },
         setNightPhase(phase) {
             nightPhase = phase || "doors";
