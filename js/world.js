@@ -9,6 +9,12 @@ import { EffectComposer } from "three/addons/postprocessing/EffectComposer.js";
 import { RenderPass } from "three/addons/postprocessing/RenderPass.js";
 import { UnrealBloomPass } from "three/addons/postprocessing/UnrealBloomPass.js";
 import { OutputPass } from "three/addons/postprocessing/OutputPass.js";
+import { GTAOPass } from "three/addons/postprocessing/GTAOPass.js";
+import { SMAAPass } from "three/addons/postprocessing/SMAAPass.js";
+import { createSky } from "./render/sky.js";
+import { createEnvironment } from "./render/environment.js";
+import { createSunShadow, markShadows } from "./render/shadows.js";
+import { createGradePass } from "./render/grade.js";
 import { buildClub } from "./club.js";
 import { buildCity, updateCity } from "./city.js";
 import { animateHuman } from "./human.js";
@@ -22,6 +28,7 @@ import { detectQuality } from "./quality.js";
 
 const _color = new THREE.Color();
 const _vibe = new THREE.Color("#ff00ff");
+const _haze = new THREE.Color(0xc6d2db);
 
 export function createWorld(canvas, adConfig) {
     const quality = detectQuality();
@@ -37,7 +44,6 @@ export function createWorld(canvas, adConfig) {
     renderer.outputColorSpace = THREE.SRGBColorSpace;
     renderer.toneMapping = THREE.ACESFilmicToneMapping;
     renderer.toneMappingExposure = 1.08;
-    renderer.shadowMap.enabled = false;
     renderer.setClearColor(0xc47858, 1);
 
     const scene = new THREE.Scene();
@@ -48,6 +54,10 @@ export function createWorld(canvas, adConfig) {
 
     const dusk = makeDuskSky(280);
     scene.add(dusk.sky, dusk.sun, dusk.glow, dusk.sunLight);
+    const sky = createSky(scene, dusk, 300);
+    // Shadow maps must be configured before the first render compiles any program.
+    const sunShadow = createSunShadow(renderer, dusk.sunLight, scene, quality);
+    const ibl = createEnvironment(renderer, sky, dusk, quality.envSize);
     const moon=new THREE.Mesh(new THREE.SphereGeometry(5,16,12),new THREE.MeshBasicMaterial({color:0xdde6ee,fog:false,transparent:true,depthWrite:false}));
     scene.add(moon);
     let daylight=daylightAt(22*3600),skyTick=1;
@@ -62,6 +72,14 @@ export function createWorld(canvas, adConfig) {
     target.samples = renderer.capabilities.isWebGL2 ? Math.min(quality.samples, renderer.capabilities.maxSamples) : 0;
     const composer = new EffectComposer(renderer, target);
     composer.addPass(new RenderPass(scene, camera));
+    let gtao = null;
+    if (quality.gtao) {
+        gtao = new GTAOPass(scene, camera, window.innerWidth, window.innerHeight);
+        gtao.blendIntensity = 0.85;
+        gtao.updateGtaoMaterial({ radius: 0.45, distanceExponent: 1.6, thickness: 1.4, distanceFallOff: 1, scale: 1, samples: 12, screenSpaceRadius: false });
+        gtao.updatePdMaterial({ lumaPhi: 10, depthPhi: 2, normalPhi: 3, radius: 6, rings: 2, samples: 12 });
+        composer.addPass(gtao);
+    }
     const bloom = new UnrealBloomPass(
         new THREE.Vector2(window.innerWidth * quality.bloomScale, window.innerHeight * quality.bloomScale),
         0.22,
@@ -70,6 +88,11 @@ export function createWorld(canvas, adConfig) {
     );
     composer.addPass(bloom);
     composer.addPass(new OutputPass());
+    const smaa = quality.smaa ? new SMAAPass(window.innerWidth * quality.pixelRatio, window.innerHeight * quality.pixelRatio) : null;
+    if (smaa) composer.addPass(smaa);
+    const grade = createGradePass();
+    grade.uniforms.uAspect.value = window.innerWidth / window.innerHeight;
+    composer.addPass(grade);
     composer.setPixelRatio(quality.pixelRatio);
     let bloomKick = 0;
     let baseFov = 82;
@@ -88,6 +111,40 @@ export function createWorld(canvas, adConfig) {
     let clubScene=CLUB_SCENES[0];
     const sceneColor=new THREE.Color(clubScene.color),sceneAccent=new THREE.Color(clubScene.accent);
     const activities = createShopActivities(scene,camera);
+    markShadows(scene);
+    const clubEnv = env;
+
+    // Render-time culling: people who can't be seen are hidden for the draw only and restored right
+    // after, so raycasts, the sign audit and gameplay always see the whole scene.
+    const clubRooms = new Set(["club", "lounge"]);
+    const clubPeople = [
+        ...club.dancers, ...(club.barCrowd || []), ...(club.loungeCrowd || []),
+        ...club.namedPeople.filter((n) => clubRooms.has(getZone(n.x, n.z, n.y))).map((n) => n.obj),
+    ];
+    const streetPeople = [...(city.peds || []), ...(district.peds || [])];
+    const allPeople = [...clubPeople, ...streetPeople, ...(city.shopCrowd || []), ...(city.subwayCrowd || []),
+        ...club.namedPeople.filter((n) => !clubRooms.has(getZone(n.x, n.z, n.y))).map((n) => n.obj)];
+    const hiddenNow = [];
+    function hideForRender(list, test) {
+        for (const o of list) if (o.visible && (!test || test(o))) { o.visible = false; hiddenNow.push(o); }
+    }
+    function cullForRender() {
+        const p = camera.position;
+        const zone = getZone(p.x, p.z, p.y - 1.7);
+        const inClub = clubRooms.has(zone);
+        const atClubDoor = Math.abs(p.x) < 18 && p.z > 6 && p.z < 34 && p.y < 3;
+        if (!inClub && !atClubDoor) hideForRender(clubPeople);
+        if (inClub) hideForRender(streetPeople);
+        if (zone !== "subway" && p.y > -1) hideForRender(city.subwayCrowd || []);
+        const far = quality.drawDistance * 0.3;
+        hideForRender(allPeople, (o) => Math.abs(o.position.x - p.x) + Math.abs(o.position.z - p.z) > far);
+    }
+    const renderComposer = composer.render.bind(composer);
+    composer.render = (delta) => {
+        cullForRender();
+        try { renderComposer(delta); }
+        finally { for (const o of hiddenNow) o.visible = true; hiddenNow.length = 0; }
+    };
 
     function makeHand(side) {
         const g = new THREE.Group();
@@ -163,6 +220,7 @@ export function createWorld(canvas, adConfig) {
         composer.setPixelRatio(quality.pixelRatio);
         composer.setSize(w, h);
         bloom.setSize(w * quality.bloomScale, h * quality.bloomScale);
+        grade.uniforms.uAspect.value = w / h;
     }
     window.addEventListener("resize", resize);
 
@@ -180,6 +238,9 @@ export function createWorld(canvas, adConfig) {
         district,
         lifeWorld,
         get daylight(){return {...daylight,sunVisible:dusk.sun.visible,moonVisible:moon.visible};},
+        quality,
+        /** Flags shadow casting/receiving on objects added after the world was built. */
+        markShadows,
 
         setShopState(state) { activities.setState(state); city.setShopState?.(state); streetLife.setState(state.expansion); lifeWorld.setState(state.life); clubScene=CLUB_SCENES.find(s=>s.id===state.life.scene)||CLUB_SCENES[0];sceneColor.set(clubScene.color);sceneAccent.set(clubScene.accent); },
         showPurchase(result) { activities.show(result); },
@@ -251,12 +312,17 @@ export function createWorld(canvas, adConfig) {
             dusk.sunLight.color.setHex(look.sunColor);
             moon.position.set(p.x+look.moonX,look.moonY,p.z+look.moonZ);
             moon.visible=outside&&look.moonY>0&&look.moonOp>.05;moon.material.opacity=look.moonOp;
+            sky.update(p, look, outside);
+            if (outside) ibl.update(look);
+            scene.environment = outside ? ibl.outdoor : (zone === "club" || zone === "lounge") ? clubEnv : ibl.room;
+            sunShadow.update(p, look, { outside, strength: look.sunInt });
             lifeWorld.setDaylight?.(look.daylight);
             dusk.sky.visible = true;
             dusk.sun.visible = outside && look.sunOp > 0.05;
             dusk.glow.visible = outside && look.sunOp > 0.05;
             if (outside) {
-                scene.fog.color.setHex(look.fogOut);
+                // By day the haze takes the colour of the physical sky's horizon.
+                scene.fog.color.setHex(look.fogOut).lerp(_haze, sky.mix * 0.55);
                 scene.fog.density = reduced ? 0.006 : look.fogOutD;
                 hemi.color.setHex(look.hemi);
                 hemi.groundColor.setHex(look.hemiGround);
@@ -438,6 +504,7 @@ export function createWorld(canvas, adConfig) {
 
             if (bloomKick > 0) bloomKick -= dt;
             const drunkPulse = drunk && !reduced ? 0.22 + Math.sin(t * 1.3) * 0.08 : 0;
+            bloom.threshold = outside ? 0.78 + sky.mix * 0.17 : 0.78;
             bloom.strength = reduced ? 0.05 : (outside ? 0.2 : zone === "club" ? 0.28 : 0.12) + (zone === "club" ? bass * 0.14 + bloomKick : 0) + drunkPulse;
             const drunkFov = drunk && !reduced ? Math.sin(t * 0.7) * 4 + Math.sin(t * 1.9) * 1.6 : 0;
             const targetFov = baseFov + (reduced ? 0 : bass * 2.4 + bloomKick * 8) + drunkFov;
@@ -467,6 +534,9 @@ export function createWorld(canvas, adConfig) {
             }
 
             updateCity(city, dt, t, { outside, reduced, lampMul: look.lamp, zone, position:p, camera });
+            grade.uniforms.uTime.value = t;
+            grade.setLook({ zone, outside, daylight: look.daylight, reduced, grain: quality.grain });
+            if (gtao) gtao.enabled = !reduced;
             activities.update(dt,t,reduced,club.namedPeople);
 
             club.particles.visible = zone === "club" || zone === "lounge";

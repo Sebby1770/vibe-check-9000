@@ -635,8 +635,18 @@ export function buildCity(scene, adConfig = mergeAdConfig()) {
     }
     const steamGeo = new THREE.BufferGeometry();
     steamGeo.setAttribute("position", new THREE.BufferAttribute(steamPos, 3));
+    // Soft round puffs: a radial sprite instead of hard square points.
+    const puff = document.createElement("canvas");
+    puff.width = puff.height = 64;
+    const pg = puff.getContext("2d"), pgr = pg.createRadialGradient(32, 32, 0, 32, 32, 32);
+    pgr.addColorStop(0, "rgba(255,255,255,0.55)");
+    pgr.addColorStop(0.45, "rgba(255,255,255,0.18)");
+    pgr.addColorStop(1, "rgba(255,255,255,0)");
+    pg.fillStyle = pgr;
+    pg.fillRect(0, 0, 64, 64);
     const steam = new THREE.Points(steamGeo, new THREE.PointsMaterial({
-        color: 0xbbc4cc, size: 0.18, transparent: true, opacity: 0.28, depthWrite: false, sizeAttenuation: true,
+        color: 0xd8d4cc, size: 1.6, map: new THREE.CanvasTexture(puff), transparent: true, opacity: 0.32,
+        depthWrite: false, sizeAttenuation: true,
     }));
     scene.add(steam);
 
