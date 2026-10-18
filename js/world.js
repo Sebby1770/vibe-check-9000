@@ -225,6 +225,7 @@ export function createWorld(canvas, adConfig) {
             city.setMarquee?.(title, sub);
         },
         enableXR() { renderer.xr.enabled = true; },
+        setHandsVisible(v) { leftHand.visible = rightHand.visible = !!v; },
 
         update(dt, t, ctx) {
             const bass = ctx.bass || 0;

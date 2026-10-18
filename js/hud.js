@@ -37,7 +37,7 @@ export function createHud(hooks) {
     function toast(msg, color) {
         const t = $("toast");
         t.textContent = msg;
-        t.style.background = color || "#39ff14";
+        t.style.setProperty("--toast", color || "#39ff14");
         t.classList.add("show");
         window.setTimeout(() => t.classList.remove("show"), 2600);
     }
@@ -502,6 +502,7 @@ export function createHud(hooks) {
             if ($("hudBpm")) $("hudBpm").textContent = String(Math.round(bpm || 128));
             if ($("hudTrack")) $("hudTrack").textContent = String(track || "HOUSE SYSTEM").slice(0, 22);
             if ($("hudEnergy")) $("hudEnergy").textContent = String(Math.round(energy || 0));
+            $("hudEnergyBar")?.style.setProperty("--energy", String(Math.max(0, Math.min(1, (energy || 0) / 100))));
             if ($("hudBass")) $("hudBass").textContent = `${Math.round((bass || 0) * 100)}%`;
             if (clock && $("hudClock")) $("hudClock").textContent = clock;
             run.energy = energy || 0;

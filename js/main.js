@@ -15,6 +15,7 @@ import { downloadCard } from "./share.js";
 import { VRButton } from "three/addons/webxr/VRButton.js";
 import { Vector3, Quaternion } from "three";
 import { createWorld } from "./world.js";
+import { mountTitle, attractShot, TITLE_SECONDS } from "./title.js";
 import { daylightAt } from "./daylight.js";
 import { createAudio } from "./audio.js";
 import { createControls } from "./controls.js";
@@ -115,6 +116,7 @@ function bindMobile(controls, hud) {
 
 async function boot() {
     const canvas = document.getElementById("gl");
+    mountTitle();
     const audio = createAudio();
     let world = null;
     let controls = null;
@@ -203,6 +205,7 @@ async function boot() {
 
     const hud = createHud({
         onEnter: async () => {
+            controls?.resetSpawn(); // the title crane leaves the camera out on 47th
             await audio.unlock();
             audio.setMuted(hud.run.muted);
             audio.start();
@@ -364,8 +367,11 @@ async function boot() {
         onNavigate: id => { destination=DESTINATIONS.find(d=>d.id===id)||null; hud.toast(destination?`Marked: ${destination.name}`:"Route cleared", "#b5cfad"); },
     });
     hud.wire();
-    document.getElementById("lifeBtn").textContent=`LIFE [L] · ${money(commerce.life.wallet)}`;
+    showWallet();
     document.getElementById("lifeBtn").addEventListener('click',()=>openLife());
+    document.getElementById("hudWallet").addEventListener('click',()=>openLife());
+    // Touch has no Esc key: the HUD menu button opens the same pause screen.
+    document.getElementById("hudMenu").addEventListener('click',()=>window.dispatchEvent(new KeyboardEvent('keydown',{key:'Escape'})));
     window.addEventListener('keydown',e=>{if(e.key.toLowerCase()==='l'&&!e.repeat&&hud.phase==='explore'){e.preventDefault();openLife();}});
     document.getElementById("journalBtn").addEventListener("click",()=>openJournal());
     for(const [id,hour] of [['waitMorningBtn',7],['waitEveningBtn',22]])document.getElementById(id).addEventListener('click',()=>{
@@ -484,9 +490,13 @@ async function boot() {
     window.addEventListener("keydown",e=>{if(e.key.toLowerCase()==="c"&&!e.repeat&&hud.phase==="explore"){e.preventDefault();requestPhoto();}});
 
     function stopPreview() { clearTimeout(previewTimer); audio.stopPreview(); }
+    function showWallet() {
+        document.getElementById("lifeBtn").textContent=`LIFE [L] · ${money(commerce.life.wallet)}`;
+        document.getElementById("hudCash").textContent=money(commerce.life.wallet);
+    }
     function persistCommerce() {
         updateGuide();
-        document.getElementById("lifeBtn").textContent=`LIFE [L] · ${money(commerce.life.wallet)}`;
+        showWallet();
         progress={...progress,night:{...progress.night,commerce,elapsed:clock.elapsedReal}};
         hud.run.commerce=commerce;
         hud.run.style=commerce.style;
@@ -798,7 +808,11 @@ async function boot() {
             }
         }
 
-        const move = controls.update(dt, audio.bpm, xr);
+        // Before ENTER the camera belongs to the title shot, not the player.
+        const attract = !hud.run.entered && !xr;
+        if (attract) attractShot(world.camera, t);
+        world.setHandsVisible(!attract);
+        const move = attract ? { dancing: false } : controls.update(dt, audio.bpm, xr);
         const p = world.camera.position;
         if (!ride && hud.phase === "explore" && !controls.airborne && !controls.sitting) {
             const struck = hitByCar(p, world.city.traffic);
@@ -839,7 +853,7 @@ async function boot() {
             note({ flags: { peakFloor: true } });
         }
 
-        const zone = getZone(p.x, p.z, fy);
+        const zone = attract ? lastZone : getZone(p.x, p.z, fy);
         audio.setZone(zone);
         hud.setZone(zone, zoneLabel(zone));
         hud.setNight({ clock: clock.clock, phase, copy: PHASE_COPY[phase], daylight: daylightAt(clock.seconds).label });
@@ -857,7 +871,7 @@ async function boot() {
             bass, mid, bpm: audio.bpm, reduced: hud.reducedFx, energy,
             talkId: hud.talkNpc && hud.talkNpc.id,
             clock: clock.clock,
-            seconds:clock.seconds,
+            seconds: attract ? TITLE_SECONDS : clock.seconds,
             phase,
             dancing: move.dancing && onFloor,
         });
