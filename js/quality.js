@@ -50,6 +50,11 @@ export function detectQuality() {
   };
 }
 
+/** The low profile, for downgrading at runtime (software GL detected after the renderer starts). */
+export function lowTier() {
+  return { tier: "low", low: true, pixelRatio: Math.min(typeof window !== "undefined" ? window.devicePixelRatio || 1 : 1, PROFILES.low.prCap), ...PROFILES.low };
+}
+
 export function saveTier(tier) {
   try {
     if (tier === "auto" || !TIERS.includes(tier)) localStorage.removeItem(QUALITY_KEY);

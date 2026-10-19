@@ -23,9 +23,27 @@ function roomScene() {
     return s;
 }
 
+/** The club: a dark room ringed with magenta and cyan light, for chrome and the bar's glassware. */
+function clubScene() {
+    const s = new THREE.Scene();
+    s.add(new THREE.Mesh(new THREE.BoxGeometry(30, 9, 30), new THREE.MeshBasicMaterial({ color: 0x140a1c, side: THREE.BackSide })));
+    const tones = [new THREE.Color(3.2, 0.4, 2.4), new THREE.Color(0.3, 2.6, 2.8), new THREE.Color(3.0, 1.8, 0.7)];
+    for (let i = 0; i < 12; i++) {
+        const a = (i / 12) * Math.PI * 2;
+        const q = new THREE.Mesh(new THREE.PlaneGeometry(4, 0.8), new THREE.MeshBasicMaterial({ color: tones[i % 3], side: THREE.DoubleSide }));
+        q.position.set(Math.cos(a) * 13, 2 + (i % 2) * 2, Math.sin(a) * 13);
+        q.lookAt(0, q.position.y, 0);
+        s.add(q);
+    }
+    return s;
+}
+
 export function createEnvironment(renderer, sky, dusk, size = 128) {
+    // Every probe comes from fromScene at the same cube size, so shaders never recompile when you walk
+    // between the club, a shop and the street (the probe size is part of each program's key).
     const pmrem = new THREE.PMREMGenerator(renderer);
     const room = pmrem.fromScene(roomScene(), 0.02).texture;
+    const club = pmrem.fromScene(clubScene(), 0.02).texture;
 
     // A private scene that borrows the live sky materials, so it always matches what you see.
     const skyScene = new THREE.Scene();
@@ -53,6 +71,7 @@ export function createEnvironment(renderer, sky, dusk, size = 128) {
     let lastDay = -1;
     const env = {
         room,
+        club,
         get outdoor() { return outdoor?.texture || room; },
         /** Re-bakes the outdoor probe when the light has changed enough to notice. Cheap otherwise. */
         update(look) {
@@ -72,7 +91,7 @@ export function createEnvironment(renderer, sky, dusk, size = 128) {
             prev?.dispose();
             return true;
         },
-        dispose() { outdoor?.dispose(); room.dispose(); pmrem.dispose(); },
+        dispose() { outdoor?.dispose(); room.dispose(); club.dispose(); pmrem.dispose(); },
     };
     env.size = size;
     return env;

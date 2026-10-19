@@ -25,7 +25,7 @@ import { makeCubeEnv, makeDuskSky, paintSky } from "./kit.js";
 import {daylightAt} from './daylight.js';
 import { phaseLook } from "./night.js";
 import { createShopActivities } from "./shop-activities.js";
-import { detectQuality } from "./quality.js";
+import { detectQuality, lowTier } from "./quality.js";
 
 const _color = new THREE.Color();
 const _vibe = new THREE.Color("#ff00ff");
@@ -40,6 +40,13 @@ export function createWorld(canvas, adConfig) {
         alpha: false,
     });
     renderer.info.autoReset = false;
+    // Software GL (SwiftShader, llvmpipe) cannot keep up with shadows and heavy shaders: use the low tier.
+    try {
+        const gl = renderer.getContext(), dbg = gl.getExtension("WEBGL_debug_renderer_info");
+        const gpu = dbg ? String(gl.getParameter(dbg.UNMASKED_RENDERER_WEBGL)) : "";
+        if (quality.auto && /swiftshader|llvmpipe|software|basic render/i.test(gpu)) Object.assign(quality, lowTier(), { software: true });
+        quality.gpu = gpu;
+    } catch { /* no debug info: keep the detected tier */ }
     renderer.setPixelRatio(quality.pixelRatio);
     renderer.setSize(window.innerWidth, window.innerHeight);
     renderer.outputColorSpace = THREE.SRGBColorSpace;
@@ -113,7 +120,8 @@ export function createWorld(canvas, adConfig) {
     const sceneColor=new THREE.Color(clubScene.color),sceneAccent=new THREE.Color(clubScene.accent);
     const activities = createShopActivities(scene,camera);
     markShadows(scene);
-    const clubEnv = env;
+    const clubEnv = ibl.club;
+    scene.environment = clubEnv;
 
     // Render-time culling: people who can't be seen are hidden for the draw only and restored right
     // after, so raycasts, the sign audit and gameplay always see the whole scene.
@@ -231,6 +239,8 @@ export function createWorld(canvas, adConfig) {
         grade.uniforms.uAspect.value = w / h;
     }
     window.addEventListener("resize", resize);
+    // Warm every shader while the title card is up, so the first steps outside don't stall.
+    renderer.compileAsync?.(scene, camera).catch(() => {});
 
     return {
         renderer,
