@@ -31,6 +31,9 @@ function worldUV(material, tile) {
                 #ifdef USE_ROUGHNESSMAP
                     vRoughnessMapUv = wuv;
                 #endif
+                #ifdef USE_EMISSIVEMAP
+                    vEmissiveMapUv = wuv;
+                #endif
             }`);
     };
     material.customProgramCacheKey = () => "vc9k-world-uv";
@@ -54,7 +57,7 @@ export function upgradeMaterials(scene) {
             }
             // Asphalt and standing water are not metals: wetness lives in roughness and Fresnel.
             if (m.metalness > 0.5 && m.roughness < 0.35 && !m.map && m.color.r + m.color.g + m.color.b < 0.12) { m.metalness = 0; m.roughness = Math.min(m.roughness, 0.06); m.envMapIntensity = 1.4; }
-            if (pbr && pbr.worldTile?.[0] === 7) { m.metalness = 0; m.roughness = 1; m.color.multiplyScalar(0.8); m.envMapIntensity = 1.5; }
+            if (pbr && pbr.worldTile?.[0] === 7) { m.metalness = 0; m.roughness = 1; m.color.multiplyScalar(0.75); m.envMapIntensity = 0.9; m.normalScale.set(0.6, 0.6); }
         }
     });
 }

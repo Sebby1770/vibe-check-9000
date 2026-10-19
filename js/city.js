@@ -708,7 +708,7 @@ export function updateCity(city, dt, t, { outside, reduced, lampMul = 1, zone, p
         if (path.cross && ped.visible && ped.position.z > ROAD.minZ - 0.6 && ped.position.z < ROAD.maxZ + 0.6) stops.push({ x: path.x0 - 2.2, dir: 1 }, { x: path.x0 + 2.2, dir: -1 });
     }
     const sims = city.traffic.map((car) => car.userData.sim);
-    stepTraffic(sims, dt, { stops });
+    stepTraffic(sims, dt, { stops, span: [-428, 294] });
     for (const car of city.traffic) {
         const sim = car.userData.sim;
         car.position.x = sim.x;

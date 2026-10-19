@@ -143,7 +143,7 @@ export function createStoryWorld(scene) {
     const echoes = [
         ghost({ outfit: "florist", body: "f", hairStyle: "victory" }, 0.4, -24.2, Math.PI * 0.85, "idle"),
         ghost({ outfit: "hood" }, -0.6, -25.6, Math.PI * 0.15 - Math.PI, "idle"),
-        ghost({ outfit: "florist", body: "f", hairStyle: "victory" }, 30, -141, Math.PI / 2, "walk"),
+        ghost({ outfit: "florist", body: "f", hairStyle: "victory" }, 50, -128, Math.PI, "walk"),
         ghost({ outfit: "lady" }, 4, 30.4, Math.PI, "idle"), ghost({ outfit: "salesman" }, 6.4, 30.6, Math.PI, "idle"),
         ghost({ outfit: "florist", body: "f", hairStyle: "victory" }, 8.2, 29.8, Math.PI * 0.9, "idle"),
         ghost({ outfit: "pedestrian" }, -26.4, -6.6, -Math.PI / 2, "sit"),

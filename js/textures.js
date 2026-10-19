@@ -17,7 +17,7 @@ function canvasTex(draw, size = 256, repeatX = 1, repeatY = 1) {
 /* PBR companions for a canvas texture: a normal map from its luminance (dark joints and cracks sink, faces
    stand proud) and a roughness map. Stored on texture.userData.pbr; render/materials.js wires them up and
    maps them at real-world size (worldTile metres per tile). */
-function withPbr(tex, { worldTile, strength = 2.2, rough = [0.82, 0.12], roughFn = null, size = 256 } = {}) {
+export function withPbr(tex, { worldTile, strength = 2.2, rough = [0.82, 0.12], roughFn = null, size = 256 } = {}) {
     const src = tex.image, s = Math.min(size, src.width);
     const c = document.createElement("canvas");
     c.width = c.height = s;
@@ -59,7 +59,7 @@ function puddleRough(u, v, lum) {
     const n = Math.sin(u * 37.1 + Math.sin(v * 11.3) * 2.1) * Math.sin(v * 29.7 + Math.sin(u * 7.9) * 1.7)
         + 0.5 * Math.sin(u * 91.3 + v * 47.9) * Math.sin(v * 83.1 - u * 13.7);
     const puddle = Math.max(0, Math.min(1, (n - 0.35) * 2.2));
-    return 0.42 + lum * 0.25 - puddle * 0.38;
+    return 0.64 + lum * 0.2 - puddle * 0.46;
 }
 
 export function brickTex(mortar = "#2a1c18", brick = "#6a3a32", size = 512) {

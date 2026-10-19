@@ -1,4 +1,5 @@
 import { buildParkResidences } from './park-residences.js';
+import { buildOpenWorld } from "./openworld/openworld.js";
 import { buildBlockLoop } from './block-loop.js';
 import { buildDistrict } from './district.js';
 import { buildLifeWorld } from './life-world.js';
@@ -114,6 +115,7 @@ export function createWorld(canvas, adConfig) {
     const district = buildDistrict(scene);
     buildBlockLoop(scene);
     buildParkResidences(scene);
+    const openWorld = buildOpenWorld(scene);
     const colliders = buildColliders(interiorColliders());
     const streetLife = buildStreetLife(scene);
     const lifeWorld = buildLifeWorld(scene,colliders);
@@ -256,6 +258,7 @@ export function createWorld(canvas, adConfig) {
         npcs: club.namedPeople,
         city,
         club,
+        openWorld,
         streetLife,
         district,
         lifeWorld,
@@ -387,8 +390,9 @@ export function createWorld(canvas, adConfig) {
                 hemi.intensity = 1.65;
                 dusk.sunLight.intensity = 0.15 * look.sunInt;
                 renderer.toneMappingExposure = 1.0;
-            } else if (["records","pharmacy","florist","rivoli","liquor","barber","books","bakery","arcade"].includes(zone)) {
+            } else if (["records","pharmacy","florist","rivoli","liquor","barber","books","bakery","arcade","meridian"].includes(zone)) {
                 const shopFog = {
+                    meridian:0x1a1c1e,
                     books:0x1b3037,bakery:0x39271c,arcade:0x201d35,
                     records: 0x241028, pharmacy: 0x102820, florist: 0x281018,
                     rivoli: 0x2a1810, liquor: 0x24180c, barber: 0x201818,
@@ -556,6 +560,7 @@ export function createWorld(canvas, adConfig) {
             }
 
             updateCity(city, dt, t, { outside, reduced, lampMul: look.lamp, zone, position:p, camera });
+            openWorld.update(dt, t, { position: p, lampMul: look.lamp, drawDistance: quality.drawDistance, reduced });
             reflections.update(look.daylight, outside);
             grade.uniforms.uTime.value = t;
             grade.setLook({ zone, outside, daylight: look.daylight, reduced, grain: quality.grain });

@@ -3,6 +3,7 @@ import { addBox, unitBox } from './kit.js';
 import { printedCard } from './shop-art.js';
 import { brickTex } from './textures.js';
 import { BLOCK_ROADS } from './district-layout.js';
+import { outerBuildings } from './openworld/layout.js';
 
 // Geometry follows the same road network used by movement regression tests.
 export function buildBlockLoop(scene) {
@@ -70,10 +71,8 @@ export function buildBlockLoop(scene) {
   const brick=material(0xc5a28e,{map:brickTex()});brick.map.repeat.set(3,5);
   const glass=material(0x4b5961,{metalness:.35,roughness:.28});
   const lit=material(0xd2b382,{emissive:0xb99357,emissiveIntensity:.25});
-  const buildings=[];
-  for(let x=-90;x<190;x+=22)buildings.push([x,117,18,17,22+(Math.abs(x)%4)*5]);
-  for(let z=-35;z<95;z+=24)buildings.push([-120,z,16,20,28],[208,z,14,20,24]);
-  for(const [x,z,w,d,h] of buildings){
+  // The same list the open city uses for colliders; facades a new road runs through are left out.
+  for(const [x,z,w,d,h] of outerBuildings()){
     box(brick,x,h/2,z,w,h,d);box(stone,x,1.8,z,w+.2,3.6,d+.2);box(stone,x,h,z,w+.5,.5,d+.5);
     for(const side of [-1,1]){
       const face=z+side*(d/2+.12);
