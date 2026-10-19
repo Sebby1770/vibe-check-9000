@@ -328,12 +328,12 @@ export function buildColliders(interiorBoxes = []) {
     for (const b of interiorBoxes) boxes.push({ ...b });
 
     // Parked cars — parallel to the curb, out of the driving lanes
-    wall(boxes, -22.1, -18.1, 18.05, 19.65, -1, 1.4);
-    wall(boxes, -8.4, -4.4, 18.05, 19.65, -1, 1.4);
-    wall(boxes, 12.4, 16.4, 18.05, 19.65, -1, 1.4);
-    wall(boxes, 27.4, 31.4, 18.05, 19.65, -1, 1.4);
-    wall(boxes, -34.2, -30.2, 26.05, 27.65, -1, 1.4);
-    wall(boxes, 6.2, 10.2, 26.05, 27.65, -1, 1.4);
+    wall(boxes, -22.1, -18.1, 18.05, 19.65, -1, 1.95);
+    wall(boxes, -8.4, -4.4, 18.05, 19.65, -1, 1.95);
+    wall(boxes, 12.4, 16.4, 18.05, 19.65, -1, 1.95);
+    wall(boxes, 27.4, 31.4, 18.05, 19.65, -1, 1.95);
+    wall(boxes, -34.2, -30.2, 26.05, 27.65, -1, 1.95);
+    wall(boxes, 6.2, 10.2, 26.05, 27.65, -1, 1.95);
 
     // Newsstand + phone booth
     wall(boxes, -13.3, -10.4, 15.35, 16.85, -1, 2.2);

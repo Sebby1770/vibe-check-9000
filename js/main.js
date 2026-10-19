@@ -16,6 +16,7 @@ import { VRButton } from "three/addons/webxr/VRButton.js";
 import { Vector3, Quaternion } from "three";
 import { createWorld } from "./world.js";
 import { mountTitle, attractShot, TITLE_SECONDS } from "./title.js";
+import { animateVehicle } from "./vehicles/models.js";
 import { daylightAt } from "./daylight.js";
 import { createAudio } from "./audio.js";
 import { createControls } from "./controls.js";
@@ -791,14 +792,26 @@ async function boot() {
         }
 
         if (ride) {
+            // A real Checker carries you down 47th: rear seat, kerb side, looking up the street.
             ride.t += dt;
-            const u = Math.min(1, ride.t / 4.2);
+            const u = Math.min(1, ride.t / 4.6);
             const ease = u < 0.5 ? 2 * u * u : -1 + (4 - 2 * u) * u;
+            const dir = Math.sign(ride.endX - ride.startX) || 1;
+            const lane = dir > 0 ? 21.35 : 24.55;
             const x = ride.startX + (ride.endX - ride.startX) * ease;
-            world.camera.position.set(x, 1.35, 21.5);
-            world.camera.lookAt(x + (ride.endX - ride.startX) * 0.15, 1.2, 21.5);
+            const cab = world.city.rideCab;
+            if (cab) {
+                const moved = Math.abs(x - cab.position.x);
+                cab.visible = true;
+                cab.position.set(x, 0, lane);
+                cab.rotation.y = dir > 0 ? 0 : Math.PI;
+                animateVehicle(cab, moved, { braking: u > 0.78 });
+            }
+            world.camera.position.set(x - dir * 0.55, 1.24, lane + dir * 0.38);
+            world.camera.lookAt(x + dir * 10, 1.15, lane);
             if (u >= 1) {
                 const z = 16.2;
+                if (cab) cab.visible = false;
                 controls.setRiding(false);
                 controls.place(ride.endX, z, ride.endX, 10);
                 hud.setRide(false);
