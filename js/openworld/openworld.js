@@ -5,6 +5,7 @@ import * as THREE from "three";
 import { asphaltTex, sidewalkTex, stoneTex, woodTex, withPbr } from "../textures.js";
 import { randomPedestrian, animateHuman } from "../human.js";
 import { OW_ROADS, SITES, FENCE, WATER_X, WORLD_BOUNDS, SIDEWALK, buildings, streetFace } from "./layout.js";
+import { meridianInterior } from "../interiors/architecture.js";
 
 const CHUNK = 128;
 const unit = new THREE.BoxGeometry(1, 1, 1);
@@ -385,6 +386,7 @@ export function buildOpenWorld(scene) {
     const tube = new THREE.Mesh(new THREE.CylinderGeometry(0.18, 0.18, 1.6, 16), M.seam);
     tube.position.set(m.x + 16, 7.9, m.z);
     root.add(tube);
+    meridianInterior(root, m);
     for (let i = 0; i < 5; i++) gbox(M.glow, m.x - 16 + i * 8, m.h - 1.4, m.z, 0.8, 0.25, 0.8);
     const merSign = new THREE.Mesh(new THREE.PlaneGeometry(22, 3.2), signMaterial(10));
     merSign.position.set(x0 - 0.06, m.h - 3, m.z);

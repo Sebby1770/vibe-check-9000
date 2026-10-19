@@ -4,6 +4,7 @@ import { addBox,unitBox } from './kit.js';
 import { printedCard } from './shop-art.js';
 import { createHuman } from './human.js';
 import { EAST_COUNTERS } from './district-layout.js';
+import { eastVenueArchitecture } from './interiors/architecture.js';
 
 export function buildEastInterior(parent,b) {
   const g=new THREE.Group();g.name=b.name;parent.add(g);
@@ -95,4 +96,5 @@ export function buildEastInterior(parent,b) {
     sign(['COURIERS WANTED','$30 · TWO STOPS · NO TIMER'],b.x+3.2,2,z0+.25,2.8,.85,0);
     for(const x of [b.x-1,b.x,b.x+1]){const pastry=new THREE.Mesh(new THREE.TorusGeometry(.18,.065,6,12),accent);pastry.rotation.x=Math.PI/2;pastry.position.set(x,1.32,counter.z);g.add(pastry);}
   }
+  eastVenueArchitecture(g,b);
 }

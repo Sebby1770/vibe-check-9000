@@ -15,7 +15,7 @@ export const STORY_PLACES = {
     notebook: { x: 30.6, z: -6.6, y: 4.4, name: "Ada's room, Astoria 4B" },
     timesSquare: { x: -250, z: 52, y: 0, name: "Times Square" },
     pierGate: { x: 296, z: 22.8, y: 0, name: "Pier 47 gate" },
-    warehouse: { x: 338, z: 12, y: 0, name: "The Meridian warehouse" },
+    warehouse: { x: 338, z: -7.5, y: 0, name: "The Meridian warehouse" },
     pierEnd: { x: 500, z: 22, y: 0, name: "The end of Pier 47" },
     limo: { x: 62, z: 152.6, y: 0, name: "Kessler's limousine, outside the Belmont Plaza" },
     hatch: { x: 36.9, z: -0.6, y: 4.4, name: "The Astoria roof hatch" },

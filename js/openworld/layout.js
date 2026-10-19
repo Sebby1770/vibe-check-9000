@@ -43,7 +43,8 @@ export const SITES = {
   bandshell: { x: 40, z: 360, w: 20, d: 14 },
   plaza: { x: 65, z: 175, w: 70, d: 34, zone: "plaza", h: 46 },
   yard: { x: 309, z: 15, w: 26, d: 60, zone: "pier" },
-  meridian: { x: 347, z: 12, w: 50, d: 40, zone: "meridian", h: 12, door: { z0: 8.6, z1: 15.4, h: 4 } },
+  // South of Pier 47 Road, so the road runs clear from the gate to the pier; the door faces the yard.
+  meridian: { x: 347, z: -7.5, w: 50, d: 40, zone: "meridian", h: 12, door: { z0: -10.9, z1: -4.1, h: 4 } },
   pier: { x: 450, z: 23, w: 140, d: 30, zone: "pier" },
   freighter: { x: 455, z: 54, w: 120, d: 16 },
   elStation: { x: 60, z: -140, w: 14, d: 22 },

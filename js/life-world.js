@@ -3,6 +3,7 @@ import {roomDecor} from './interiors/decor.js';
 import {addBox,unitBox} from './kit.js';
 import {printedCard} from './shop-art.js';
 import {HOMES,HOME_BOUNDS,LIFE_PLACES,CLUB_SCENES,normalizeLife} from './life.js';
+import {homeArchitecture} from './interiors/architecture.js';
 export const LIFE_PROPS=[...LIFE_PLACES.map(p=>({...p,action:p.id==='clubdesk'?'life-club':'life-homes'})),...HOMES.map(h=>({id:`home-${h.id}`,name:`${h.number} · ${h.name}`,x:h.doorX+.25,z:h.doorZ,y:h.floorY??4.4,action:'life-homes'}))].map(p=>({...p,type:'prop',aimY:1.4,reach:2.8,prompt:`[E] ${p.name.toUpperCase()}`}));
 export function buildLifeWorld(scene,colliders){
  const root=new THREE.Group();scene.add(root);
@@ -97,6 +98,7 @@ export function buildLifeWorld(scene,colliders){
   trim.frame(['MIDTOWN STUDIES',home.number+' · A PLACE OF YOUR OWN'],r.minX+.18,6.6,cz,1.5,1.15,Math.PI/2,{paper:home.color,ink:'#eadabd'});
   trim.b(tm.wood,cx,7.39,cz,.035,.6,.035);trim.cyl(tm.ivory,cx,7.06,cz,.38,.16,.5);trim.cyl(tm.glow,cx,6.98,cz,.36,.015);
   trim.flush();
+  homeArchitecture(room,r);
   decor.set(home.id,items);
  }
  // Street listings board is backed and mounted on two posts, outside the entry halls.

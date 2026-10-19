@@ -7,6 +7,7 @@
    zones.js stays three-free for the node tests, so world.js feeds interiorColliders() into buildColliders(). */
 import {polishShop,shopPolishColliders} from './shop-polish.js';
 import { finishInterior } from './finishes.js';
+import { roomArchitecture, updateArchitecture } from './architecture.js';
 import * as THREE from "three";
 import { SHOPS, DINER, HOTEL, SECOND_Y } from "../zones.js";
 import * as records from "./records.js";
@@ -64,6 +65,7 @@ export function buildInteriors({ root, scene, mats }) {
     const res = room.mod.build({ root, scene, mats, shop: room.rect, lamp, place, crowds }) || {};
     finishInterior(root,room.id,room.rect);
     polishShop(root,room.id,room.rect);
+    roomArchitecture(root, room.id, room.rect);
     for (let i = start; i < crowds.length; i++) crowds[i].userData.room = room.zone;
     rooms[room.id] = res;
     if (res.update) live.push(res);
@@ -82,4 +84,5 @@ export function interiorColliders() {
 
 export function updateInteriors(dt, t, env = {}) {
   for (const room of live) room.update(dt, t, env);
+  updateArchitecture(dt, env.reduced);
 }
