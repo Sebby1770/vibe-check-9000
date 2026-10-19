@@ -16,6 +16,7 @@ import { createSky } from "./render/sky.js";
 import { createEnvironment } from "./render/environment.js";
 import { createSunShadow, markShadows } from "./render/shadows.js";
 import { createGradePass } from "./render/grade.js";
+import { upgradeMaterials, addRoadMarkings, addStreetReflections } from "./render/materials.js";
 import { buildClub } from "./club.js";
 import { buildCity, updateCity } from "./city.js";
 import { animateHuman } from "./human.js";
@@ -119,6 +120,9 @@ export function createWorld(canvas, adConfig) {
     let clubScene=CLUB_SCENES[0];
     const sceneColor=new THREE.Color(clubScene.color),sceneAccent=new THREE.Color(clubScene.accent);
     const activities = createShopActivities(scene,camera);
+    upgradeMaterials(scene);
+    addRoadMarkings(scene);
+    const reflections = addStreetReflections(scene, city);
     markShadows(scene);
     const clubEnv = ibl.club;
     scene.environment = clubEnv;
@@ -552,6 +556,7 @@ export function createWorld(canvas, adConfig) {
             }
 
             updateCity(city, dt, t, { outside, reduced, lampMul: look.lamp, zone, position:p, camera });
+            reflections.update(look.daylight, outside);
             grade.uniforms.uTime.value = t;
             grade.setLook({ zone, outside, daylight: look.daylight, reduced, grain: quality.grain });
             if (gtao) gtao.enabled = !reduced;

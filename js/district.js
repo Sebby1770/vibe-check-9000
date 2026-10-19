@@ -69,7 +69,7 @@ export function buildDistrict(scene) {
   batch(unitBox,iron,frames);
   // Bring panes forward of their recessed dark surrounds.
   windows.forEach(p=>{if(p[3]===.04)p[3]=.18;else p[5]=.18;});
-  const panes=batch(unitBox,mat(0xffffff,{map:windowPaneTex('warm'),emissive:0xe3b764,emissiveIntensity:.12}),windows);
+  const paneMat=mat(0xffffff,{map:windowPaneTex('warm'),emissive:0xe3b764,emissiveIntensity:.12});const panes=batch(unitBox,paneMat,windows);
   windows.forEach((_,i)=>panes.setColorAt(i,new THREE.Color(i%7<3?0x34484c:i%3===0?0xd8bc94:0xffe9bb)));
   panes.instanceColor.needsUpdate=true;
   batch(unitBox,cream,trim);
@@ -112,6 +112,8 @@ export function buildDistrict(scene) {
   });
   return {root,peds,seats:DISTRICT_SEATS,update(t,reduced,p,daylight=0){
     streetGlow.emissiveIntensity=.08+(1-daylight)*1.42;
+    // By day the rooms behind the glass fall dark; the panes read as glass, not lamps.
+    paneMat.color.setScalar(.28+(1-daylight)*.72);paneMat.emissiveIntensity=(1-daylight)*.12;
     peds.forEach((person,i)=>{if(!person.visible||person.position.distanceToSquared(p)>55*55)return;animateHuman(person,t,{mode:reduced?'idle':'walk',bpm:100});person.position.x=65+i*13+Math.sin(t*.12+i)*3;person.rotation.y=Math.cos(t*.12+i)>0?Math.PI/2:-Math.PI/2;});
     fountainWater.forEach(w=>{w.material.roughness=reduced?.25:.22+Math.sin(t*1.4)*.07;});
   }};

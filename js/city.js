@@ -609,6 +609,7 @@ export function buildCity(scene, adConfig = mergeAdConfig()) {
     scene.add(hotelUp);
 
     return {
+        windowMats: [winOn, winWarm],
         root,
         ads,
         winOn,
@@ -697,6 +698,8 @@ export function updateCity(city, dt, t, { outside, reduced, lampMul = 1, zone, p
     }
     city.steamGeo.attributes.position.needsUpdate = true;
 
+    // Lit windows dim to glass by day.
+    for (const m of city.windowMats || []) m.color.setScalar(0.3 + 0.7 * Math.min(1, lampMul ?? 1));
     // Red light at the club crossing, and anyone on a crossing, stop the traffic.
     const stops = [];
     if (Math.floor(t / 3.2) % 3 === 0) stops.push({ x: -3.4, dir: 1 }, { x: 3.6, dir: -1 });
