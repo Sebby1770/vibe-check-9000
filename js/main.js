@@ -17,6 +17,7 @@ import { Vector3, Quaternion } from "three";
 import { createWorld } from "./world.js";
 import { mountTitle, attractShot, TITLE_SECONDS } from "./title.js";
 import { animateVehicle } from "./vehicles/models.js";
+import { createStore } from "./db/store.js";
 import { daylightAt } from "./daylight.js";
 import { createAudio } from "./audio.js";
 import { createControls } from "./controls.js";
@@ -24,7 +25,7 @@ import { createHud } from "./hud.js";
 import { onDanceFloor, applyChoice, NPCS, PROPS, SIT_SPOTS } from "./people.js";
 import { getZone, zoneLabel } from "./zones.js";
 import { createClock, dayKey, dayHash, tonightBill, PHASE_COPY, dareComplete } from "./night.js";
-import { loadProgress, saveProgress, evaluateUnlocks, stampNight, setLook, getLook, touchVisit, buildRecap } from "./progress.js";
+import { setSaveSink, loadProgress, saveProgress, evaluateUnlocks, stampNight, setLook, getLook, touchVisit, buildRecap } from "./progress.js";
 
 import { SHOPS_CATALOG, normalizeCommerce, transact, deliver, collectIce, addLead, getErrands, DESTINATIONS } from "./commerce.js";
 import { createShopUI } from "./shop-ui.js";
@@ -133,6 +134,9 @@ async function boot() {
     const cubeFound = { done: false };
     let energy = 0;
     let ride = null;
+    // Every save is mirrored, off-thread, into SQLite (OPFS): instant autosaves with rolling restore points.
+    const store = createStore();
+    setSaveSink((data) => store.save(data));
     const clock = createClock();
     const today = dayKey();
     const bill = tonightBill(dayHash(today));
@@ -332,6 +336,9 @@ async function boot() {
     const saveUI=createSaveUI({
         snapshot:()=>({...progress,night:{...progress.night,commerce,elapsed:clock.elapsedReal}}),
         onClose:resumeStreet,
+        restorePoints:()=>store.history(),
+        loadRestorePoint:id=>store.restorePoint(id),
+        dbInfo:()=>store.info,
         onRestore:text=>{
             restoreBackup(text,{...progress,night:{...progress.night,commerce,elapsed:clock.elapsedReal}},localStorage);
             restoringProgress=true;
@@ -768,7 +775,8 @@ async function boot() {
                     gripError:u?u.getWorldPosition(new Vector3()).distanceTo(j.lHand.getWorldPosition(new Vector3())):null,
                     upright:u?new Vector3(0,1,0).applyQuaternion(u.getWorldQuaternion(new Quaternion())).y:null};
             });},
-            snapshot(){return {homes:Object.fromEntries([...world.lifeWorld.doors].map(([id,door])=>[id,{locked:door.visible,furnishings:[...world.lifeWorld.decor.get(id)].filter(([,g])=>g.visible).map(([key])=>key)}])),commerce,progress,daylight:world.daylight,clock:clock.clock,elapsed:clock.elapsedReal,phase:hud.phase,night:clock.phase,zone:hud.run.zone,sitting:controls.sitting,airborne:!!controls.airborne,energy,filmVersion:world.city.film.material.map.version,audio:{preview:audio.previewing,muted:audio.muted,usingDeck:audio.usingDeck,bpm:audio.bpm},position:{x:world.camera.position.x,y:world.camera.position.y,z:world.camera.position.z},target:interactionTarget()?.id,set:activeSet,render:world.renderer.info.render,memory:world.renderer.info.memory};},
+            db(){return store.stats();},
+            snapshot(){return {db:store.info,homes:Object.fromEntries([...world.lifeWorld.doors].map(([id,door])=>[id,{locked:door.visible,furnishings:[...world.lifeWorld.decor.get(id)].filter(([,g])=>g.visible).map(([key])=>key)}])),commerce,progress,daylight:world.daylight,clock:clock.clock,elapsed:clock.elapsedReal,phase:hud.phase,night:clock.phase,zone:hud.run.zone,sitting:controls.sitting,airborne:!!controls.airborne,energy,filmVersion:world.city.film.material.map.version,audio:{preview:audio.previewing,muted:audio.muted,usingDeck:audio.usingDeck,bpm:audio.bpm},position:{x:world.camera.position.x,y:world.camera.position.y,z:world.camera.position.z},target:interactionTarget()?.id,set:activeSet,render:world.renderer.info.render,memory:world.renderer.info.memory};},
         };
     }
 

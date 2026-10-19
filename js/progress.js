@@ -87,8 +87,13 @@ export function loadProgress(storage) {
     }
 }
 
+let saveSink = null;
+/** Mirror every save somewhere else as well (the SQLite store). The sink must not throw or block. */
+export function setSaveSink(fn) { saveSink = typeof fn === "function" ? fn : null; }
+
 export function saveProgress(data, storage) {
     const store = storage || (typeof localStorage !== "undefined" ? localStorage : null);
+    if (!storage) { try { saveSink?.(data); } catch { /* the local save below still happens */ } }
     if (!store) return data;
     try { store.setItem(PROGRESS_KEY, JSON.stringify(data)); } catch { /* Private mode and full storage still allow this night to play. */ }
     return data;
