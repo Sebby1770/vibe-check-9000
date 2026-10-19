@@ -181,6 +181,7 @@ function profileCar(s, paintHex, kind) {
 
     const g = new THREE.Group();
     const paintMesh = new THREE.Mesh(merge(paintParts), paintMaterial(paintHex));
+    paintMesh.userData.batch = true;
     const glassMesh = new THREE.Mesh(clean(glass), S.glass);
     const chromeMesh = new THREE.Mesh(merge(chrome), S.chrome);
     const trimMesh = new THREE.Mesh(merge(trim, true), S.trim);
@@ -223,12 +224,15 @@ function boxyVehicle(s, kind, paintHex) {
         glassPanels.push(at(new THREE.BoxGeometry(0.03, 0.95, s.wid - 0.2), s.front + 0.005, 2.25, 0));
         const cream = new THREE.Mesh(merge([-1, 1].map((z) => at(new THREE.BoxGeometry(s.len - 0.3, 1.18, 0.012), 0, 2.2, z * (s.wid / 2 + 0.006)))), paintMaterial(0xe6dcc0));
         const dest = new THREE.Mesh(new THREE.PlaneGeometry(1.5, 0.22), S.sign);
-        dest.position.set(s.front + 0.012, 2.82, 0);
+        dest.position.set(s.front + 0.068, 2.82, 0);
         dest.rotation.y = Math.PI / 2;
-        g.add(cream, dest);
+        g.add(cream);
+        g.userData.destBoard = dest;
     }
     const body = extrudeSide([...top, ...bottom.reverse()].reverse(), s.wid - 0.1, 0.05, 3);
     const paintMesh = new THREE.Mesh(merge([body]), paintMaterial(paintHex));
+    paintMesh.userData.batch = true; // a solid body: the destination board is mounted on it
+    if (g.userData.destBoard) paintMesh.add(g.userData.destBoard); // the body itself is the board's wall
     chrome.push(at(new THREE.CapsuleGeometry(0.08, s.wid - 0.25, 4, 10), s.front + 0.05, 0.48, 0, Math.PI / 2));
     chrome.push(at(new THREE.CapsuleGeometry(0.08, s.wid - 0.25, 4, 10), s.rear - 0.05, 0.48, 0, Math.PI / 2));
     for (const z of [-1, 1]) chrome.push(at(new THREE.TorusGeometry(0.11, 0.018, 8, 20), s.front + 0.01, kind === "bus" ? 0.95 : 0.85, z * (s.wid / 2 - 0.3), 0, Math.PI / 2));
@@ -299,7 +303,7 @@ export function buildVehicle(kind = "sedan", { color = 0x2a2a32, driver = true, 
     g.userData.kind = kind;
     g.userData.spec = {
         length: s.len, width: s.wid, wheelbase: s.wheels[0] - s.wheels[1], wheelRadius: s.wheelR,
-        driverSeat: new THREE.Vector3(s.cab[3] - 0.85, (kind === "bus" ? 1.15 : 0.62) + 0.62, -0.38),
+        driverSeat: new THREE.Vector3(s.cab[3] - 1.0, (kind === "bus" ? 1.15 : 0.62) + 0.8, -0.38),
         passengerSeat: new THREE.Vector3(s.cab[1] + 0.25, 1.22, 0.4),
         chase: new THREE.Vector3(-s.len * 1.25, s.roof + 1.4, 0),
         doorSide: -1,

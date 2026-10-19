@@ -21,6 +21,7 @@ import { createStore } from "./db/store.js";
 import { normalizeStory, onStoryEvent, currentObjective, objectiveTarget, storyLine, STORY_PLACES } from "./story/story.js";
 import { createStoryUI } from "./story/story-ui.js";
 import { createStoryWorld } from "./story/story-world.js";
+import { createDriving } from "./vehicles/drive.js";
 import { daylightAt } from "./daylight.js";
 import { createAudio } from "./audio.js";
 import { createControls } from "./controls.js";
@@ -437,7 +438,22 @@ async function boot() {
     controls = createControls(world.camera, canvas, world.colliders);
     const storyUI = createStoryUI();
     const storyWorld = createStoryWorld(world.scene);
-    world.markShadows(storyWorld.root);
+    const driving = createDriving({ scene: world.scene, camera: world.camera, colliders: world.colliders, city: world.city, audio, hud });
+    world.markShadows(world.scene);
+    function toggleDrive() {
+        if (hud.phase !== "explore" || ride) return false;
+        if (driving.active) {
+            const out = driving.exit();
+            if (out) { controls.place(out.x, out.z, out.lookX, out.lookZ); hud.toast("BACK ON FOOT", "#e0b25a"); }
+            return true;
+        }
+        const car = driving.nearest(world.camera.position);
+        if (!car) return false;
+        if (controls.sitting) controls.stand();
+        driving.enter(car);
+        return true;
+    }
+    window.addEventListener("keydown", (e) => { if (e.key.toLowerCase() === "f" && !e.repeat && hud.phase === "explore") { if (toggleDrive()) e.preventDefault(); } });
     let storyClock = 0, storyStatus = "", cutsceneT = -1, choiceOpen = false, echoHeld = false;
     const gameHour = () => (clock.seconds % 86400) / 3600;
 
@@ -807,6 +823,7 @@ async function boot() {
         const fy = controls.floorY;
         const target=interactionTarget();
         if(target?.type==="story"){storyEvent({type:"interact",prop:target.prop});return;}
+        if(!target&&driving.nearest(p,2.6)){toggleDrive();return;}
         if(target?.type==="neighborhood"){openNeighborhood(target.id);return;}
         if(target?.type==="npc") {
             const npc=target.ref;
@@ -871,6 +888,8 @@ async function boot() {
             });},
             db(){return store.stats();},
             storyStart(){storyEvent({type:"start"});return story;},
+            drive(){return {active:driving.active,speed:driving.speed,car:driving.car?{x:driving.car.position.x,z:driving.car.position.z,kind:driving.car.userData.kind}:null};},
+            toggleDrive(){return toggleDrive();},
             storyEvent(ev){storyEvent(ev);return story;},
             storySet(data){applyStory({changed:true,state:normalizeStory(data),effects:[]});return story;},
             snapshot(){return {story,db:store.info,homes:Object.fromEntries([...world.lifeWorld.doors].map(([id,door])=>[id,{locked:door.visible,furnishings:[...world.lifeWorld.decor.get(id)].filter(([,g])=>g.visible).map(([key])=>key)}])),commerce,progress,daylight:world.daylight,clock:clock.clock,elapsed:clock.elapsedReal,phase:hud.phase,night:clock.phase,zone:hud.run.zone,sitting:controls.sitting,airborne:!!controls.airborne,energy,filmVersion:world.city.film.material.map.version,audio:{preview:audio.previewing,muted:audio.muted,usingDeck:audio.usingDeck,bpm:audio.bpm},position:{x:world.camera.position.x,y:world.camera.position.y,z:world.camera.position.z},target:interactionTarget()?.id,set:activeSet,render:world.renderer.info.render,memory:world.renderer.info.memory};},
@@ -929,17 +948,20 @@ async function boot() {
         // Before ENTER the camera belongs to the title shot, not the player.
         const attract = !hud.run.entered && !xr;
         if (attract) attractShot(world.camera, t);
-        world.setHandsVisible(!attract);
-        const move = attract ? { dancing: false } : controls.update(dt, audio.bpm, xr);
+        world.setHandsVisible(!attract && !driving.active);
+        let move;
+        if (attract) move = { dancing: false };
+        else if (driving.active) { if (hud.phase === "explore") driving.update(dt, { stick: controls.stickInput, night: 1 - world.daylight.daylight }); move = { dancing: false }; }
+        else move = controls.update(dt, audio.bpm, xr);
         const p = world.camera.position;
-        if (!ride && hud.phase === "explore" && !controls.airborne && !controls.sitting) {
+        if (!ride && !driving.active && hud.phase === "explore" && !controls.airborne && !controls.sitting) {
             const struck = hitByCar(p, world.city.traffic);
             if (struck && controls.knock(struck)) {
                 audio.horn();
                 hud.toast("THE CHECKER DOESN'T YIELD", "#f5c518");
             }
         }
-        const fy = controls.floorY;
+        const fy = driving.active ? 0 : controls.floorY;
         const onFloor = onDanceFloor(p.x, p.z, fy);
         if (move.dancing && onFloor) energy = Math.min(100, energy + dt * 22);
         else energy = Math.max(0, energy - dt * 7);
@@ -1001,7 +1023,7 @@ async function boot() {
                 if (before < 5 && boardsRead(adViews) >= 5) note({ flags: { billboards: true } });
             }
         }
-        storyFrame(dt, t, p, fy);
+        storyFrame(dt, t, driving.active ? driving.car.position : p, fy);
         hud.setTelemetry({
             bpm: audio.bpm,
             track: audio.trackName,
@@ -1010,7 +1032,9 @@ async function boot() {
             clock: clock.clock,
         });
 
-        if (hud.phase === "explore" && !ride) {
+        if (hud.phase === "explore" && driving.active) {
+            hud.setInteract(`${Math.round(Math.abs(driving.speed) * 2.237)} MPH  ·  [F] GET OUT  ·  [Q] VIEW`, true);
+        } else if (hud.phase === "explore" && !ride) {
             if (controls.sitting) hud.setInteract("[E] STAND UP  ·  WASD TO GET UP", true);
             else {
                 const target=interactionTarget();
@@ -1018,7 +1042,9 @@ async function boot() {
                 else {
                     const seenId=(world.city?.ads?.lastSeen||[])[0];
                     const seen=seenId&&filledSlots(adConfig).find(s=>s.id===seenId);
-                    if(seen) hud.setInteract(seen.creative.kind==="available"?`[LOOK] TO LET · ${seen.creative.brand}`:`[LOOK] ${seen.creative.brand} — ${seen.creative.line}`,true);
+                    const nearCar=driving.nearest(p,2.6);
+                    if(nearCar) hud.setInteract(`[F] DRIVE THE ${(nearCar.userData.kind==="checker"?"CHECKER":nearCar.userData.kind||"CAR").toUpperCase()}`,true);
+                    else if(seen) hud.setInteract(seen.creative.kind==="available"?`[LOOK] TO LET · ${seen.creative.brand}`:`[LOOK] ${seen.creative.brand} — ${seen.creative.line}`,true);
                     else if (onFloor) hud.setInteract("SPACE TO DANCE", true);
                     else hud.setInteract("", false);
                 }

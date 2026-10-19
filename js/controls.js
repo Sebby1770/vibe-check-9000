@@ -93,6 +93,7 @@ export function createControls(camera, domElement, colliders) {
         get object() { return camera; },
         get floorY() { return floorY; },
         get riding() { return riding; },
+        get stickInput() { return { x: stick.x, y: stick.y }; },
         get airborne() { return !!air; },
         setRiding(v) { riding = !!v; },
         knock(hit) {
