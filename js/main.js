@@ -18,6 +18,9 @@ import { createWorld } from "./world.js";
 import { mountTitle, attractShot, TITLE_SECONDS } from "./title.js";
 import { animateVehicle } from "./vehicles/models.js";
 import { createStore } from "./db/store.js";
+import { normalizeStory, onStoryEvent, currentObjective, objectiveTarget, storyLine, STORY_PLACES } from "./story/story.js";
+import { createStoryUI } from "./story/story-ui.js";
+import { createStoryWorld } from "./story/story-world.js";
 import { daylightAt } from "./daylight.js";
 import { createAudio } from "./audio.js";
 import { createControls } from "./controls.js";
@@ -144,6 +147,9 @@ async function boot() {
     if (bill.dare) progress = { ...progress, dareId: bill.dare.id };
     saveProgress(progress);
     let commerce = normalizeCommerce(progress.night.commerce);
+    let story = normalizeStory(progress.story);
+    // Browser tests drive the scene directly: the story waits to be started by hand under ?inspect.
+    const inspectMode = new URLSearchParams(location.search).has("inspect");
     cubeFound.done = !!progress.night.flags.cube;
     clock.tick(Math.max(0, Number(progress.night.elapsed) || 0));
     let activeSet = commerce.expansion.signalOn ? SIGNAL_SET : commerce.playingRecord?.set || bill.set;
@@ -211,6 +217,8 @@ async function boot() {
     const hud = createHud({
         onEnter: async () => {
             controls?.resetSpawn(); // the title crane leaves the camera out on 47th
+            if (!inspectMode && !story.started) setTimeout(() => storyEvent({ type: "start" }), 900);
+            else setTimeout(routeStory, 0);
             await audio.unlock();
             audio.setMuted(hud.run.muted);
             audio.start();
@@ -382,8 +390,8 @@ async function boot() {
     document.getElementById("hudMenu").addEventListener('click',()=>window.dispatchEvent(new KeyboardEvent('keydown',{key:'Escape'})));
     window.addEventListener('keydown',e=>{if(e.key.toLowerCase()==='l'&&!e.repeat&&hud.phase==='explore'){e.preventDefault();openLife();}});
     document.getElementById("journalBtn").addEventListener("click",()=>openJournal());
-    for(const [id,hour] of [['waitMorningBtn',7],['waitEveningBtn',22]])document.getElementById(id).addEventListener('click',()=>{
-        clock.waitUntil(hour);recapShown=true;persistCommerce();resumeStreet();hud.toast(hour===7?'Morning on 47th. Your keys and wallet are safe.':'The lights are coming on. Welcome to another evening.');
+    for(const [id,hour] of [['waitMorningBtn',7],['waitEveningBtn',22],['waitMidnightBtn',0]])document.getElementById(id)?.addEventListener('click',()=>{
+        clock.waitUntil(hour);recapShown=true;persistCommerce();resumeStreet();hud.toast(hour===7?'Morning on 47th. Your keys and wallet are safe.':hour===0?'Midnight. The booths and the trains keep their own hours now.':'The lights are coming on. Welcome to another evening.');
     });
     document.getElementById("pauseJournalBtn").addEventListener("click",()=>openJournal());
     window.addEventListener("keydown",e=>{if(e.key.toLowerCase()==="j"&&!e.repeat&&hud.phase==="explore"){e.preventDefault();openJournal();}});
@@ -427,6 +435,89 @@ async function boot() {
 
     world = createWorld(canvas, adConfig);
     controls = createControls(world.camera, canvas, world.colliders);
+    const storyUI = createStoryUI();
+    const storyWorld = createStoryWorld(world.scene);
+    world.markShadows(storyWorld.root);
+    let storyClock = 0, storyStatus = "", cutsceneT = -1, choiceOpen = false, echoHeld = false;
+    const gameHour = () => (clock.seconds % 86400) / 3600;
+
+    function storyNpcs() { return [...NPCS, ...storyWorld.people(story)]; }
+    function routeStory() {
+        if (!story.started || story.ending) { if (destination?.id?.startsWith("story-")) destination = null; return; }
+        if (destination && destination.id !== "noticeboard" && !destination.id.startsWith("story-")) return;
+        destination = objectiveTarget(story, storyNpcs());
+    }
+    /** Applies a story reducer result: state, save, and every effect it asks for. */
+    function applyStory(result) {
+        if (!result) return;
+        if (!result.changed) { if (result.message) hud.toast(result.message, "#f2a541"); return; }
+        story = result.state;
+        progress = { ...progress, story };
+        saveProgress(progress);
+        for (const fx of result.effects) {
+            if (fx.type === "lines") storyUI.say(fx.lines);
+            else if (fx.type === "cash") { commerce.life = credit(commerce.life, fx.amount, fx.label.slice(0, 90)); persistCommerce(); hud.toast(`+$${fx.amount} · ${fx.label.replace("Story · ", "")}`, "#bdd3b2"); }
+            else if (fx.type === "echoes") hud.toast("THE VISOR IS TUNED · HOLD V TO SEE ECHOES", "#62fff5");
+            else if (fx.type === "flash") { world.flashFloor(); audio.cheer?.(); }
+            else if (fx.type === "signalSet") { activeSet = SIGNAL_SET; audio.houseSystem(); audio.setHouseSet(activeSet); world.setLedMessage(activeSet.name, "124 BPM · THE CITY ANSWERS"); }
+            else if (fx.type === "card") { storyUI.card(fx.chapter); story = onStoryEvent(story, { type: "card", chapter: fx.chapter }).state; progress = { ...progress, story }; }
+            else if (fx.type === "ending") { storyUI.ending(fx.ending === "home" ? "Home" : "The set", fx.lines); world.flashFloor(); }
+            else if (fx.type === "save") store.save({ ...progress, night: { ...progress.night, commerce, elapsed: clock.elapsedReal } }, fx.label);
+        }
+        choiceOpen = false;
+        routeStory();
+    }
+    function storyEvent(event) { applyStory(onStoryEvent(story, event, { hour: gameHour() })); }
+    /** If the story needs this character, they say their story line first. */
+    function storyTalk(npc) {
+        const line = storyLine(story, npc.id);
+        if (!line) {
+            if (npc.id === "ada") { hud.openTalk({ id: "story-ada", faceId: "ada", name: "ADA", role: "MERIDIAN RADIO", nodes: { start: { say: story.ending ? "We did it. Whatever you chose, we did it." : "The Seam opens at 12:04. The tube, the roof, the record, the train. Don't be late.", choices: [{ text: "I won't.", next: null }] } } }); return true; }
+            return false;
+        }
+        const choices = [{ text: line.reply, next: null, action: `plot:talk:${npc.id}` }];
+        if (NPCS.some((n) => n.id === npc.id)) choices.push({ text: "Something else first.", next: null, action: `plot:smalltalk:${npc.id}` });
+        hud.openTalk({ id: `story-${npc.id}`, faceId: npc.id, name: npc.name, role: "THE 12:04", nodes: { start: { say: line.say, choices } } });
+        return true;
+    }
+    function storyAction(action) {
+        const [, kind, value] = action.split(":");
+        if (kind === "talk") { storyEvent({ type: "talk", npc: value }); note({ talkId: value }); }
+        else if (kind === "smalltalk") { const npc = NPCS.find((n) => n.id === value); if (npc) { hud.openTalk(npc); note({ talkId: npc.id }); } }
+        else if (kind === "choice") storyEvent({ type: "choice", value });
+    }
+    function storyFrame(dt, t, p, fy) {
+        storyClock += dt;
+        const o = currentObjective(story);
+        const playing = hud.phase === "explore";
+        const r = storyWorld.update(dt, t, { story, player: { x: p.x, z: p.z, y: fy }, echo: echoHeld && playing, reduced: hud.reducedFx, cutscene: cutsceneT >= 0 });
+        storyUI.echo(echoHeld && story.echoes && playing);
+        if (playing && story.started) {
+            storyStatus = r.status;
+            for (const ev of r.events) storyEvent(ev);
+            if (r.teleport) { controls.place(r.teleport.x, r.teleport.z, r.teleport.lookX, r.teleport.lookZ); hud.toast("THE WATCHMEN WALK YOU BACK TO THE GATE", "#f2a541"); }
+            if (storyClock > 0.25) {
+                storyClock = 0;
+                if (o && (o.kind === "reach")) storyEvent({ type: "reach", x: p.x, z: p.z, y: fy });
+            }
+            // A cutscene: letterbox, lines, then the story moves on.
+            if (o?.kind === "cutscene") {
+                if (cutsceneT < 0) { cutsceneT = 0; storyUI.letterbox(true); controls.setEnabled(false); storyUI.say(o.lines); }
+                cutsceneT += dt;
+                if (cutsceneT > 3 && !storyUI.speaking) { cutsceneT = -1; storyUI.letterbox(false); controls.setEnabled(true); storyEvent({ type: "cutscene", scene: o.scene }); }
+            }
+            // The ending: offered on the platform.
+            if (o?.kind === "choice" && !choiceOpen && fy < -3) {
+                choiceOpen = true;
+                storyUI.say(o.lines);
+                hud.openTalk({ id: "story-choice", name: "THE 12:04", role: "UPTOWN LOCAL · TRACK 4", nodes: { start: { say: "The doors stay open. The club is playing your song upstairs.", choices: o.options.map((opt) => ({ text: opt.text, next: null, action: `plot:choice:${opt.id}` })) } } });
+            }
+        }
+        if (story.started) storyUI.setTracker(story, gameHour(), storyStatus);
+        else storyUI.hideTracker();
+    }
+    window.addEventListener("keydown", (e) => { if (e.key.toLowerCase() === "v" && !e.repeat) echoHeld = true; });
+    window.addEventListener("keyup", (e) => { if (e.key.toLowerCase() === "v") echoHeld = false; });
     controls.setReduced(hud.reducedFx);
     controls.setEnabled(hud.phase === "explore");
     world.setLedMessage(activeSet.name, "DOORS OPEN");
@@ -588,7 +679,7 @@ async function boot() {
     function interactionTarget() {
         world.camera.getWorldDirection(_dir);
         return selectInteraction({position:world.camera.position,forward:_dir,floorY:controls.floorY,
-            candidates:cubeFound.done?candidates.filter(c=>c.type!=="cube"):candidates,boxes:world.colliders.boxes,touch:isTouch()});
+            candidates:[...storyWorld.candidates(story),...storyWorld.people(story).map(n=>({...n,type:"npc",ref:n,aimY:1.5,reach:3.1,prompt:`[E] TALK TO ${n.name}`})),...(cubeFound.done?candidates.filter(c=>c.type!=="cube"):candidates)],boxes:world.colliders.boxes,touch:isTouch()});
     }
     document.getElementById("mobileInteract").addEventListener("click",tryInteract);
     const danceButton=document.getElementById("mobileDance");
@@ -608,6 +699,7 @@ async function boot() {
 
     function handleAction(action) {
         if (!action) return;
+        if (action.startsWith("plot:")) { queueMicrotask(() => storyAction(action)); return; }
         if(action.startsWith("life-")){openLife(action.slice(5),action==="life-club"?{job:"club"}:{});return;}
         if(action.startsWith("street-")){openStreet(action.slice(7));return;}
         if(action==="rent-board"){hud.openAds?.();return;}
@@ -714,9 +806,11 @@ async function boot() {
         const p = world.camera.position;
         const fy = controls.floorY;
         const target=interactionTarget();
+        if(target?.type==="story"){storyEvent({type:"interact",prop:target.prop});return;}
         if(target?.type==="neighborhood"){openNeighborhood(target.id);return;}
         if(target?.type==="npc") {
             const npc=target.ref;
+            if(storyTalk(npc)){note({talkId:npc.id});return;}
             if(npc.id==="frank"){commerce=addLead(commerce,"ice");persistCommerce();}
             if(npc.id==="velma"){commerce=addLead(commerce,"flowers");persistCommerce();}
             if(npc.id==="marco"){commerce=addLead(commerce,"gin");persistCommerce();}
@@ -776,7 +870,10 @@ async function boot() {
                     upright:u?new Vector3(0,1,0).applyQuaternion(u.getWorldQuaternion(new Quaternion())).y:null};
             });},
             db(){return store.stats();},
-            snapshot(){return {db:store.info,homes:Object.fromEntries([...world.lifeWorld.doors].map(([id,door])=>[id,{locked:door.visible,furnishings:[...world.lifeWorld.decor.get(id)].filter(([,g])=>g.visible).map(([key])=>key)}])),commerce,progress,daylight:world.daylight,clock:clock.clock,elapsed:clock.elapsedReal,phase:hud.phase,night:clock.phase,zone:hud.run.zone,sitting:controls.sitting,airborne:!!controls.airborne,energy,filmVersion:world.city.film.material.map.version,audio:{preview:audio.previewing,muted:audio.muted,usingDeck:audio.usingDeck,bpm:audio.bpm},position:{x:world.camera.position.x,y:world.camera.position.y,z:world.camera.position.z},target:interactionTarget()?.id,set:activeSet,render:world.renderer.info.render,memory:world.renderer.info.memory};},
+            storyStart(){storyEvent({type:"start"});return story;},
+            storyEvent(ev){storyEvent(ev);return story;},
+            storySet(data){applyStory({changed:true,state:normalizeStory(data),effects:[]});return story;},
+            snapshot(){return {story,db:store.info,homes:Object.fromEntries([...world.lifeWorld.doors].map(([id,door])=>[id,{locked:door.visible,furnishings:[...world.lifeWorld.decor.get(id)].filter(([,g])=>g.visible).map(([key])=>key)}])),commerce,progress,daylight:world.daylight,clock:clock.clock,elapsed:clock.elapsedReal,phase:hud.phase,night:clock.phase,zone:hud.run.zone,sitting:controls.sitting,airborne:!!controls.airborne,energy,filmVersion:world.city.film.material.map.version,audio:{preview:audio.previewing,muted:audio.muted,usingDeck:audio.usingDeck,bpm:audio.bpm},position:{x:world.camera.position.x,y:world.camera.position.y,z:world.camera.position.z},target:interactionTarget()?.id,set:activeSet,render:world.renderer.info.render,memory:world.renderer.info.memory};},
         };
     }
 
@@ -890,7 +987,7 @@ async function boot() {
         audio.setListener(p.x, p.y, p.z, _dir.x, _dir.y, _dir.z);
         world.update(dt, t, {
             bass, mid, bpm: audio.bpm, reduced: hud.reducedFx, energy,
-            talkId: hud.talkNpc && hud.talkNpc.id,
+            talkId: hud.talkNpc && (hud.talkNpc.faceId || hud.talkNpc.id),
             clock: clock.clock,
             seconds: attract ? TITLE_SECONDS : clock.seconds,
             phase,
@@ -904,6 +1001,7 @@ async function boot() {
                 if (before < 5 && boardsRead(adViews) >= 5) note({ flags: { billboards: true } });
             }
         }
+        storyFrame(dt, t, p, fy);
         hud.setTelemetry({
             bpm: audio.bpm,
             track: audio.trackName,
@@ -933,8 +1031,9 @@ async function boot() {
         if(destination) {
             const guidance=neighborhoodWaypoint(p,destination);
             let target=guidance?.target||destination, hint=guidance?.hint||"";
+            if(destination.y<-2 && fy>-2) {target={x:-22.4,z:26.6};hint="SUBWAY STAIRS ↓";}
             if(destination.y>2 && fy<2) {
-                const hotel=destination.id==="ice"||destination.id.startsWith("home-");
+                const hotel=destination.id==="ice"||destination.id.startsWith("home-")||destination.x>16.5;
                 target=hotel?{x:37,z:9.5}:{x:14.6,z:9.7};
                 hint=hotel?"ASTORIA EAST STAIRS → 2F":"CLUB EAST STAIRS → LOUNGE";
             }

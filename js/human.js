@@ -494,7 +494,7 @@ export function createHuman(spec = {}) {
     colors[S.white] = lin(0xf2eee6);
     colors[S.iris] = lin([0x3a2614, 0x1a120c, 0x2c4a5a, 0x3a4a2a][Math.floor(seed * 4)]);
     colors[S.shirt] = lin(o.cut === "tee" ? o.top : 0xeeeae0);
-    colors[S.hat] = lin(o.hat === "fedora" ? [0x2a241c, 0x1a1612, 0x3a3428, 0x28303a][Math.floor(seed * 4)] : 0x1a1612);
+    colors[S.hat] = lin(spec.hatColor ?? (o.hat === "fedora" ? [0x2a241c, 0x1a1612, 0x3a3428, 0x28303a][Math.floor(seed * 4)] : 0x1a1612));
     colors[S.lips] = lin(female ? 0x9a2a34 : skinC).multiplyScalar(female ? 1 : 0.72);
     colors[S.metal] = lin(o.extra === "badge" ? 0xc9a227 : 0x8a8478);
     colors[S.brow] = shade(hairC, 0.8);

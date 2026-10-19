@@ -1,3 +1,4 @@
+import { normalizeStory } from "./story/story.js";
 import { normalizeCommerce } from "./commerce.js";
 /* Local night stamps + cosmetic unlocks. No DOM. */
 
@@ -79,6 +80,7 @@ export function loadProgress(storage) {
                 }
                 : emptyNight(),
             look: LOOKS.some((l) => l.id === data.look) ? data.look : "stock",
+            ...(data.story ? { story: normalizeStory(data.story) } : {}),
             streak: Number(data.streak) || 0,
             visits: Number(data.visits) || 0,
         };
