@@ -232,6 +232,23 @@
     text-wrap: balance;
 }
 
+/* Which deploy you're looking at, quiet in the top bar opposite MUTE. */
+.boot-build {
+    position: absolute;
+    top: 0;
+    left: var(--title-inset);
+    height: var(--bar);
+    z-index: 2;
+    display: flex;
+    align-items: center;
+    margin: 0;
+    color: rgba(239, 227, 196, 0.38);
+    font: 600 12px/1 "Big Shoulders Text", "Oswald", sans-serif;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    pointer-events: none;
+}
+
 /* ---------- the one opening sequence ---------- */
 
 .boot-frame::before,
