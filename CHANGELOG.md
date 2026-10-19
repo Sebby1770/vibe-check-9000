@@ -4,6 +4,19 @@ All notable changes to VIBE CHECK 9000™ are documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
+## [32.0.0] - 2026-10-20
+
+### The map, the subway, and rooms that feel lived in
+
+- **City map (M).** A 1954 pocket street map drawn from the game's own layout data: 31 named streets, 279 building footprints, walk-in buildings in warm orange with their names, parks, the North River, the El, the Pier 47 fence and five subway stops. Drag, wheel or +/− to zoom, arrow keys to pan, Find me. Labels are placed in priority order and never overlap. Click a pin, a stop or any spot to mark a route; the wayfinder follows it. Uptown is up and the map is unmirrored, so left in the street is left on the map. Touch screens get a Map button and a stacked layout.
+- **Minimap.** A round map in the corner, sampled each frame from a pre-drawn copy of the city (one draw call), with your heading, your route and the story's next stop, and rim arrows for anything off the edge. Click it to open the full map.
+- **Subway fast travel.** Five stops (47 St – Rivoli, Times Sq – 42 St, 59 St – Belmont Plaza, 12 Av – Pier 47, Third Avenue El at 44½ St). New IRT stair heads with railings and green globe lamps, an enamel plate at the El stair, and a route map on the 47th Street platform. Press E, choose a stop, and a departures card carries you there. The stair heads are solid.
+- **Interiors.** A new architecture pass (`js/interiors/architecture.js`, a few draw calls per room): normal-mapped pressed-tin ceilings, subway-tile or panelled wainscot with chair rails, crown mouldings, door casings, framed oils over cast-iron radiators, plaster medallions, palms, a coat rack, queue ropes at the Rivoli, and turning ceiling fans in the barber, diner and bakery. The Astoria corridor lamps, which hung in mid-air, sit on bracketed wall shelves; homes get a radiator and a ceiling medallion.
+- **The Meridian warehouse** was lined with the street facade (inside it looked like a courtyard of apartment windows). It now has whitewashed brick over a green dado, roof trusses, high windows, a plank deck, a concrete floor, shop lamps with light pools, radio benches with glowing valves and an oscilloscope, cable drums, a parts rack and the Seam blackboard.
+- **Fix: Pier 47 Road ran through the Meridian warehouse** (two street lamps stood inside and the road dead-ended at its wall). The warehouse moves 19.5 m south so the road runs clear from the gate to the pier; its door still faces the yard, and the watchmen, Ada, Kessler and the story marker move with it.
+- **Fix: returning visitors could still see an old version.** v10 had registered a service worker that v12 removed but never unregistered. `sw.js` is back as a kill switch and the page retires any leftover worker. The Pages build now stamps `?v=<commit>` onto every module URL, the entry script and the stylesheets (`tools/stamp-build.mjs`), and the title shows `v32.0.0 · build <commit> · <date>`.
+- Tests: `tests/map.test.js` (orientation, picking, every arrival and boarding spot clear, kiosks off the road and solid), `tests/stamp.test.js`, and a new browser journey `npm run test:map` (minimap, map, marking a route, Escape, riding from the platform and from a stair head, phone layout).
+
 ## [31.0.0] - 2026-10-19
 
 ### The 12:04 — an open city, a story, real cars and saves that keep up

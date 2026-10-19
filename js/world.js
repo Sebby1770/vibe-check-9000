@@ -1,5 +1,6 @@
 import { buildParkResidences } from './park-residences.js';
 import { buildOpenWorld } from "./openworld/openworld.js";
+import { buildStationFixtures } from "./openworld/kiosks.js";
 import { buildBlockLoop } from './block-loop.js';
 import { buildDistrict } from './district.js';
 import { buildLifeWorld } from './life-world.js';
@@ -116,6 +117,7 @@ export function createWorld(canvas, adConfig) {
     buildBlockLoop(scene);
     buildParkResidences(scene);
     const openWorld = buildOpenWorld(scene);
+    buildStationFixtures(scene);
     const colliders = buildColliders(interiorColliders());
     const streetLife = buildStreetLife(scene);
     const lifeWorld = buildLifeWorld(scene,colliders);

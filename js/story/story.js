@@ -89,7 +89,7 @@ export const CHAPTERS = [
             { id: "warning", kind: "talk", npc: "muldoon", text: "Muldoon on the alley beat has a warning",
                 say: "Man in a grey hat's been up and down this block asking about a kid in funny glasses. Kessler. Meridian Radio money. Paid my sergeant to forget his face. He's leaving the Astoria now — if you're going to follow him, don't let him see you.",
                 reply: "I'll keep my distance." },
-            { id: "tail", kind: "follow", actor: "kessler", place: "timesSquare", near: 5, far: 42, text: "Tail the Grey Hat west to Times Square — close, but unseen",
+            { id: "tail", kind: "follow", actor: "kessler", place: "timesSquare", near: 5, far: 42, text: "Tail the Grey Hat crosstown to Times Square — close, but unseen",
                 lines: ["Kessler stops under the biggest sign on Broadway and checks his watch.", "A black limousine slides to the kerb. He gets in. Pier 47, he tells the driver."] },
             { id: "to-pier", kind: "reach", place: "pierGate", r: 8, text: "Get to the Pier 47 gate (drive — press F at any car)",
                 lines: ["The limousine is parked inside the gate. Light under the warehouse door.", "Two watchmen with flashlights walk the yard."] },

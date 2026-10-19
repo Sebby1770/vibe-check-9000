@@ -1,9 +1,10 @@
 /* The open city beyond the old block loop: roads, building lots, landmarks, zones and colliders for
-   Broadway & Times Square (west), Belmont Park & the Plaza (north), the Pier 47 waterfront (east) and the
-   Garment District under the El (south). Pure data and geometry maths — no three, no DOM — shared by the
+   Broadway & Times Square (crosstown, -x), Belmont Park & the Plaza (uptown, +z), the Pier 47 waterfront on
+   the North River (+x) and the Garment District under the El (downtown, -z). Pure data and geometry maths — no three, no DOM — shared by the
    renderer (openworld.js), movement (zones.js) and the tests. Deterministic: the same city every time. */
 
 import { DISTRICT_BOUNDS } from "../district-layout.js";
+import { stationColliders } from "./stations.js";
 
 export const WORLD_BOUNDS = { minX: -430, maxX: 540, minZ: -300, maxZ: 400 };
 export const OLD = DISTRICT_BOUNDS; // the original loop, untouched
@@ -241,6 +242,8 @@ export function openWorldColliders() {
   wall(bs.x - bs.w / 2, bs.x + bs.w / 2, bs.z - bs.d / 2 + 4, bs.z + bs.d / 2, -1, 8);
   // El columns along Third Avenue.
   for (let z = -60; z > -300; z -= 12) for (const x of [53.6, 66.4]) wall(x - 0.3, x + 0.3, z - 0.3, z + 0.3, -1, 8, { sightMaxY: 8 });
+  // Subway stair heads on the pavement.
+  boxes.push(...stationColliders());
   return boxes;
 }
 

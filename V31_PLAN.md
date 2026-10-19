@@ -219,12 +219,15 @@ Done, with tests:
 - **Saves:** SQLite on OPFS in a worker, instant autosave, restore points, world-object tables, sync-ready outbox,
   Postgres schema for later.
 
+Delivered in v32.0.0: the interior architecture pass (tin ceilings, wainscot, mouldings, fittings, fans; the Meridian
+warehouse interior), the minimap and full city map (M), subway fast travel between five stops, versioned Pages builds
+and the retirement of v10's service worker.
+
 Not done yet (next steps):
 
-- Interior architecture pass (§1.5: wainscoting, mouldings, coffered and tin ceilings, new furniture) beyond the PBR
-  materials, and the facade kit for the original 47th Street buildings.
+- The facade kit for the original 47th Street buildings.
 - Instanced far-LOD crowds (`createCrowd`) and a fixed point-light pool.
-- Minimap and full city map (M), subway fast travel, traffic on the avenues.
+- Traffic on the avenues (cars still only drive 47th Street).
 - Touch driving was wired through the on-screen stick but not tried on a phone; the full story was verified by unit
   test and in-browser beats, not by one continuous human play-through.
 - `npm run test:browser` fails at Frank's ice on `main` too (pre-existing; the suite predates later changes).
