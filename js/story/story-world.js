@@ -25,9 +25,10 @@ const PROP_VERB = {
 
 // Kessler's walk from the Astoria to Times Square, along 47th Street's club-side pavement.
 const TAIL_PATH = [[26, 14.8], [16, 15.6], [-20, 15.6], [-60, 15.8], [-97, 16.2], [-140, 16.4], [-190, 16.6], [-226, 26], [-246, 44], [-250, 50]];
+// The watchmen walk the yard between the gate road and the warehouse door (west wall, z -10.9..-4.1).
 const PATROLS = [
-    [[300, 2], [318, 2], [318, 10], [300, 10]],
-    [[318, 30], [300, 30], [300, 18], [318, 18]],
+    [[300, -13], [318, -13], [318, -3], [300, -3]],
+    [[318, 13], [300, 13], [300, 3], [318, 3]],
 ];
 
 function human(spec) {
@@ -113,7 +114,7 @@ export function createStoryWorld(scene) {
     kessler.visible = false;
     root.add(kessler);
     const ada = human({ outfit: "florist", body: "f", hairStyle: "victory", skin: 0xf1c27d, hair: 0x6b2a18, name: "ADA", color: "#9fd0c0" });
-    ada.position.set(348, 0, 14);
+    ada.position.set(348, 0, -5.5);
     ada.rotation.y = -Math.PI / 2;
     ada.visible = false;
     root.add(ada);
@@ -215,7 +216,7 @@ export function createStoryWorld(scene) {
                 if (at.end) out.events.push({ type: "follow", actor: "kessler", result: "done" });
                 out.status = `${Math.round(dist)} m behind him${looking ? " · he's looking back" : dist < 9 ? " · too close" : dist > 32 ? " · losing him" : ""}`;
             } else if (o?.id === "ambush" && cutscene) {
-                kessler.position.set(326, 0, 12);
+                kessler.position.set(326, 0, -7.5);
                 kessler.rotation.y = Math.PI / 2;
                 animateHuman(kessler, t, { mode: "idle", talking: true });
             }
@@ -251,7 +252,7 @@ export function createStoryWorld(scene) {
                 if (inCone && t - sneak.spottedAt > 2) {
                     sneak.spottedAt = t;
                     out.events.push({ type: "stealth", result: "spotted" });
-                    out.teleport = { x: STORY_PLACES.pierGate.x - 6, z: STORY_PLACES.pierGate.z, lookX: 320, lookZ: 14 };
+                    out.teleport = { x: STORY_PLACES.pierGate.x - 6, z: STORY_PLACES.pierGate.z, lookX: 320, lookZ: -7.5 };
                 }
             }
             if (guarding && Math.hypot(player.x - STORY_PLACES.warehouse.x, player.z - STORY_PLACES.warehouse.z) < (o.r || 6)) out.events.push({ type: "stealth", result: "in" });

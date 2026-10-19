@@ -43,6 +43,7 @@
     <link rel="stylesheet" href="hud.css">
     <link rel="stylesheet" href="panels.css">
     <link rel="stylesheet" href="story.css">
+    <link rel="stylesheet" href="map.css">
 </head>
 <body data-zone="club" data-phase="boot" class="pre-night">
     <button id="cameraCapture" class="camera-trigger" type="button" hidden>CAMERA [C]</button>
@@ -87,13 +88,19 @@
             </div>
             <button type="button" class="hud-wallet" id="hudWallet" aria-label="Open your wallet"><span class="hud-label">Wallet</span><strong id="hudCash">$120</strong><kbd>L</kbd></button>
             <button type="button" class="hud-menu" id="hudMenu">Menu</button>
+            <button type="button" class="hud-menu hud-map" id="hudMap" aria-label="Open the city map">Map</button>
             <span class="hud-hidden" aria-hidden="true"><em id="hudBpm">128</em><em id="hudTrack">HOUSE SYSTEM</em></span>
         </div>
         <div class="visor-reticle" aria-hidden="true"></div>
+        <button type="button" class="minimap" id="minimap" aria-label="Open the city map (M)">
+            <canvas id="minimapCanvas" aria-hidden="true"></canvas>
+            <span class="minimap-north" aria-hidden="true">N</span>
+            <span class="minimap-key" aria-hidden="true">M</span>
+        </button>
 
         <section id="boot" class="overlay boot" aria-labelledby="bootTitle">
             <div class="boot-frame" aria-hidden="true"></div>
-            <p class="boot-build" id="bootBuild" data-build="dev">v31.0.0 · local</p>
+            <p class="boot-build" id="bootBuild" data-build="dev">v32.0.0 · local</p>
             <div class="boot-card">
                 <h1 id="bootTitle" class="boot-logo" aria-label="Vibe Check 9000">
                     <span class="flap-row" data-flaps="VIBE CHECK" aria-hidden="true">VIBE CHECK</span>
@@ -113,12 +120,53 @@
             </div>
             <div class="boot-foot">
                 <p class="boot-keys">
-                    <span class="keys-desk"><kbd>WASD</kbd> walk <kbd>Mouse</kbd> look <kbd>E</kbd> use <kbd>F</kbd> drive <kbd>L</kbd> wallet <kbd>Esc</kbd> menu</span>
+                    <span class="keys-desk"><kbd>WASD</kbd> walk <kbd>Mouse</kbd> look <kbd>E</kbd> use <kbd>F</kbd> drive <kbd>M</kbd> map <kbd>L</kbd> wallet <kbd>Esc</kbd> menu</span>
                     <span class="keys-touch">Left stick to walk, drag to look, tap Use to talk</span>
                 </p>
                 <p class="boot-sponsor" id="bootSponsor">TONIGHT'S BOARD · THE STREET STILL SELLS LIGHT</p>
             </div>
         </section>
+
+        <section id="cityMap" class="overlay city-map hidden" aria-labelledby="cityMapTitle">
+            <div class="city-map-frame">
+                <header class="city-map-head">
+                    <div>
+                        <p class="city-map-kicker" id="cityMapKicker">MIDTOWN · NOVEMBER 1954</p>
+                        <h2 id="cityMapTitle">The city</h2>
+                    </div>
+                    <div class="city-map-tools">
+                        <button type="button" id="mapZoomIn" aria-label="Zoom in">+</button>
+                        <button type="button" id="mapZoomOut" aria-label="Zoom out">−</button>
+                        <button type="button" id="mapCentre">Find me</button>
+                        <button type="button" id="mapClose">Close <kbd>M</kbd></button>
+                    </div>
+                </header>
+                <div class="city-map-body">
+                    <canvas id="cityMapCanvas" aria-label="Street map of Midtown. Drag to move, scroll to zoom, click a place to mark a route."></canvas>
+                    <aside class="city-map-side">
+                        <div class="map-card" id="mapCard" hidden>
+                            <p class="map-card-kind" id="mapCardKind"></p>
+                            <h3 id="mapCardName"></h3>
+                            <p class="map-card-dist" id="mapCardDist"></p>
+                            <p class="map-card-hint" id="mapCardHint"></p>
+                            <div class="map-card-actions">
+                                <button type="button" class="map-ride map-card-ride" id="mapCardRide" hidden>Ride here</button>
+                                <button type="button" id="mapCardMark">Mark route</button>
+                            </div>
+                        </div>
+                        <h3 class="map-side-title" id="mapSideTitle">Subway</h3>
+                        <ol class="map-stations" id="mapStations"></ol>
+                        <p class="map-legend"><span class="lg you"></span>You <span class="lg route"></span>Route <span class="lg story"></span>Story <span class="lg venue"></span>Walk in</p>
+                    </aside>
+                </div>
+            </div>
+        </section>
+
+        <div id="rideCard" class="ride-card hidden" aria-live="polite">
+            <p class="ride-card-kicker" id="rideKicker">IRT · NEXT STOP</p>
+            <p class="ride-card-name" id="rideName"></p>
+            <p class="ride-card-line" id="rideLine">Stand clear of the closing doors</p>
+        </div>
 
         <section id="talk" class="overlay panel-wrap hidden" aria-live="polite">
             <div class="panel talk-panel">

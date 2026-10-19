@@ -22,6 +22,8 @@ import { normalizeStory, onStoryEvent, currentObjective, objectiveTarget, storyL
 import { createStoryUI } from "./story/story-ui.js";
 import { createStoryWorld } from "./story/story-world.js";
 import { createDriving } from "./vehicles/drive.js";
+import { createMapUI } from "./map/map-ui.js";
+import { SUBWAY_STATIONS, boardingPoint } from "./openworld/stations.js";
 import { saveTier, QUALITY_KEY } from "./quality.js";
 import { daylightAt } from "./daylight.js";
 import { createAudio } from "./audio.js";
@@ -592,6 +594,60 @@ async function boot() {
         lifeUI.open(commerce.life,page,{job:hud.run.entered&&JOBS.some(j=>j.id===zone)?zone:undefined,...context});
     }
     function resumeStreet(){hud.setPhase(hud.run.entered?"explore":"boot");if(hud.run.entered&&!isTouch())controls?.lock();}
+
+    // --- the city map (M), the corner minimap and subway rides between the five stops
+    const stationCandidates = SUBWAY_STATIONS.map((s) => {
+        const b = boardingPoint(s);
+        return { type: "prop", x: b.x, z: b.z, y: b.y || 0, aimY: s.board ? 1.55 : 1.0, reach: s.board ? 2.6 : 3.2,
+            prompt: s.board ? "[E] ROUTE MAP · CHOOSE A STOP" : s.el ? "[E] UP TO THE EL · CHOOSE A STOP" : "[E] DOWN TO THE TRAINS · CHOOSE A STOP", action: `subway:${s.id}` };
+    });
+    let subwayRide = null, mapObjective = null, mapObjectiveAt = -1;
+    const mapUI = createMapUI({
+        onWaypoint: (place) => { destination = { ...place, id: `map-${place.id}` }; hud.toast(`Marked: ${place.name}`, "#f2a541"); mapUI.close(); resumeStreet(); },
+        onTravel: (id) => rideSubway(id),
+        onClose: () => resumeStreet(),
+    });
+    function mapState() {
+        const p = world.camera.position;
+        world.camera.getWorldDirection(_dir);
+        const now = performance.now();
+        if (now - mapObjectiveAt > 250) { mapObjectiveAt = now; mapObjective = story.started && !story.ending ? objectiveTarget(story, storyNpcs()) : null; }
+        return { player: { x: p.x, z: p.z, dx: _dir.x, dz: _dir.z }, destination, objective: mapObjective };
+    }
+    function openMap(mode = "map", from = null) {
+        if (subwayRide || (mode === "travel" && driving.active)) return;
+        neighborhoodUI?.close(); lifeUI?.close(); activityUI?.close(); shopUI?.close(); stopPreview();
+        hud.run.talkNpc = null; hud.setPhase("activity");
+        mapObjectiveAt = -1;
+        mapUI.open(mode, from, mapState());
+    }
+    /** Board, ride (a moment on the departure board), and step out at the far stop. */
+    function rideSubway(id) {
+        const st = SUBWAY_STATIONS.find((s) => s.id === id);
+        if (!st || subwayRide) return;
+        mapUI.close();
+        hud.setPhase("activity");
+        const card = document.getElementById("rideCard");
+        document.getElementById("rideKicker").textContent = st.el ? "THIRD AVENUE EL · NEXT STOP" : `${st.line} · NEXT STOP`;
+        document.getElementById("rideName").textContent = st.name;
+        card.classList.remove("hidden", "leaving");
+        audio.playShopSound("ticket");
+        subwayRide = setTimeout(() => {
+            const a = st.arrive;
+            controls.sit({ x: a.x, z: a.z, y: a.y || 0, eye: 1.7, lookX: a.lookX, lookZ: a.lookZ });
+            controls.stand();
+            card.classList.add("leaving");
+            subwayRide = setTimeout(() => {
+                card.classList.add("hidden");
+                card.classList.remove("leaving");
+                subwayRide = null;
+                resumeStreet();
+                hud.toast(`${st.name.toUpperCase()} · MIND THE GAP`, "#9fd0c0");
+            }, 520);
+        }, 1500);
+    }
+    window.addEventListener("keydown", (e) => { if (e.key.toLowerCase() === "m" && !e.repeat && hud.phase === "explore") { e.preventDefault(); openMap("map"); } });
+    document.getElementById("hudMap").addEventListener("click", () => { if (hud.phase === "explore") openMap("map"); });
     function applyExpansion(result){
         if(result.state){commerce={...commerce,expansion:result.state};persistCommerce();note(result.events||{});}
         return result;
@@ -708,7 +764,7 @@ async function boot() {
     function interactionTarget() {
         world.camera.getWorldDirection(_dir);
         return selectInteraction({position:world.camera.position,forward:_dir,floorY:controls.floorY,
-            candidates:[...storyWorld.candidates(story),...storyWorld.people(story).map(n=>({...n,type:"npc",ref:n,aimY:1.5,reach:3.1,prompt:`[E] TALK TO ${n.name}`})),...(cubeFound.done?candidates.filter(c=>c.type!=="cube"):candidates)],boxes:world.colliders.boxes,touch:isTouch()});
+            candidates:[...storyWorld.candidates(story),...storyWorld.people(story).map(n=>({...n,type:"npc",ref:n,aimY:1.5,reach:3.1,prompt:`[E] TALK TO ${n.name}`})),...stationCandidates,...(cubeFound.done?candidates.filter(c=>c.type!=="cube"):candidates)],boxes:world.colliders.boxes,touch:isTouch()});
     }
     document.getElementById("mobileInteract").addEventListener("click",tryInteract);
     const danceButton=document.getElementById("mobileDance");
@@ -731,6 +787,7 @@ async function boot() {
         if (action.startsWith("plot:")) { queueMicrotask(() => storyAction(action)); return; }
         if(action.startsWith("life-")){openLife(action.slice(5),action==="life-club"?{job:"club"}:{});return;}
         if(action.startsWith("street-")){openStreet(action.slice(7));return;}
+        if(action.startsWith("subway:")){openMap("travel",action.slice(7));return;}
         if(action==="rent-board"){hud.openAds?.();return;}
         if(action.startsWith("ad-open:")){
             const url=action.slice(8);
@@ -903,6 +960,12 @@ async function boot() {
             storyStart(){storyEvent({type:"start"});return story;},
             drive(){return {active:driving.active,speed:driving.speed,car:driving.car?{x:driving.car.position.x,z:driving.car.position.z,kind:driving.car.userData.kind}:null};},
             toggleDrive(){return toggleDrive();},
+            map(){return mapUI.debug();},
+            openMap(mode="map",from=null){openMap(mode,from);return mapUI.debug();},
+            closeMap(){mapUI.close(true);return mapUI.debug();},
+            mapPick(x,y){const hit=mapUI.pick(x,y);return hit?{type:hit.type,name:hit.item.name,id:hit.item.id}:null;},
+            ride(id){rideSubway(id);},
+            get destination(){return destination;},
             storyEvent(ev){storyEvent(ev);return story;},
             storySet(data){applyStory({changed:true,state:normalizeStory(data),effects:[]});return story;},
             snapshot(){return {story,db:store.info,homes:Object.fromEntries([...world.lifeWorld.doors].map(([id,door])=>[id,{locked:door.visible,furnishings:[...world.lifeWorld.decor.get(id)].filter(([,g])=>g.visible).map(([key])=>key)}])),commerce,progress,daylight:world.daylight,clock:clock.clock,elapsed:clock.elapsedReal,phase:hud.phase,night:clock.phase,zone:hud.run.zone,sitting:controls.sitting,airborne:!!controls.airborne,energy,filmVersion:world.city.film.material.map.version,audio:{preview:audio.previewing,muted:audio.muted,usingDeck:audio.usingDeck,bpm:audio.bpm},position:{x:world.camera.position.x,y:world.camera.position.y,z:world.camera.position.z},target:interactionTarget()?.id,set:activeSet,render:world.renderer.info.render,memory:world.renderer.info.memory};},
@@ -1078,8 +1141,9 @@ async function boot() {
             }
             const dx=target.x-p.x,dz=target.z-p.z,dist=Math.hypot(dx,dz),cross=_dir.x*dz-_dir.z*dx,dot=_dir.x*dx+_dir.z*dz;
             const arrow=dist<2?"●":dot<0?"↶":cross>1?"←":cross< -1?"→":"↑";
-            marker.textContent=`${arrow} ${destination.name} · ${Math.round(dist)} m${hint?" · "+hint:""} · J notebook`;
+            marker.textContent=`${arrow} ${destination.name} · ${Math.round(dist)} m${hint?" · "+hint:""} · M map`;
         }
+        if(hud.phase==="explore")mapUI.updateMini(mapState());
         if(restoringProgress)return;
         savedAt+=dt;
         if(savedAt>10&&hud.run.entered){savedAt=0;progress={...progress,night:{...progress.night,elapsed:clock.elapsedReal,commerce}};saveProgress(progress);}

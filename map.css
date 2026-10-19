@@ -1,0 +1,269 @@
+/* The city map (M), the corner minimap and the subway ride card, in the title's language. */
+
+/* ---------- minimap ---------- */
+.minimap {
+    position: absolute;
+    right: 24px;
+    bottom: 24px;
+    width: 168px;
+    height: 168px;
+    padding: 0;
+    border: 2px solid rgba(239, 227, 196, 0.55);
+    border-radius: 50%;
+    background: #e9dec3;
+    box-shadow: 0 10px 34px rgba(0, 0, 0, 0.55), inset 0 0 0 4px rgba(13, 12, 15, 0.82);
+    overflow: hidden;
+    cursor: pointer;
+    pointer-events: auto;
+    z-index: 4;
+}
+.minimap canvas { display: block; width: 100%; height: 100%; border-radius: 50%; opacity: 0.94; }
+.minimap::after {
+    content: "";
+    position: absolute;
+    inset: 0;
+    border-radius: 50%;
+    box-shadow: inset 0 0 0 5px rgba(13, 12, 15, 0.86), inset 0 0 22px rgba(0, 0, 0, 0.35);
+    pointer-events: none;
+}
+.minimap-north,
+.minimap-key {
+    position: absolute;
+    z-index: 1;
+    display: grid;
+    place-items: center;
+    width: 20px;
+    height: 20px;
+    border-radius: 50%;
+    background: rgba(13, 12, 15, 0.88);
+    color: var(--paper);
+    font: 700 12px/1 "Big Shoulders Text", "Oswald", sans-serif;
+}
+.minimap-north { top: 3px; left: calc(50% - 10px); color: var(--tungsten); }
+.minimap-key { bottom: 4px; left: calc(50% - 10px); border: 1px solid rgba(239, 227, 196, 0.4); }
+.minimap:hover { border-color: var(--paper); }
+.minimap:focus-visible { outline: 2px solid var(--paper); outline-offset: 3px; }
+body:not([data-phase="explore"]) .minimap,
+body.pre-night .minimap { display: none; }
+
+/* The Map button joins Menu on touch screens, where the minimap moves up out of the thumbs' way. */
+.hud-map { display: none; }
+@media (pointer: coarse) {
+    .hud-map { display: inline-flex; }
+    .minimap { top: 128px; right: 16px; bottom: auto; width: 112px; height: 112px; }
+    .minimap-key { display: none; }
+}
+@media (max-width: 760px) {
+    .minimap { top: 120px; right: 12px; bottom: auto; width: 104px; height: 104px; }
+}
+
+/* ---------- full map ---------- */
+.city-map {
+    z-index: 30;
+    padding: 28px;
+    background: rgba(0, 0, 0, 0.55);
+    backdrop-filter: blur(3px);
+    -webkit-backdrop-filter: blur(3px);
+}
+.city-map-frame {
+    display: flex;
+    flex-direction: column;
+    width: min(1280px, 100%);
+    height: min(860px, 100%);
+    border-radius: 4px;
+    background: rgba(13, 12, 15, 0.94);
+    box-shadow: 0 28px 90px rgba(0, 0, 0, 0.6);
+    color: var(--paper);
+    overflow: hidden;
+}
+.city-map-head {
+    display: flex;
+    align-items: flex-end;
+    justify-content: space-between;
+    gap: 16px;
+    padding: 18px 22px 14px;
+}
+.city-map-kicker {
+    margin: 0 0 4px;
+    color: var(--tungsten);
+    font: 700 13px/1 "Big Shoulders Text", "Oswald", sans-serif;
+    letter-spacing: 0.14em;
+}
+.city-map-head h2 {
+    margin: 0;
+    font: 900 34px/1 "Big Shoulders Display", "Oswald", sans-serif;
+    letter-spacing: 0.02em;
+    text-transform: uppercase;
+}
+.city-map-tools { display: flex; flex-wrap: wrap; gap: 8px; justify-content: flex-end; }
+.city-map-tools button,
+.map-card-actions button,
+.map-ride {
+    min-width: 40px;
+    min-height: 38px;
+    padding: 8px 12px;
+    border: 1px solid rgba(239, 227, 196, 0.28);
+    border-radius: 3px;
+    background: rgba(239, 227, 196, 0.06);
+    color: var(--paper);
+    font: 700 15px/1 "Big Shoulders Text", "Oswald", sans-serif;
+    letter-spacing: 0.06em;
+    text-transform: uppercase;
+    cursor: pointer;
+}
+.city-map-tools button:hover,
+.map-card-actions button:hover,
+.map-ride:hover:not([disabled]) { border-color: var(--paper); background: rgba(239, 227, 196, 0.14); }
+.city-map-tools button:focus-visible,
+.map-card-actions button:focus-visible,
+.map-ride:focus-visible,
+.map-station-name:focus-visible { outline: 2px solid var(--paper); outline-offset: 2px; }
+.city-map-tools kbd {
+    margin-left: 6px;
+    padding: 2px 5px;
+    border-radius: 2px;
+    background: #25242a;
+    font: inherit;
+}
+.city-map-body {
+    position: relative;
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) 300px;
+    flex: 1;
+    min-height: 0;
+}
+#cityMapCanvas {
+    display: block;
+    width: 100%;
+    height: 100%;
+    background: #e9dec3;
+    cursor: grab;
+    touch-action: none;
+}
+#cityMapCanvas:active { cursor: grabbing; }
+.city-map-side {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+    padding: 16px 18px 18px;
+    border-left: 1px solid rgba(239, 227, 196, 0.12);
+    overflow-y: auto;
+}
+.map-side-title {
+    margin: 4px 0 0;
+    color: rgba(239, 227, 196, 0.6);
+    font: 700 13px/1 "Big Shoulders Text", "Oswald", sans-serif;
+    letter-spacing: 0.14em;
+    text-transform: uppercase;
+}
+.map-stations { display: flex; flex-direction: column; gap: 6px; margin: 0; padding: 0; list-style: none; }
+.map-station {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 6px 6px 6px 4px;
+    border-radius: 3px;
+}
+.map-station.here { background: rgba(31, 107, 58, 0.22); }
+.map-station-name {
+    display: flex;
+    flex: 1;
+    align-items: center;
+    gap: 10px;
+    min-width: 0;
+    padding: 2px;
+    border: 0;
+    background: none;
+    color: var(--paper);
+    text-align: left;
+    cursor: pointer;
+}
+.map-station-name strong { display: block; font: 700 16px/1.15 "Big Shoulders Text", "Oswald", sans-serif; }
+.map-station-name em { display: block; color: rgba(239, 227, 196, 0.55); font: 600 12px/1.2 "Big Shoulders Text", "Oswald", sans-serif; font-style: normal; letter-spacing: 0.08em; }
+.map-bullet {
+    display: grid;
+    flex: none;
+    place-items: center;
+    width: 26px;
+    height: 26px;
+    border: 2px solid #f4efe0;
+    border-radius: 50%;
+    background: #1f6b3a;
+    color: #f4efe0;
+    font: 800 14px/1 "Big Shoulders Text", "Oswald", sans-serif;
+}
+.map-bullet.el { background: #3a3530; }
+.map-ride { min-height: 34px; padding: 6px 12px; border-color: rgba(242, 165, 65, 0.6); color: var(--tungsten); }
+.map-ride[disabled] { border-color: transparent; background: none; color: rgba(239, 227, 196, 0.5); cursor: default; font-size: 12px; }
+.map-card {
+    padding: 14px 14px 12px;
+    border-left: 3px solid var(--tungsten);
+    border-radius: 3px;
+    background: rgba(239, 227, 196, 0.07);
+}
+.map-card[hidden] { display: none; }
+.map-card-kind { margin: 0 0 3px; color: var(--tungsten); font: 700 12px/1 "Big Shoulders Text", "Oswald", sans-serif; letter-spacing: 0.12em; }
+.map-card h3 { margin: 0 0 4px; font: 800 21px/1.1 "Big Shoulders Display", "Oswald", sans-serif; }
+.map-card-dist { margin: 0; color: rgba(239, 227, 196, 0.72); font: 14px/1.4 "Special Elite", "Courier New", monospace; }
+.map-card-hint { margin: 6px 0 0; color: rgba(239, 227, 196, 0.6); font: 13px/1.35 "Special Elite", "Courier New", monospace; }
+.map-card-hint:empty { display: none; }
+.map-card-actions { display: flex; gap: 8px; margin-top: 10px; }
+.map-legend {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 6px 10px;
+    margin: auto 0 0;
+    color: rgba(239, 227, 196, 0.6);
+    font: 600 13px/1 "Big Shoulders Text", "Oswald", sans-serif;
+}
+.map-legend .lg { display: inline-block; width: 11px; height: 11px; margin-right: -4px; border-radius: 2px; }
+.lg.you { background: #b7282b; clip-path: polygon(100% 50%, 0 0, 30% 50%, 0 100%); }
+.lg.route { background: #f2a541; border-radius: 50% 50% 50% 0; transform: rotate(-45deg); }
+.lg.story { background: #e65a3e; transform: rotate(45deg) scale(0.8); }
+.lg.venue { background: #dd9e68; border: 1px solid #6e4325; }
+.city-map[data-mode="travel"] .map-side-title { color: var(--tungsten); }
+
+@media (max-width: 860px), (pointer: coarse) and (max-height: 520px) {
+    .city-map { padding: 0; }
+    .city-map-frame { width: 100%; height: 100%; border-radius: 0; }
+    .city-map-head { padding: 12px 14px 10px; flex-wrap: wrap; }
+    .city-map-head h2 { font-size: 26px; }
+    .city-map-body { grid-template-columns: 1fr; grid-template-rows: minmax(0, 1fr) auto; }
+    .city-map-side { max-height: 42vh; border-left: 0; border-top: 1px solid rgba(239, 227, 196, 0.12); padding: 12px 14px; }
+}
+
+/* ---------- subway ride ---------- */
+.ride-card {
+    position: absolute;
+    inset: 0;
+    z-index: 40;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 10px;
+    background: #050405;
+    color: var(--paper);
+    text-align: center;
+    pointer-events: auto;
+    animation: ride-in 420ms ease-out both;
+}
+.ride-card.leaving { animation: ride-out 520ms ease-in both; }
+.ride-card-kicker { margin: 0; color: var(--tungsten); font: 700 15px/1 "Big Shoulders Text", "Oswald", sans-serif; letter-spacing: 0.2em; }
+.ride-card-name {
+    margin: 0;
+    padding: 10px 18px 8px;
+    border-radius: 3px;
+    background: #1a191e;
+    box-shadow: inset 0 -2px 0 #000, 0 1px 0 rgba(239, 227, 196, 0.08);
+    font: 900 clamp(34px, 6vw, 72px)/1 "Big Shoulders Display", "Oswald", sans-serif;
+    letter-spacing: 0.04em;
+    text-transform: uppercase;
+}
+.ride-card-line { margin: 0; color: rgba(239, 227, 196, 0.6); font: 16px/1.4 "Special Elite", "Courier New", monospace; }
+@keyframes ride-in { from { opacity: 0; } to { opacity: 1; } }
+@keyframes ride-out { from { opacity: 1; } to { opacity: 0; } }
+@media (prefers-reduced-motion: reduce) {
+    .ride-card, .ride-card.leaving { animation-duration: 1ms; }
+}

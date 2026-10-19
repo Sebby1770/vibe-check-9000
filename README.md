@@ -16,10 +16,18 @@ The parks have four usable benches. The club plays original jazz-house, while a 
 
 No install. Click **ENTER THE NIGHT**.
 
+## New in v32: the map, the subway and rooms that feel lived in
+
+- **City map.** Press **M** (or tap **Map**) for a 1954 pocket street map of the whole city: every street by name, the buildings you can walk into, parks, the North River, the El and the subway stops. Drag to move, scroll or **+/−** to zoom, and click any place (or anywhere) to **mark a route** — the wayfinder at the top of the screen follows it. Uptown is at the top, and the map is a true overhead view, so what's on your left in the street is on your left on the map.
+- **Minimap.** A small map in the corner shows the streets around you, your heading, your marked route and the story's next stop (an arrow on the rim when it's off the edge). Click it to open the full map.
+- **Subway.** Ride between five stops — **47 St – Rivoli**, **Times Sq – 42 St**, **59 St – Belmont Plaza**, **12 Av – Pier 47** and the **Third Avenue El** in the Garment District. Press **E** at a green-globed stair head, the El stair, or the route map on the 47th Street platform, then pick a stop.
+- **Interiors.** Pressed-tin ceilings, tiled and panelled wainscot, crown mouldings, framed paintings, cast-iron radiators, palms and turning ceiling fans in the shops, Dottie's, the Astoria and the bakery. The Astoria's corridor lamps stand on wall shelves instead of floating. The Meridian warehouse is a real warehouse inside — whitewashed brick, roof trusses, radio benches with glowing valves, an oscilloscope and the Seam blackboard — and it now stands beside Pier 47 Road instead of across it.
+- **Always the latest build.** Each deploy versions every file it serves, the service worker an old version left in some browsers is retired, and the title screen shows the build you're playing (top left).
+
 ## New in v31: The 12:04
 
 - **A story.** You came through the DJ booth from 2026. *The 12:04* runs from REXA's booth to the last uptown local at 12:04 AM, with a prologue, five chapters and two endings. Follow the tracker (top right); hold **V** once the visor is tuned to see echoes of what happened here.
-- **An open city.** Walk or drive west to Broadway and Times Square, north to Belmont Park and the Belmont Plaza, east to the Pier 47 waterfront, or south under the El into the Garment District.
+- **An open city.** Walk or drive crosstown to Broadway and Times Square, uptown to Belmont Park and the Belmont Plaza, out to the Pier 47 waterfront on the North River, or downtown under the El into the Garment District.
 - **Drive.** Press **F** at any parked car. **W/S** drive and brake, **A/D** steer, **Space** handbrake, **Q** changes the view, **H** horn, **F** to get out.
 - **New look.** Physical sky, shadows, reflections, PBR brick and wet asphalt, people with faces and tailoring, and 1950s cars. Choose Low–Ultra in Settings, or add `?quality=low` to the address.
 - **Saves.** Progress autosaves instantly to a SQLite database in your browser (OPFS), with restore points in **SAVE & BACKUP**. The `.json` backups still work.
