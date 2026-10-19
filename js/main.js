@@ -22,6 +22,7 @@ import { normalizeStory, onStoryEvent, currentObjective, objectiveTarget, storyL
 import { createStoryUI } from "./story/story-ui.js";
 import { createStoryWorld } from "./story/story-world.js";
 import { createDriving } from "./vehicles/drive.js";
+import { saveTier, QUALITY_KEY } from "./quality.js";
 import { daylightAt } from "./daylight.js";
 import { createAudio } from "./audio.js";
 import { createControls } from "./controls.js";
@@ -391,6 +392,17 @@ async function boot() {
     document.getElementById("hudMenu").addEventListener('click',()=>window.dispatchEvent(new KeyboardEvent('keydown',{key:'Escape'})));
     window.addEventListener('keydown',e=>{if(e.key.toLowerCase()==='l'&&!e.repeat&&hud.phase==='explore'){e.preventDefault();openLife();}});
     document.getElementById("journalBtn").addEventListener("click",()=>openJournal());
+    // Graphics tier: saved, then applied by reloading (shadow maps and render targets are set at start-up).
+    const qualitySelect=document.getElementById("qualitySelect");
+    if(qualitySelect){
+        try{qualitySelect.value=localStorage.getItem(QUALITY_KEY)||"auto";}catch{qualitySelect.value="auto";}
+        qualitySelect.addEventListener("change",()=>{
+            saveTier(qualitySelect.value);
+            progress={...progress,night:{...progress.night,commerce,elapsed:clock.elapsedReal}};saveProgress(progress);
+            hud.toast(`GRAPHICS · ${qualitySelect.value.toUpperCase()} · RELOADING`,"#f2a541");
+            setTimeout(()=>location.reload(),400);
+        });
+    }
     for(const [id,hour] of [['waitMorningBtn',7],['waitEveningBtn',22],['waitMidnightBtn',0]])document.getElementById(id)?.addEventListener('click',()=>{
         clock.waitUntil(hour);recapShown=true;persistCommerce();resumeStreet();hud.toast(hour===7?'Morning on 47th. Your keys and wallet are safe.':hour===0?'Midnight. The booths and the trains keep their own hours now.':'The lights are coming on. Welcome to another evening.');
     });
@@ -484,16 +496,17 @@ async function boot() {
         routeStory();
     }
     function storyEvent(event) { applyStory(onStoryEvent(story, event, { hour: gameHour() })); }
-    /** If the story needs this character, they say their story line first. */
+    /** When the story needs a character, their usual conversation gains a first choice that carries the plot. */
     function storyTalk(npc) {
         const line = storyLine(story, npc.id);
-        if (!line) {
-            if (npc.id === "ada") { hud.openTalk({ id: "story-ada", faceId: "ada", name: "ADA", role: "MERIDIAN RADIO", nodes: { start: { say: story.ending ? "We did it. Whatever you chose, we did it." : "The Seam opens at 12:04. The tube, the roof, the record, the train. Don't be late.", choices: [{ text: "I won't.", next: null }] } } }); return true; }
-            return false;
+        if (npc.id === "ada" || !NPCS.some((n) => n.id === npc.id)) {
+            const say = line ? line.say : story.ending ? "We did it. Whatever you chose, we did it." : "The Seam opens at 12:04. The tube, the roof, the record, the train. Don't be late.";
+            hud.openTalk({ id: "story-ada", faceId: "ada", name: npc.name || "ADA", role: "MERIDIAN RADIO", nodes: { start: { say, choices: [{ text: line ? line.reply : "I won't.", next: null, action: line ? `plot:talk:${npc.id}` : null }] } } });
+            return true;
         }
-        const choices = [{ text: line.reply, next: null, action: `plot:talk:${npc.id}` }];
-        if (NPCS.some((n) => n.id === npc.id)) choices.push({ text: "Something else first.", next: null, action: `plot:smalltalk:${npc.id}` });
-        hud.openTalk({ id: `story-${npc.id}`, faceId: npc.id, name: npc.name, role: "THE 12:04", nodes: { start: { say: line.say, choices } } });
+        if (!line) return false;
+        const plot = { text: `▸ ${line.reply}`, next: "__story" };
+        hud.openTalk({ ...npc, nodes: { ...npc.nodes, start: { ...npc.nodes.start, choices: [plot, ...(npc.nodes.start.choices || [])] }, __story: { say: line.say, choices: [{ text: "Go on.", next: null, action: `plot:talk:${npc.id}` }] } } });
         return true;
     }
     function storyAction(action) {

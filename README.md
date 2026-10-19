@@ -16,6 +16,14 @@ The parks have four usable benches. The club plays original jazz-house, while a 
 
 No install. Click **ENTER THE NIGHT**.
 
+## New in v31: The 12:04
+
+- **A story.** You came through the DJ booth from 2026. *The 12:04* runs from REXA's booth to the last uptown local at 12:04 AM, with a prologue, five chapters and two endings. Follow the tracker (top right); hold **V** once the visor is tuned to see echoes of what happened here.
+- **An open city.** Walk or drive west to Broadway and Times Square, north to Belmont Park and the Belmont Plaza, east to the Pier 47 waterfront, or south under the El into the Garment District.
+- **Drive.** Press **F** at any parked car. **W/S** drive and brake, **A/D** steer, **Space** handbrake, **Q** changes the view, **H** horn, **F** to get out.
+- **New look.** Physical sky, shadows, reflections, PBR brick and wet asphalt, people with faces and tailoring, and 1950s cars. Choose Low–Ultra in Settings, or add `?quality=low` to the address.
+- **Saves.** Progress autosaves instantly to a SQLite database in your browser (OPFS), with restore points in **SAVE & BACKUP**. The `.json` backups still work.
+
 ## New in v30: furnished interiors and a full day
 
 Hotel Astoria has a marble arrival hall, a fluted concierge desk, brass chandeliers, furnished lounges and a second-floor salon. Shop upgrades include stocked apothecary cabinets, a flower cooler, framed cinema posters, bottle shelving and barber workstations. Dottie’s has upholstered booths, counter stools and a decorative jukebox. Apartments have additional trim, lighting and window views that brighten with the day.
@@ -127,6 +135,8 @@ Earned, not bought. The visor keeps them.
 python3 -m http.server 8000
 npm test
 ```
+
+SQLite runs from `vendor/sqlite/` (the official WebAssembly build). Serving over plain HTTP is enough: the OPFS SAH-pool VFS needs no cross-origin isolation headers.
 
 Needs HTTP because of ES modules. No build step. Three.js r160 is pinned locally in `vendor/three/`, including its MIT license. Fonts use browser fallbacks when unavailable.
 

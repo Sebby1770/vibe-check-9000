@@ -198,3 +198,33 @@ Story intros never fire under `?inspect`, so browser tests keep control.
 - `normalizeNeighborhood` keeps its exact shape; unknown `commerce.*` keys are dropped by `normalizeCommerce`.
 - Backups: no string containing `<`/`>`, flags are booleans only, `BACKUP_VERSION` stays 1.
 - Browser tests open `/?inspect=1`, click ENTER THE NIGHT and act at once; they need zero console errors.
+
+---
+
+## Delivered (31.0.0, 2026-10-19)
+
+Done, with tests:
+
+- **Interface:** split-flap title over a live crane shot, minimal play HUD, restyled panels, Graphics tier select.
+- **Rendering:** physical sky, stars, shadows, time-of-day probes, grade, SMAA/MSAA, GTAO (ultra), tiers, software-GL fallback,
+  render-time crowd culling, no shader stall between zones.
+- **Materials:** PBR maps at world scale, wet asphalt, lane markings, light streaks on the road, daylight-aware windows.
+- **People:** one skinned mesh each, sculpted bodies/faces/hair/hats/tailoring, palette shader, improved animation, new
+  first-person hands.
+- **Cars:** six period models, car-following traffic (`stepTraffic`, unit tested), a real Checker ride, solid parked cars.
+- **Open world:** four districts (§2), 242 buildings, landmarks, zones and colliders; the old loop's routes, zones and
+  browser checks unchanged.
+- **Driving:** any parked car, arcade handling, collisions, chase/seat cameras, horn, headlights.
+- **Story:** all six chapters with tracker, cards, subtitles, letterbox, echoes, Kessler's tail, Pier 47 stealth, endings.
+- **Saves:** SQLite on OPFS in a worker, instant autosave, restore points, world-object tables, sync-ready outbox,
+  Postgres schema for later.
+
+Not done yet (next steps):
+
+- Interior architecture pass (§1.5: wainscoting, mouldings, coffered and tin ceilings, new furniture) beyond the PBR
+  materials, and the facade kit for the original 47th Street buildings.
+- Instanced far-LOD crowds (`createCrowd`) and a fixed point-light pool.
+- Minimap and full city map (M), subway fast travel, traffic on the avenues.
+- Touch driving was wired through the on-screen stick but not tried on a phone; the full story was verified by unit
+  test and in-browser beats, not by one continuous human play-through.
+- `npm run test:browser` fails at Frank's ice on `main` too (pre-existing; the suite predates later changes).
