@@ -1,4 +1,5 @@
 import { buildParkResidences } from './park-residences.js';
+import { buildOpenWorld } from "./openworld/openworld.js";
 import { buildBlockLoop } from './block-loop.js';
 import { buildDistrict } from './district.js';
 import { buildLifeWorld } from './life-world.js';
@@ -9,6 +10,14 @@ import { EffectComposer } from "three/addons/postprocessing/EffectComposer.js";
 import { RenderPass } from "three/addons/postprocessing/RenderPass.js";
 import { UnrealBloomPass } from "three/addons/postprocessing/UnrealBloomPass.js";
 import { OutputPass } from "three/addons/postprocessing/OutputPass.js";
+import { GTAOPass } from "three/addons/postprocessing/GTAOPass.js";
+import { RoundedBoxGeometry } from "three/addons/geometries/RoundedBoxGeometry.js";
+import { SMAAPass } from "three/addons/postprocessing/SMAAPass.js";
+import { createSky } from "./render/sky.js";
+import { createEnvironment } from "./render/environment.js";
+import { createSunShadow, markShadows } from "./render/shadows.js";
+import { createGradePass } from "./render/grade.js";
+import { upgradeMaterials, addRoadMarkings, addStreetReflections } from "./render/materials.js";
 import { buildClub } from "./club.js";
 import { buildCity, updateCity } from "./city.js";
 import { animateHuman } from "./human.js";
@@ -18,10 +27,11 @@ import { makeCubeEnv, makeDuskSky, paintSky } from "./kit.js";
 import {daylightAt} from './daylight.js';
 import { phaseLook } from "./night.js";
 import { createShopActivities } from "./shop-activities.js";
-import { detectQuality } from "./quality.js";
+import { detectQuality, lowTier } from "./quality.js";
 
 const _color = new THREE.Color();
 const _vibe = new THREE.Color("#ff00ff");
+const _haze = new THREE.Color(0xc6d2db);
 
 export function createWorld(canvas, adConfig) {
     const quality = detectQuality();
@@ -32,12 +42,18 @@ export function createWorld(canvas, adConfig) {
         alpha: false,
     });
     renderer.info.autoReset = false;
+    // Software GL (SwiftShader, llvmpipe) cannot keep up with shadows and heavy shaders: use the low tier.
+    try {
+        const gl = renderer.getContext(), dbg = gl.getExtension("WEBGL_debug_renderer_info");
+        const gpu = dbg ? String(gl.getParameter(dbg.UNMASKED_RENDERER_WEBGL)) : "";
+        if (quality.auto && /swiftshader|llvmpipe|software|basic render/i.test(gpu)) Object.assign(quality, lowTier(), { software: true });
+        quality.gpu = gpu;
+    } catch { /* no debug info: keep the detected tier */ }
     renderer.setPixelRatio(quality.pixelRatio);
     renderer.setSize(window.innerWidth, window.innerHeight);
     renderer.outputColorSpace = THREE.SRGBColorSpace;
     renderer.toneMapping = THREE.ACESFilmicToneMapping;
     renderer.toneMappingExposure = 1.08;
-    renderer.shadowMap.enabled = false;
     renderer.setClearColor(0xc47858, 1);
 
     const scene = new THREE.Scene();
@@ -48,6 +64,10 @@ export function createWorld(canvas, adConfig) {
 
     const dusk = makeDuskSky(280);
     scene.add(dusk.sky, dusk.sun, dusk.glow, dusk.sunLight);
+    const sky = createSky(scene, dusk, 300);
+    // Shadow maps must be configured before the first render compiles any program.
+    const sunShadow = createSunShadow(renderer, dusk.sunLight, scene, quality);
+    const ibl = createEnvironment(renderer, sky, dusk, quality.envSize);
     const moon=new THREE.Mesh(new THREE.SphereGeometry(5,16,12),new THREE.MeshBasicMaterial({color:0xdde6ee,fog:false,transparent:true,depthWrite:false}));
     scene.add(moon);
     let daylight=daylightAt(22*3600),skyTick=1;
@@ -62,6 +82,14 @@ export function createWorld(canvas, adConfig) {
     target.samples = renderer.capabilities.isWebGL2 ? Math.min(quality.samples, renderer.capabilities.maxSamples) : 0;
     const composer = new EffectComposer(renderer, target);
     composer.addPass(new RenderPass(scene, camera));
+    let gtao = null;
+    if (quality.gtao) {
+        gtao = new GTAOPass(scene, camera, window.innerWidth, window.innerHeight);
+        gtao.blendIntensity = 0.85;
+        gtao.updateGtaoMaterial({ radius: 0.45, distanceExponent: 1.6, thickness: 1.4, distanceFallOff: 1, scale: 1, samples: 12, screenSpaceRadius: false });
+        gtao.updatePdMaterial({ lumaPhi: 10, depthPhi: 2, normalPhi: 3, radius: 6, rings: 2, samples: 12 });
+        composer.addPass(gtao);
+    }
     const bloom = new UnrealBloomPass(
         new THREE.Vector2(window.innerWidth * quality.bloomScale, window.innerHeight * quality.bloomScale),
         0.22,
@@ -70,6 +98,11 @@ export function createWorld(canvas, adConfig) {
     );
     composer.addPass(bloom);
     composer.addPass(new OutputPass());
+    const smaa = quality.smaa ? new SMAAPass(window.innerWidth * quality.pixelRatio, window.innerHeight * quality.pixelRatio) : null;
+    if (smaa) composer.addPass(smaa);
+    const grade = createGradePass();
+    grade.uniforms.uAspect.value = window.innerWidth / window.innerHeight;
+    composer.addPass(grade);
     composer.setPixelRatio(quality.pixelRatio);
     let bloomKick = 0;
     let baseFov = 82;
@@ -82,37 +115,83 @@ export function createWorld(canvas, adConfig) {
     const district = buildDistrict(scene);
     buildBlockLoop(scene);
     buildParkResidences(scene);
+    const openWorld = buildOpenWorld(scene);
     const colliders = buildColliders(interiorColliders());
     const streetLife = buildStreetLife(scene);
     const lifeWorld = buildLifeWorld(scene,colliders);
     let clubScene=CLUB_SCENES[0];
     const sceneColor=new THREE.Color(clubScene.color),sceneAccent=new THREE.Color(clubScene.accent);
     const activities = createShopActivities(scene,camera);
+    upgradeMaterials(scene);
+    addRoadMarkings(scene);
+    const reflections = addStreetReflections(scene, city);
+    markShadows(scene);
+    const clubEnv = ibl.club;
+    scene.environment = clubEnv;
 
+    // Render-time culling: people who can't be seen are hidden for the draw only and restored right
+    // after, so raycasts, the sign audit and gameplay always see the whole scene.
+    const clubRooms = new Set(["club", "lounge"]);
+    const clubPeople = [
+        ...club.dancers, ...(club.barCrowd || []), ...(club.loungeCrowd || []),
+        ...club.namedPeople.filter((n) => clubRooms.has(getZone(n.x, n.z, n.y))).map((n) => n.obj),
+    ];
+    const streetPeople = [...(city.peds || []), ...(district.peds || [])];
+    const allPeople = [...clubPeople, ...streetPeople, ...(city.shopCrowd || []), ...(city.subwayCrowd || []),
+        ...club.namedPeople.filter((n) => !clubRooms.has(getZone(n.x, n.z, n.y))).map((n) => n.obj)];
+    const hiddenNow = [];
+    function hideForRender(list, test) {
+        for (const o of list) if (o.visible && (!test || test(o))) { o.visible = false; hiddenNow.push(o); }
+    }
+    function cullForRender() {
+        const p = camera.position;
+        const zone = getZone(p.x, p.z, p.y - 1.7);
+        const inClub = clubRooms.has(zone);
+        const atClubDoor = Math.abs(p.x) < 18 && p.z > 6 && p.z < 34 && p.y < 3;
+        if (!inClub && !atClubDoor) hideForRender(clubPeople);
+        if (inClub) hideForRender(streetPeople);
+        if (zone !== "subway" && p.y > -1) hideForRender(city.subwayCrowd || []);
+        const far = quality.drawDistance * 0.3;
+        hideForRender(allPeople, (o) => Math.abs(o.position.x - p.x) + Math.abs(o.position.z - p.z) > far);
+    }
+    const renderComposer = composer.render.bind(composer);
+    composer.render = (delta) => {
+        cullForRender();
+        try { renderComposer(delta); }
+        finally { for (const o of hiddenNow) o.visible = true; hiddenNow.length = 0; }
+    };
+
+    // First-person hands: a wool suit sleeve, a shirt cuff, and the visor's thin wristband (slot 1, tinted by the look).
+    const handSkin = new THREE.MeshStandardMaterial({ color: 0xc68642, roughness: 0.6 });
+    const sleeveWool = new THREE.MeshStandardMaterial({ color: 0x23242b, roughness: 0.88 });
+    const shirtCotton = new THREE.MeshStandardMaterial({ color: 0xe9e4d8, roughness: 0.75 });
     function makeHand(side) {
         const g = new THREE.Group();
-        const palm = new THREE.Mesh(
-            new THREE.SphereGeometry(1, 14, 10),
-            new THREE.MeshStandardMaterial({ color: 0xc68642, roughness: 0.55 }),
-        );
-        const cuff = new THREE.Mesh(
-            new THREE.CylinderGeometry(0.035, 0.04, 0.16, 16),
-            new THREE.MeshStandardMaterial({
-                color: 0x1a1410,
-                emissive: side < 0 ? 0xff00aa : 0x00fff7,
-                emissiveIntensity: 0.055,
-            }),
-        );
-        g.add(palm, cuff); // Keep the cuff in slot 1 for visor-colour updates.
-        palm.scale.set(.04,.022,.065);
-        for(let i=0;i<4;i++){
-            const finger=new THREE.Mesh(new THREE.CapsuleGeometry(.008,.038,3,8),palm.material);
-            finger.rotation.x=Math.PI/2;finger.position.set(-.025+i*.017,-.001,-.057);g.add(finger);
-        }
-        const thumb=new THREE.Mesh(new THREE.CapsuleGeometry(.012,.026,3,8),palm.material);
-        thumb.rotation.set(Math.PI/2,0,side*.5);thumb.position.set(-side*.035,-.003,-.015);g.add(thumb);
+        const hand = new THREE.Group();
+        const palm = new THREE.Mesh(new RoundedBoxGeometry(0.078, 0.028, 0.092, 3, 0.012), handSkin);
+        palm.position.z = -0.045;
+        hand.add(palm);
+        [0.04, 0.046, 0.043, 0.034].forEach((len, i) => {
+            const finger = new THREE.Mesh(new THREE.CapsuleGeometry(0.0085, len, 3, 8), handSkin);
+            finger.rotation.x = Math.PI / 2 - 0.35;
+            finger.position.set(-0.027 + i * 0.018, -0.008, -0.094 - len / 2);
+            hand.add(finger);
+        });
+        const thumb = new THREE.Mesh(new THREE.CapsuleGeometry(0.011, 0.034, 3, 8), handSkin);
+        thumb.rotation.set(Math.PI / 2, 0, side * 0.6);
+        thumb.position.set(-side * 0.042, -0.006, -0.03);
+        hand.add(thumb);
+        const band = new THREE.Mesh(new THREE.TorusGeometry(0.037, 0.0055, 8, 28), new THREE.MeshStandardMaterial({
+            color: 0x15151a, roughness: 0.3, metalness: 0.6, emissive: side < 0 ? 0xff00aa : 0x00fff7, emissiveIntensity: 0.4,
+        }));
+        band.position.z = 0.03;
+        const cuff = new THREE.Mesh(new THREE.CylinderGeometry(0.039, 0.04, 0.03, 18), shirtCotton);
         cuff.rotation.x = Math.PI / 2;
-        cuff.position.z = 0.12;
+        cuff.position.z = 0.05;
+        const sleeve = new THREE.Mesh(new THREE.CylinderGeometry(0.045, 0.05, 0.34, 18), sleeveWool);
+        sleeve.rotation.x = Math.PI / 2;
+        sleeve.position.z = 0.23;
+        g.add(hand, band, cuff, sleeve); // Keep the band in slot 1 for visor-colour updates.
         g.position.set(side * 0.28, -0.22, -0.42);
         g.rotation.set(-0.35, side * 0.18, side * 0.12);
         camera.add(g);
@@ -163,8 +242,11 @@ export function createWorld(canvas, adConfig) {
         composer.setPixelRatio(quality.pixelRatio);
         composer.setSize(w, h);
         bloom.setSize(w * quality.bloomScale, h * quality.bloomScale);
+        grade.uniforms.uAspect.value = w / h;
     }
     window.addEventListener("resize", resize);
+    // Warm every shader while the title card is up, so the first steps outside don't stall.
+    renderer.compileAsync?.(scene, camera).catch(() => {});
 
     return {
         renderer,
@@ -176,10 +258,14 @@ export function createWorld(canvas, adConfig) {
         npcs: club.namedPeople,
         city,
         club,
+        openWorld,
         streetLife,
         district,
         lifeWorld,
         get daylight(){return {...daylight,sunVisible:dusk.sun.visible,moonVisible:moon.visible};},
+        quality,
+        /** Flags shadow casting/receiving on objects added after the world was built. */
+        markShadows,
 
         setShopState(state) { activities.setState(state); city.setShopState?.(state); streetLife.setState(state.expansion); lifeWorld.setState(state.life); clubScene=CLUB_SCENES.find(s=>s.id===state.life.scene)||CLUB_SCENES[0];sceneColor.set(clubScene.color);sceneAccent.set(clubScene.accent); },
         showPurchase(result) { activities.show(result); },
@@ -206,8 +292,8 @@ export function createWorld(canvas, adConfig) {
         setCuffs(left, right) {
             const lc = leftHand.children[1]?.material;
             const rc = rightHand.children[1]?.material;
-            if (lc && left) { lc.emissive.set(left); lc.emissiveIntensity = 0.55; }
-            if (rc && right) { rc.emissive.set(right); rc.emissiveIntensity = 0.55; }
+            if (lc && left) { lc.emissive.set(left); lc.emissiveIntensity = 0.9; }
+            if (rc && right) { rc.emissive.set(right); rc.emissiveIntensity = 0.9; }
         },
         setNightPhase(phase) {
             nightPhase = phase || "doors";
@@ -225,6 +311,7 @@ export function createWorld(canvas, adConfig) {
             city.setMarquee?.(title, sub);
         },
         enableXR() { renderer.xr.enabled = true; },
+        setHandsVisible(v) { leftHand.visible = rightHand.visible = !!v; },
 
         update(dt, t, ctx) {
             const bass = ctx.bass || 0;
@@ -250,12 +337,17 @@ export function createWorld(canvas, adConfig) {
             dusk.sunLight.color.setHex(look.sunColor);
             moon.position.set(p.x+look.moonX,look.moonY,p.z+look.moonZ);
             moon.visible=outside&&look.moonY>0&&look.moonOp>.05;moon.material.opacity=look.moonOp;
+            sky.update(p, look, outside);
+            if (outside) ibl.update(look);
+            scene.environment = outside ? ibl.outdoor : (zone === "club" || zone === "lounge") ? clubEnv : ibl.room;
+            sunShadow.update(p, look, { outside, strength: look.sunInt });
             lifeWorld.setDaylight?.(look.daylight);
             dusk.sky.visible = true;
             dusk.sun.visible = outside && look.sunOp > 0.05;
             dusk.glow.visible = outside && look.sunOp > 0.05;
             if (outside) {
-                scene.fog.color.setHex(look.fogOut);
+                // By day the haze takes the colour of the physical sky's horizon.
+                scene.fog.color.setHex(look.fogOut).lerp(_haze, sky.mix * 0.55);
                 scene.fog.density = reduced ? 0.006 : look.fogOutD;
                 hemi.color.setHex(look.hemi);
                 hemi.groundColor.setHex(look.hemiGround);
@@ -298,8 +390,9 @@ export function createWorld(canvas, adConfig) {
                 hemi.intensity = 1.65;
                 dusk.sunLight.intensity = 0.15 * look.sunInt;
                 renderer.toneMappingExposure = 1.0;
-            } else if (["records","pharmacy","florist","rivoli","liquor","barber","books","bakery","arcade"].includes(zone)) {
+            } else if (["records","pharmacy","florist","rivoli","liquor","barber","books","bakery","arcade","meridian"].includes(zone)) {
                 const shopFog = {
+                    meridian:0x1a1c1e,
                     books:0x1b3037,bakery:0x39271c,arcade:0x201d35,
                     records: 0x241028, pharmacy: 0x102820, florist: 0x281018,
                     rivoli: 0x2a1810, liquor: 0x24180c, barber: 0x201818,
@@ -437,6 +530,7 @@ export function createWorld(canvas, adConfig) {
 
             if (bloomKick > 0) bloomKick -= dt;
             const drunkPulse = drunk && !reduced ? 0.22 + Math.sin(t * 1.3) * 0.08 : 0;
+            bloom.threshold = outside ? 0.78 + sky.mix * 0.17 : 0.78;
             bloom.strength = reduced ? 0.05 : (outside ? 0.2 : zone === "club" ? 0.28 : 0.12) + (zone === "club" ? bass * 0.14 + bloomKick : 0) + drunkPulse;
             const drunkFov = drunk && !reduced ? Math.sin(t * 0.7) * 4 + Math.sin(t * 1.9) * 1.6 : 0;
             const targetFov = baseFov + (reduced ? 0 : bass * 2.4 + bloomKick * 8) + drunkFov;
@@ -466,6 +560,11 @@ export function createWorld(canvas, adConfig) {
             }
 
             updateCity(city, dt, t, { outside, reduced, lampMul: look.lamp, zone, position:p, camera });
+            openWorld.update(dt, t, { position: p, lampMul: look.lamp, drawDistance: quality.drawDistance, reduced });
+            reflections.update(look.daylight, outside);
+            grade.uniforms.uTime.value = t;
+            grade.setLook({ zone, outside, daylight: look.daylight, reduced, grain: quality.grain });
+            if (gtao) gtao.enabled = !reduced;
             activities.update(dt,t,reduced,club.namedPeople);
 
             club.particles.visible = zone === "club" || zone === "lounge";

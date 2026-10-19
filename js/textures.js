@@ -14,8 +14,56 @@ function canvasTex(draw, size = 256, repeatX = 1, repeatY = 1) {
     return tex;
 }
 
+/* PBR companions for a canvas texture: a normal map from its luminance (dark joints and cracks sink, faces
+   stand proud) and a roughness map. Stored on texture.userData.pbr; render/materials.js wires them up and
+   maps them at real-world size (worldTile metres per tile). */
+export function withPbr(tex, { worldTile, strength = 2.2, rough = [0.82, 0.12], roughFn = null, size = 256 } = {}) {
+    const src = tex.image, s = Math.min(size, src.width);
+    const c = document.createElement("canvas");
+    c.width = c.height = s;
+    const g = c.getContext("2d");
+    g.drawImage(src, 0, 0, s, s);
+    const px = g.getImageData(0, 0, s, s).data;
+    const h = new Float32Array(s * s);
+    for (let i = 0; i < s * s; i++) h[i] = (px[i * 4] * 0.3 + px[i * 4 + 1] * 0.59 + px[i * 4 + 2] * 0.11) / 255;
+    const at = (x, y) => h[((y + s) % s) * s + ((x + s) % s)];
+    const nImg = g.createImageData(s, s), rImg = g.createImageData(s, s);
+    for (let y = 0; y < s; y++) for (let x = 0; x < s; x++) {
+        const dx = (at(x + 1, y - 1) + 2 * at(x + 1, y) + at(x + 1, y + 1) - at(x - 1, y - 1) - 2 * at(x - 1, y) - at(x - 1, y + 1)) * strength;
+        const dy = (at(x - 1, y + 1) + 2 * at(x, y + 1) + at(x + 1, y + 1) - at(x - 1, y - 1) - 2 * at(x, y - 1) - at(x + 1, y - 1)) * strength;
+        const inv = 1 / Math.hypot(dx, dy, 1), i = (y * s + x) * 4;
+        nImg.data[i] = (-dx * inv * 0.5 + 0.5) * 255;
+        nImg.data[i + 1] = (dy * inv * 0.5 + 0.5) * 255;
+        nImg.data[i + 2] = (inv * 0.5 + 0.5) * 255;
+        nImg.data[i + 3] = 255;
+        const r = roughFn ? roughFn(x / s, y / s, at(x, y)) : rough[0] + (1 - at(x, y)) * rough[1];
+        rImg.data[i] = rImg.data[i + 1] = rImg.data[i + 2] = Math.max(0, Math.min(1, r)) * 255;
+        rImg.data[i + 3] = 255;
+    }
+    const mk = (img) => {
+        const cc = document.createElement("canvas");
+        cc.width = cc.height = s;
+        cc.getContext("2d").putImageData(img, 0, 0);
+        const t = new THREE.CanvasTexture(cc);
+        t.colorSpace = THREE.NoColorSpace;
+        t.wrapS = t.wrapT = THREE.RepeatWrapping;
+        t.anisotropy = 8;
+        return t;
+    };
+    tex.userData.pbr = { normalMap: mk(nImg), roughnessMap: mk(rImg), worldTile };
+    return tex;
+}
+
+// Puddle mask: wet low spots are near-mirror, the crown of the road is merely damp.
+function puddleRough(u, v, lum) {
+    const n = Math.sin(u * 37.1 + Math.sin(v * 11.3) * 2.1) * Math.sin(v * 29.7 + Math.sin(u * 7.9) * 1.7)
+        + 0.5 * Math.sin(u * 91.3 + v * 47.9) * Math.sin(v * 83.1 - u * 13.7);
+    const puddle = Math.max(0, Math.min(1, (n - 0.35) * 2.2));
+    return 0.64 + lum * 0.2 - puddle * 0.46;
+}
+
 export function brickTex(mortar = "#2a1c18", brick = "#6a3a32", size = 512) {
-    return canvasTex((g, s) => {
+    return withPbr(canvasTex((g, s) => {
         g.fillStyle = mortar;
         g.fillRect(0, 0, s, s);
         const rows = 8;
@@ -34,7 +82,7 @@ export function brickTex(mortar = "#2a1c18", brick = "#6a3a32", size = 512) {
                 g.fillRect(c * bw + off + 4, r * bh + 3, bw * 0.35, 3);
             }
         }
-    }, size, 6, 10);
+    }, size, 6, 10), { worldTile: [0.86, 0.6], strength: 3.2, rough: [0.78, 0.2] });
 }
 
 export function darkBrickTex() {
@@ -42,7 +90,7 @@ export function darkBrickTex() {
 }
 
 export function asphaltTex() {
-    return canvasTex((g, s) => {
+    return withPbr(canvasTex((g, s) => {
         g.fillStyle = "#1a1a1e";
         g.fillRect(0, 0, s, s);
         for (let i = 0; i < 2200; i++) {
@@ -56,18 +104,21 @@ export function asphaltTex() {
             g.ellipse(Math.random() * s, Math.random() * s, 18 + Math.random() * 24, 6 + Math.random() * 10, Math.random(), 0, Math.PI * 2);
             g.fill();
         }
-        g.strokeStyle = "rgba(180,160,80,0.35)";
-        g.lineWidth = 6;
-        g.setLineDash([18, 16]);
-        g.beginPath();
-        g.moveTo(s * 0.5, 0);
-        g.lineTo(s * 0.5, s);
-        g.stroke();
-    }, 512, 8, 2);
+        // Tar-sealed cracks (the lane paint is real geometry now, not part of the tile).
+        g.strokeStyle = "rgba(8,8,10,0.55)";
+        g.lineWidth = 2;
+        for (let i = 0; i < 9; i++) {
+            let x = Math.random() * s, y = Math.random() * s;
+            g.beginPath();
+            g.moveTo(x, y);
+            for (let k = 0; k < 6; k++) { x += (Math.random() - 0.5) * 60; y += (Math.random() - 0.5) * 60; g.lineTo(x, y); }
+            g.stroke();
+        }
+    }, 512, 8, 2), { worldTile: [7, 7], strength: 1.4, roughFn: puddleRough });
 }
 
 export function sidewalkTex() {
-    return canvasTex((g, s) => {
+    return withPbr(canvasTex((g, s) => {
         g.fillStyle = "#3a3a40";
         g.fillRect(0, 0, s, s);
         g.strokeStyle = "#2a2a30";
@@ -81,7 +132,7 @@ export function sidewalkTex() {
         }
         g.fillStyle = "rgba(200,210,220,0.05)";
         for (let i = 0; i < 18; i++) g.fillRect(Math.random() * s, Math.random() * s, 22, 3);
-    }, 512, 4, 4);
+    }, 512, 4, 4), { worldTile: [3, 3], strength: 2.6, rough: [0.72, 0.25] });
 }
 
 export function windowPaneTex(kind = "on") {
@@ -148,7 +199,7 @@ export function windowPaneTex(kind = "on") {
 }
 
 export function stoneTex() {
-    return canvasTex((g, s) => {
+    return withPbr(canvasTex((g, s) => {
         g.fillStyle = "#6a5a48";
         g.fillRect(0, 0, s, s);
         const rows = 5;
@@ -167,18 +218,18 @@ export function stoneTex() {
                 g.fillRect(c * bw + off + bw * 0.45, r * bh + bh * 0.45, bw * 0.4, bh * 0.35);
             }
         }
-    }, 256, 4, 6);
+    }, 256, 4, 6), { worldTile: [1.8, 1.75], strength: 3, rough: [0.7, 0.2] });
 }
 
 export function plasterTex() {
-    return canvasTex((g, s) => {
+    return withPbr(canvasTex((g, s) => {
         g.fillStyle = "#c9b79a";
         g.fillRect(0, 0, s, s);
         for (let i = 0; i < 400; i++) {
             g.fillStyle = `rgba(80,60,40,${Math.random() * 0.08})`;
             g.fillRect(Math.random() * s, Math.random() * s, 3, 3);
         }
-    }, 128, 4, 4);
+    }, 128, 4, 4), { worldTile: [1.6, 1.6], strength: 1.2, rough: [0.84, 0.1], size: 128 });
 }
 
 export function woodTex() {

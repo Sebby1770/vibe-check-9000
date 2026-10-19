@@ -1,0 +1,97 @@
+/* THE 12:04 — tracker, chapter cards, subtitles, letterbox, echo vision. Same language as the title and HUD. */
+
+.story-layer { position: absolute; inset: 0; pointer-events: none; }
+
+.story-tracker {
+    position: absolute;
+    top: 20px;
+    right: 24px;
+    max-width: min(360px, 42vw);
+    padding: 10px 14px 11px;
+    border-right: 2px solid var(--tungsten);
+    border-radius: 3px 0 0 3px;
+    background: rgba(8, 7, 10, 0.55);
+    color: var(--paper);
+    text-align: right;
+    backdrop-filter: blur(6px);
+    -webkit-backdrop-filter: blur(6px);
+}
+.story-tracker[hidden], body:not([data-phase="explore"]) .story-tracker, body.pre-night .story-tracker { display: none; }
+.story-kicker { font: 700 11px/1.3 "Big Shoulders Text", "Oswald", sans-serif; letter-spacing: 0.1em; color: rgba(239, 227, 196, 0.6); }
+.story-objective { margin-top: 3px; font: 700 17px/1.25 "Big Shoulders Text", "Oswald", sans-serif; letter-spacing: 0.02em; }
+.story-hint { margin-top: 4px; font: 15px/1.4 "Special Elite", "Courier New", monospace; color: rgba(242, 165, 65, 0.92); }
+.story-hint:empty { display: none; }
+.story-tracker.done { border-right-color: rgba(239, 227, 196, 0.5); }
+
+.story-bars i {
+    position: absolute;
+    left: 0;
+    right: 0;
+    height: 0;
+    background: #000;
+    transition: height 700ms cubic-bezier(0.2, 0.8, 0.2, 1);
+}
+.story-bars i:first-child { top: 0; }
+.story-bars i:last-child { bottom: 0; }
+body.story-cutscene .story-bars i { height: 11vh; }
+body.story-cutscene .hud-cluster,
+body.story-cutscene .story-tracker,
+body.story-cutscene .wayfinder,
+body.story-cutscene .interact,
+body.story-cutscene .crosshair,
+body.story-cutscene .evening-hint { opacity: 0; transition: opacity 300ms ease; }
+
+.story-card {
+    position: absolute;
+    left: 50%;
+    top: 34%;
+    transform: translate(-50%, -50%);
+    width: min(760px, calc(100vw - 48px));
+    text-align: center;
+    color: var(--paper);
+    text-shadow: 0 2px 18px rgba(0, 0, 0, 0.85);
+    animation: card-in 900ms cubic-bezier(0.2, 0.8, 0.2, 1) both;
+    transition: opacity 900ms ease;
+}
+.story-card.out { opacity: 0; }
+@keyframes card-in { from { opacity: 0; transform: translate(-50%, -44%); } }
+.story-card-kicker { font: 700 14px/1 "Big Shoulders Text", "Oswald", sans-serif; letter-spacing: 0.24em; color: var(--tungsten); }
+.story-card-title { margin: 12px 0 10px; font: 900 clamp(40px, 6.4vw, 84px)/0.95 "Big Shoulders Display", "Oswald", sans-serif; letter-spacing: 0.01em; }
+.story-card-blurb { font: 19px/1.5 "Special Elite", "Courier New", monospace; color: rgba(239, 227, 196, 0.86); }
+.story-card-blurb:empty { display: none; }
+
+.story-subtitle {
+    position: absolute;
+    left: 50%;
+    bottom: 13vh;
+    transform: translateX(-50%);
+    width: min(860px, calc(100vw - 40px));
+    padding: 10px 18px;
+    border-radius: 3px;
+    background: rgba(8, 7, 10, 0.68);
+    color: var(--paper);
+    font: 19px/1.5 "Special Elite", "Courier New", monospace;
+    text-align: center;
+}
+.story-subtitle b { color: var(--tungsten); font: 700 15px/1 "Big Shoulders Text", "Oswald", sans-serif; letter-spacing: 0.12em; margin-right: 8px; text-transform: uppercase; }
+.story-subtitle b:empty { display: none; }
+body.story-cutscene .story-subtitle { bottom: calc(11vh + 18px); background: transparent; }
+
+/* Echo vision: the visor tunes in; colour drains, the edges glow cyan. */
+.story-echo {
+    position: absolute;
+    inset: 0;
+    opacity: 0;
+    transition: opacity 400ms ease;
+    background: radial-gradient(ellipse at center, rgba(40, 210, 230, 0) 45%, rgba(40, 210, 230, 0.22) 100%);
+    mix-blend-mode: screen;
+}
+body.story-echoes .story-echo { opacity: 1; }
+body.story-echoes #gl { filter: saturate(0.35) contrast(1.08) brightness(0.92); }
+
+@media (max-width: 720px) {
+    .story-tracker { top: auto; bottom: 214px; right: 12px; max-width: calc(100vw - 24px); }
+    .story-objective { font-size: 15px; }
+    .story-subtitle { font-size: 16px; bottom: 26vh; }
+}
+@media (prefers-reduced-motion: reduce) { .story-card { animation: none; } .story-bars i { transition: none; } }

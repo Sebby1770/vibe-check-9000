@@ -20,9 +20,10 @@ export function framePhoto(source) {
     c.width,
     c.height,
   );
-  let image = c.toDataURL("image/jpeg", 0.8);
-  if (image.length >= 180000) image = c.toDataURL("image/jpeg", 0.55);
-  if (image.length >= 180000) {
+  // Keep each photograph small (they live in localStorage and SQLite): aim under ~90 kB of base64.
+  let image = c.toDataURL("image/jpeg", 0.66);
+  if (image.length >= 90000) image = c.toDataURL("image/jpeg", 0.48);
+  if (image.length >= 90000) {
     c.width = 480;
     c.height = 270;
     g.drawImage(source, (w - sw) / 2, (h - sh) / 2, sw, sh, 0, 0, 480, 270);

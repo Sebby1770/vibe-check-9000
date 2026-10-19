@@ -1,3 +1,4 @@
+import { normalizeStory } from "./story/story.js";
 import { normalizeCommerce } from "./commerce.js";
 /* Local night stamps + cosmetic unlocks. No DOM. */
 
@@ -79,6 +80,7 @@ export function loadProgress(storage) {
                 }
                 : emptyNight(),
             look: LOOKS.some((l) => l.id === data.look) ? data.look : "stock",
+            ...(data.story ? { story: normalizeStory(data.story) } : {}),
             streak: Number(data.streak) || 0,
             visits: Number(data.visits) || 0,
         };
@@ -87,8 +89,13 @@ export function loadProgress(storage) {
     }
 }
 
+let saveSink = null;
+/** Mirror every save somewhere else as well (the SQLite store). The sink must not throw or block. */
+export function setSaveSink(fn) { saveSink = typeof fn === "function" ? fn : null; }
+
 export function saveProgress(data, storage) {
     const store = storage || (typeof localStorage !== "undefined" ? localStorage : null);
+    if (!storage) { try { saveSink?.(data); } catch { /* the local save below still happens */ } }
     if (!store) return data;
     try { store.setItem(PROGRESS_KEY, JSON.stringify(data)); } catch { /* Private mode and full storage still allow this night to play. */ }
     return data;

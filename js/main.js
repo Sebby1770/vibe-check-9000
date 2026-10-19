@@ -15,6 +15,14 @@ import { downloadCard } from "./share.js";
 import { VRButton } from "three/addons/webxr/VRButton.js";
 import { Vector3, Quaternion } from "three";
 import { createWorld } from "./world.js";
+import { mountTitle, attractShot, TITLE_SECONDS } from "./title.js";
+import { animateVehicle } from "./vehicles/models.js";
+import { createStore } from "./db/store.js";
+import { normalizeStory, onStoryEvent, currentObjective, objectiveTarget, storyLine, STORY_PLACES } from "./story/story.js";
+import { createStoryUI } from "./story/story-ui.js";
+import { createStoryWorld } from "./story/story-world.js";
+import { createDriving } from "./vehicles/drive.js";
+import { saveTier, QUALITY_KEY } from "./quality.js";
 import { daylightAt } from "./daylight.js";
 import { createAudio } from "./audio.js";
 import { createControls } from "./controls.js";
@@ -22,7 +30,7 @@ import { createHud } from "./hud.js";
 import { onDanceFloor, applyChoice, NPCS, PROPS, SIT_SPOTS } from "./people.js";
 import { getZone, zoneLabel } from "./zones.js";
 import { createClock, dayKey, dayHash, tonightBill, PHASE_COPY, dareComplete } from "./night.js";
-import { loadProgress, saveProgress, evaluateUnlocks, stampNight, setLook, getLook, touchVisit, buildRecap } from "./progress.js";
+import { setSaveSink, loadProgress, saveProgress, evaluateUnlocks, stampNight, setLook, getLook, touchVisit, buildRecap } from "./progress.js";
 
 import { SHOPS_CATALOG, normalizeCommerce, transact, deliver, collectIce, addLead, getErrands, DESTINATIONS } from "./commerce.js";
 import { createShopUI } from "./shop-ui.js";
@@ -115,6 +123,7 @@ function bindMobile(controls, hud) {
 
 async function boot() {
     const canvas = document.getElementById("gl");
+    mountTitle();
     const audio = createAudio();
     let world = null;
     let controls = null;
@@ -130,6 +139,9 @@ async function boot() {
     const cubeFound = { done: false };
     let energy = 0;
     let ride = null;
+    // Every save is mirrored, off-thread, into SQLite (OPFS): instant autosaves with rolling restore points.
+    const store = createStore();
+    setSaveSink((data) => store.save(data));
     const clock = createClock();
     const today = dayKey();
     const bill = tonightBill(dayHash(today));
@@ -137,6 +149,9 @@ async function boot() {
     if (bill.dare) progress = { ...progress, dareId: bill.dare.id };
     saveProgress(progress);
     let commerce = normalizeCommerce(progress.night.commerce);
+    let story = normalizeStory(progress.story);
+    // Browser tests drive the scene directly: the story waits to be started by hand under ?inspect.
+    const inspectMode = new URLSearchParams(location.search).has("inspect");
     cubeFound.done = !!progress.night.flags.cube;
     clock.tick(Math.max(0, Number(progress.night.elapsed) || 0));
     let activeSet = commerce.expansion.signalOn ? SIGNAL_SET : commerce.playingRecord?.set || bill.set;
@@ -203,6 +218,9 @@ async function boot() {
 
     const hud = createHud({
         onEnter: async () => {
+            controls?.resetSpawn(); // the title crane leaves the camera out on 47th
+            if (!inspectMode && !story.started) setTimeout(() => storyEvent({ type: "start" }), 900);
+            else setTimeout(routeStory, 0);
             await audio.unlock();
             audio.setMuted(hud.run.muted);
             audio.start();
@@ -328,6 +346,9 @@ async function boot() {
     const saveUI=createSaveUI({
         snapshot:()=>({...progress,night:{...progress.night,commerce,elapsed:clock.elapsedReal}}),
         onClose:resumeStreet,
+        restorePoints:()=>store.history(),
+        loadRestorePoint:id=>store.restorePoint(id),
+        dbInfo:()=>store.info,
         onRestore:text=>{
             restoreBackup(text,{...progress,night:{...progress.night,commerce,elapsed:clock.elapsedReal}},localStorage);
             restoringProgress=true;
@@ -364,12 +385,26 @@ async function boot() {
         onNavigate: id => { destination=DESTINATIONS.find(d=>d.id===id)||null; hud.toast(destination?`Marked: ${destination.name}`:"Route cleared", "#b5cfad"); },
     });
     hud.wire();
-    document.getElementById("lifeBtn").textContent=`LIFE [L] · ${money(commerce.life.wallet)}`;
+    showWallet();
     document.getElementById("lifeBtn").addEventListener('click',()=>openLife());
+    document.getElementById("hudWallet").addEventListener('click',()=>openLife());
+    // Touch has no Esc key: the HUD menu button opens the same pause screen.
+    document.getElementById("hudMenu").addEventListener('click',()=>window.dispatchEvent(new KeyboardEvent('keydown',{key:'Escape'})));
     window.addEventListener('keydown',e=>{if(e.key.toLowerCase()==='l'&&!e.repeat&&hud.phase==='explore'){e.preventDefault();openLife();}});
     document.getElementById("journalBtn").addEventListener("click",()=>openJournal());
-    for(const [id,hour] of [['waitMorningBtn',7],['waitEveningBtn',22]])document.getElementById(id).addEventListener('click',()=>{
-        clock.waitUntil(hour);recapShown=true;persistCommerce();resumeStreet();hud.toast(hour===7?'Morning on 47th. Your keys and wallet are safe.':'The lights are coming on. Welcome to another evening.');
+    // Graphics tier: saved, then applied by reloading (shadow maps and render targets are set at start-up).
+    const qualitySelect=document.getElementById("qualitySelect");
+    if(qualitySelect){
+        try{qualitySelect.value=localStorage.getItem(QUALITY_KEY)||"auto";}catch{qualitySelect.value="auto";}
+        qualitySelect.addEventListener("change",()=>{
+            saveTier(qualitySelect.value);
+            progress={...progress,night:{...progress.night,commerce,elapsed:clock.elapsedReal}};saveProgress(progress);
+            hud.toast(`GRAPHICS · ${qualitySelect.value.toUpperCase()} · RELOADING`,"#f2a541");
+            setTimeout(()=>location.reload(),400);
+        });
+    }
+    for(const [id,hour] of [['waitMorningBtn',7],['waitEveningBtn',22],['waitMidnightBtn',0]])document.getElementById(id)?.addEventListener('click',()=>{
+        clock.waitUntil(hour);recapShown=true;persistCommerce();resumeStreet();hud.toast(hour===7?'Morning on 47th. Your keys and wallet are safe.':hour===0?'Midnight. The booths and the trains keep their own hours now.':'The lights are coming on. Welcome to another evening.');
     });
     document.getElementById("pauseJournalBtn").addEventListener("click",()=>openJournal());
     window.addEventListener("keydown",e=>{if(e.key.toLowerCase()==="j"&&!e.repeat&&hud.phase==="explore"){e.preventDefault();openJournal();}});
@@ -413,6 +448,105 @@ async function boot() {
 
     world = createWorld(canvas, adConfig);
     controls = createControls(world.camera, canvas, world.colliders);
+    const storyUI = createStoryUI();
+    const storyWorld = createStoryWorld(world.scene);
+    const driving = createDriving({ scene: world.scene, camera: world.camera, colliders: world.colliders, city: world.city, audio, hud });
+    world.markShadows(world.scene);
+    function toggleDrive() {
+        if (hud.phase !== "explore" || ride) return false;
+        if (driving.active) {
+            const out = driving.exit();
+            if (out) { controls.place(out.x, out.z, out.lookX, out.lookZ); hud.toast("BACK ON FOOT", "#e0b25a"); }
+            return true;
+        }
+        const car = driving.nearest(world.camera.position);
+        if (!car) return false;
+        if (controls.sitting) controls.stand();
+        driving.enter(car);
+        return true;
+    }
+    window.addEventListener("keydown", (e) => { if (e.key.toLowerCase() === "f" && !e.repeat && hud.phase === "explore") { if (toggleDrive()) e.preventDefault(); } });
+    let storyClock = 0, storyStatus = "", cutsceneT = -1, choiceOpen = false, echoHeld = false;
+    const gameHour = () => (clock.seconds % 86400) / 3600;
+
+    function storyNpcs() { return [...NPCS, ...storyWorld.people(story)]; }
+    function routeStory() {
+        if (!story.started || story.ending) { if (destination?.id?.startsWith("story-")) destination = null; return; }
+        if (destination && destination.id !== "noticeboard" && !destination.id.startsWith("story-")) return;
+        destination = objectiveTarget(story, storyNpcs());
+    }
+    /** Applies a story reducer result: state, save, and every effect it asks for. */
+    function applyStory(result) {
+        if (!result) return;
+        if (!result.changed) { if (result.message) hud.toast(result.message, "#f2a541"); return; }
+        story = result.state;
+        progress = { ...progress, story };
+        saveProgress(progress);
+        for (const fx of result.effects) {
+            if (fx.type === "lines") storyUI.say(fx.lines);
+            else if (fx.type === "cash") { commerce.life = credit(commerce.life, fx.amount, fx.label.slice(0, 90)); persistCommerce(); hud.toast(`+$${fx.amount} · ${fx.label.replace("Story · ", "")}`, "#bdd3b2"); }
+            else if (fx.type === "echoes") hud.toast("THE VISOR IS TUNED · HOLD V TO SEE ECHOES", "#62fff5");
+            else if (fx.type === "flash") { world.flashFloor(); audio.cheer?.(); }
+            else if (fx.type === "signalSet") { activeSet = SIGNAL_SET; audio.houseSystem(); audio.setHouseSet(activeSet); world.setLedMessage(activeSet.name, "124 BPM · THE CITY ANSWERS"); }
+            else if (fx.type === "card") { storyUI.card(fx.chapter); story = onStoryEvent(story, { type: "card", chapter: fx.chapter }).state; progress = { ...progress, story }; }
+            else if (fx.type === "ending") { storyUI.ending(fx.ending === "home" ? "Home" : "The set", fx.lines); world.flashFloor(); }
+            else if (fx.type === "save") store.save({ ...progress, night: { ...progress.night, commerce, elapsed: clock.elapsedReal } }, fx.label);
+        }
+        choiceOpen = false;
+        routeStory();
+    }
+    function storyEvent(event) { applyStory(onStoryEvent(story, event, { hour: gameHour() })); }
+    /** When the story needs a character, their usual conversation gains a first choice that carries the plot. */
+    function storyTalk(npc) {
+        const line = storyLine(story, npc.id);
+        if (npc.id === "ada" || !NPCS.some((n) => n.id === npc.id)) {
+            const say = line ? line.say : story.ending ? "We did it. Whatever you chose, we did it." : "The Seam opens at 12:04. The tube, the roof, the record, the train. Don't be late.";
+            hud.openTalk({ id: "story-ada", faceId: "ada", name: npc.name || "ADA", role: "MERIDIAN RADIO", nodes: { start: { say, choices: [{ text: line ? line.reply : "I won't.", next: null, action: line ? `plot:talk:${npc.id}` : null }] } } });
+            return true;
+        }
+        if (!line) return false;
+        const plot = { text: `▸ ${line.reply}`, next: "__story" };
+        hud.openTalk({ ...npc, nodes: { ...npc.nodes, start: { ...npc.nodes.start, choices: [plot, ...(npc.nodes.start.choices || [])] }, __story: { say: line.say, choices: [{ text: "Go on.", next: null, action: `plot:talk:${npc.id}` }] } } });
+        return true;
+    }
+    function storyAction(action) {
+        const [, kind, value] = action.split(":");
+        if (kind === "talk") { storyEvent({ type: "talk", npc: value }); note({ talkId: value }); }
+        else if (kind === "smalltalk") { const npc = NPCS.find((n) => n.id === value); if (npc) { hud.openTalk(npc); note({ talkId: npc.id }); } }
+        else if (kind === "choice") storyEvent({ type: "choice", value });
+    }
+    function storyFrame(dt, t, p, fy) {
+        storyClock += dt;
+        const o = currentObjective(story);
+        const playing = hud.phase === "explore";
+        const r = storyWorld.update(dt, t, { story, player: { x: p.x, z: p.z, y: fy }, echo: echoHeld && playing, reduced: hud.reducedFx, cutscene: cutsceneT >= 0 });
+        storyUI.echo(echoHeld && story.echoes && playing);
+        if (playing && story.started) {
+            storyStatus = r.status;
+            for (const ev of r.events) storyEvent(ev);
+            if (r.teleport) { controls.place(r.teleport.x, r.teleport.z, r.teleport.lookX, r.teleport.lookZ); hud.toast("THE WATCHMEN WALK YOU BACK TO THE GATE", "#f2a541"); }
+            if (storyClock > 0.25) {
+                storyClock = 0;
+                if (o && (o.kind === "reach")) storyEvent({ type: "reach", x: p.x, z: p.z, y: fy });
+            }
+            // A cutscene: letterbox, lines, then the story moves on.
+            if (o?.kind === "cutscene") {
+                if (cutsceneT < 0) { cutsceneT = 0; storyUI.letterbox(true); controls.setEnabled(false); storyUI.say(o.lines); }
+                cutsceneT += dt;
+                if (cutsceneT > 3 && !storyUI.speaking) { cutsceneT = -1; storyUI.letterbox(false); controls.setEnabled(true); storyEvent({ type: "cutscene", scene: o.scene }); }
+            }
+            // The ending: offered on the platform.
+            if (o?.kind === "choice" && !choiceOpen && fy < -3) {
+                choiceOpen = true;
+                storyUI.say(o.lines);
+                hud.openTalk({ id: "story-choice", name: "THE 12:04", role: "UPTOWN LOCAL · TRACK 4", nodes: { start: { say: "The doors stay open. The club is playing your song upstairs.", choices: o.options.map((opt) => ({ text: opt.text, next: null, action: `plot:choice:${opt.id}` })) } } });
+            }
+        }
+        if (story.started) storyUI.setTracker(story, gameHour(), storyStatus);
+        else storyUI.hideTracker();
+    }
+    window.addEventListener("keydown", (e) => { if (e.key.toLowerCase() === "v" && !e.repeat) echoHeld = true; });
+    window.addEventListener("keyup", (e) => { if (e.key.toLowerCase() === "v") echoHeld = false; });
     controls.setReduced(hud.reducedFx);
     controls.setEnabled(hud.phase === "explore");
     world.setLedMessage(activeSet.name, "DOORS OPEN");
@@ -484,9 +618,13 @@ async function boot() {
     window.addEventListener("keydown",e=>{if(e.key.toLowerCase()==="c"&&!e.repeat&&hud.phase==="explore"){e.preventDefault();requestPhoto();}});
 
     function stopPreview() { clearTimeout(previewTimer); audio.stopPreview(); }
+    function showWallet() {
+        document.getElementById("lifeBtn").textContent=`LIFE [L] · ${money(commerce.life.wallet)}`;
+        document.getElementById("hudCash").textContent=money(commerce.life.wallet);
+    }
     function persistCommerce() {
         updateGuide();
-        document.getElementById("lifeBtn").textContent=`LIFE [L] · ${money(commerce.life.wallet)}`;
+        showWallet();
         progress={...progress,night:{...progress.night,commerce,elapsed:clock.elapsedReal}};
         hud.run.commerce=commerce;
         hud.run.style=commerce.style;
@@ -570,7 +708,7 @@ async function boot() {
     function interactionTarget() {
         world.camera.getWorldDirection(_dir);
         return selectInteraction({position:world.camera.position,forward:_dir,floorY:controls.floorY,
-            candidates:cubeFound.done?candidates.filter(c=>c.type!=="cube"):candidates,boxes:world.colliders.boxes,touch:isTouch()});
+            candidates:[...storyWorld.candidates(story),...storyWorld.people(story).map(n=>({...n,type:"npc",ref:n,aimY:1.5,reach:3.1,prompt:`[E] TALK TO ${n.name}`})),...(cubeFound.done?candidates.filter(c=>c.type!=="cube"):candidates)],boxes:world.colliders.boxes,touch:isTouch()});
     }
     document.getElementById("mobileInteract").addEventListener("click",tryInteract);
     const danceButton=document.getElementById("mobileDance");
@@ -590,6 +728,7 @@ async function boot() {
 
     function handleAction(action) {
         if (!action) return;
+        if (action.startsWith("plot:")) { queueMicrotask(() => storyAction(action)); return; }
         if(action.startsWith("life-")){openLife(action.slice(5),action==="life-club"?{job:"club"}:{});return;}
         if(action.startsWith("street-")){openStreet(action.slice(7));return;}
         if(action==="rent-board"){hud.openAds?.();return;}
@@ -696,9 +835,12 @@ async function boot() {
         const p = world.camera.position;
         const fy = controls.floorY;
         const target=interactionTarget();
+        if(target?.type==="story"){storyEvent({type:"interact",prop:target.prop});return;}
+        if(!target&&driving.nearest(p,2.6)){toggleDrive();return;}
         if(target?.type==="neighborhood"){openNeighborhood(target.id);return;}
         if(target?.type==="npc") {
             const npc=target.ref;
+            if(storyTalk(npc)){note({talkId:npc.id});return;}
             if(npc.id==="frank"){commerce=addLead(commerce,"ice");persistCommerce();}
             if(npc.id==="velma"){commerce=addLead(commerce,"flowers");persistCommerce();}
             if(npc.id==="marco"){commerce=addLead(commerce,"gin");persistCommerce();}
@@ -757,7 +899,13 @@ async function boot() {
                     gripError:u?u.getWorldPosition(new Vector3()).distanceTo(j.lHand.getWorldPosition(new Vector3())):null,
                     upright:u?new Vector3(0,1,0).applyQuaternion(u.getWorldQuaternion(new Quaternion())).y:null};
             });},
-            snapshot(){return {homes:Object.fromEntries([...world.lifeWorld.doors].map(([id,door])=>[id,{locked:door.visible,furnishings:[...world.lifeWorld.decor.get(id)].filter(([,g])=>g.visible).map(([key])=>key)}])),commerce,progress,daylight:world.daylight,clock:clock.clock,elapsed:clock.elapsedReal,phase:hud.phase,night:clock.phase,zone:hud.run.zone,sitting:controls.sitting,airborne:!!controls.airborne,energy,filmVersion:world.city.film.material.map.version,audio:{preview:audio.previewing,muted:audio.muted,usingDeck:audio.usingDeck,bpm:audio.bpm},position:{x:world.camera.position.x,y:world.camera.position.y,z:world.camera.position.z},target:interactionTarget()?.id,set:activeSet,render:world.renderer.info.render,memory:world.renderer.info.memory};},
+            db(){return store.stats();},
+            storyStart(){storyEvent({type:"start"});return story;},
+            drive(){return {active:driving.active,speed:driving.speed,car:driving.car?{x:driving.car.position.x,z:driving.car.position.z,kind:driving.car.userData.kind}:null};},
+            toggleDrive(){return toggleDrive();},
+            storyEvent(ev){storyEvent(ev);return story;},
+            storySet(data){applyStory({changed:true,state:normalizeStory(data),effects:[]});return story;},
+            snapshot(){return {story,db:store.info,homes:Object.fromEntries([...world.lifeWorld.doors].map(([id,door])=>[id,{locked:door.visible,furnishings:[...world.lifeWorld.decor.get(id)].filter(([,g])=>g.visible).map(([key])=>key)}])),commerce,progress,daylight:world.daylight,clock:clock.clock,elapsed:clock.elapsedReal,phase:hud.phase,night:clock.phase,zone:hud.run.zone,sitting:controls.sitting,airborne:!!controls.airborne,energy,filmVersion:world.city.film.material.map.version,audio:{preview:audio.previewing,muted:audio.muted,usingDeck:audio.usingDeck,bpm:audio.bpm},position:{x:world.camera.position.x,y:world.camera.position.y,z:world.camera.position.z},target:interactionTarget()?.id,set:activeSet,render:world.renderer.info.render,memory:world.renderer.info.memory};},
         };
     }
 
@@ -781,14 +929,26 @@ async function boot() {
         }
 
         if (ride) {
+            // A real Checker carries you down 47th: rear seat, kerb side, looking up the street.
             ride.t += dt;
-            const u = Math.min(1, ride.t / 4.2);
+            const u = Math.min(1, ride.t / 4.6);
             const ease = u < 0.5 ? 2 * u * u : -1 + (4 - 2 * u) * u;
+            const dir = Math.sign(ride.endX - ride.startX) || 1;
+            const lane = dir > 0 ? 21.35 : 24.55;
             const x = ride.startX + (ride.endX - ride.startX) * ease;
-            world.camera.position.set(x, 1.35, 21.5);
-            world.camera.lookAt(x + (ride.endX - ride.startX) * 0.15, 1.2, 21.5);
+            const cab = world.city.rideCab;
+            if (cab) {
+                const moved = Math.abs(x - cab.position.x);
+                cab.visible = true;
+                cab.position.set(x, 0, lane);
+                cab.rotation.y = dir > 0 ? 0 : Math.PI;
+                animateVehicle(cab, moved, { braking: u > 0.78 });
+            }
+            world.camera.position.set(x - dir * 0.55, 1.24, lane + dir * 0.38);
+            world.camera.lookAt(x + dir * 10, 1.15, lane);
             if (u >= 1) {
                 const z = 16.2;
+                if (cab) cab.visible = false;
                 controls.setRiding(false);
                 controls.place(ride.endX, z, ride.endX, 10);
                 hud.setRide(false);
@@ -798,16 +958,23 @@ async function boot() {
             }
         }
 
-        const move = controls.update(dt, audio.bpm, xr);
+        // Before ENTER the camera belongs to the title shot, not the player.
+        const attract = !hud.run.entered && !xr;
+        if (attract) attractShot(world.camera, t);
+        world.setHandsVisible(!attract && !driving.active);
+        let move;
+        if (attract) move = { dancing: false };
+        else if (driving.active) { if (hud.phase === "explore") driving.update(dt, { stick: controls.stickInput, night: 1 - world.daylight.daylight }); move = { dancing: false }; }
+        else move = controls.update(dt, audio.bpm, xr);
         const p = world.camera.position;
-        if (!ride && hud.phase === "explore" && !controls.airborne && !controls.sitting) {
+        if (!ride && !driving.active && hud.phase === "explore" && !controls.airborne && !controls.sitting) {
             const struck = hitByCar(p, world.city.traffic);
             if (struck && controls.knock(struck)) {
                 audio.horn();
                 hud.toast("THE CHECKER DOESN'T YIELD", "#f5c518");
             }
         }
-        const fy = controls.floorY;
+        const fy = driving.active ? 0 : controls.floorY;
         const onFloor = onDanceFloor(p.x, p.z, fy);
         if (move.dancing && onFloor) energy = Math.min(100, energy + dt * 22);
         else energy = Math.max(0, energy - dt * 7);
@@ -839,7 +1006,7 @@ async function boot() {
             note({ flags: { peakFloor: true } });
         }
 
-        const zone = getZone(p.x, p.z, fy);
+        const zone = attract ? lastZone : getZone(p.x, p.z, fy);
         audio.setZone(zone);
         hud.setZone(zone, zoneLabel(zone));
         hud.setNight({ clock: clock.clock, phase, copy: PHASE_COPY[phase], daylight: daylightAt(clock.seconds).label });
@@ -855,9 +1022,9 @@ async function boot() {
         audio.setListener(p.x, p.y, p.z, _dir.x, _dir.y, _dir.z);
         world.update(dt, t, {
             bass, mid, bpm: audio.bpm, reduced: hud.reducedFx, energy,
-            talkId: hud.talkNpc && hud.talkNpc.id,
+            talkId: hud.talkNpc && (hud.talkNpc.faceId || hud.talkNpc.id),
             clock: clock.clock,
-            seconds:clock.seconds,
+            seconds: attract ? TITLE_SECONDS : clock.seconds,
             phase,
             dancing: move.dancing && onFloor,
         });
@@ -869,6 +1036,7 @@ async function boot() {
                 if (before < 5 && boardsRead(adViews) >= 5) note({ flags: { billboards: true } });
             }
         }
+        storyFrame(dt, t, driving.active ? driving.car.position : p, fy);
         hud.setTelemetry({
             bpm: audio.bpm,
             track: audio.trackName,
@@ -877,7 +1045,9 @@ async function boot() {
             clock: clock.clock,
         });
 
-        if (hud.phase === "explore" && !ride) {
+        if (hud.phase === "explore" && driving.active) {
+            hud.setInteract(`${Math.round(Math.abs(driving.speed) * 2.237)} MPH  ·  [F] GET OUT  ·  [Q] VIEW`, true);
+        } else if (hud.phase === "explore" && !ride) {
             if (controls.sitting) hud.setInteract("[E] STAND UP  ·  WASD TO GET UP", true);
             else {
                 const target=interactionTarget();
@@ -885,7 +1055,9 @@ async function boot() {
                 else {
                     const seenId=(world.city?.ads?.lastSeen||[])[0];
                     const seen=seenId&&filledSlots(adConfig).find(s=>s.id===seenId);
-                    if(seen) hud.setInteract(seen.creative.kind==="available"?`[LOOK] TO LET · ${seen.creative.brand}`:`[LOOK] ${seen.creative.brand} — ${seen.creative.line}`,true);
+                    const nearCar=driving.nearest(p,2.6);
+                    if(nearCar) hud.setInteract(`[F] DRIVE THE ${(nearCar.userData.kind==="checker"?"CHECKER":nearCar.userData.kind||"CAR").toUpperCase()}`,true);
+                    else if(seen) hud.setInteract(seen.creative.kind==="available"?`[LOOK] TO LET · ${seen.creative.brand}`:`[LOOK] ${seen.creative.brand} — ${seen.creative.line}`,true);
                     else if (onFloor) hud.setInteract("SPACE TO DANCE", true);
                     else hud.setInteract("", false);
                 }
@@ -898,8 +1070,9 @@ async function boot() {
         if(destination) {
             const guidance=neighborhoodWaypoint(p,destination);
             let target=guidance?.target||destination, hint=guidance?.hint||"";
+            if(destination.y<-2 && fy>-2) {target={x:-22.4,z:26.6};hint="SUBWAY STAIRS ↓";}
             if(destination.y>2 && fy<2) {
-                const hotel=destination.id==="ice"||destination.id.startsWith("home-");
+                const hotel=destination.id==="ice"||destination.id.startsWith("home-")||destination.x>16.5;
                 target=hotel?{x:37,z:9.5}:{x:14.6,z:9.7};
                 hint=hotel?"ASTORIA EAST STAIRS → 2F":"CLUB EAST STAIRS → LOUNGE";
             }

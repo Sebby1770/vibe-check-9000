@@ -1,184 +1,184 @@
-/* Opening title card + the quiet visor that sits around it before the night starts. */
+/* Opening title: a split-flap departures board over a letterboxed crane shot of 47th Street. */
+
+:root {
+    --ink: #000;
+    --paper: #efe3c4;
+    --tungsten: #f2a541;
+    --signal: #e65a3e;
+    --flap-top: #25242a;
+    --flap-bottom: #1a191e;
+    --title-inset: clamp(22px, 7vw, 112px);
+    /* Bars sized toward a 2.39:1 frame, but never swallowing a phone screen. */
+    --bar: clamp(42px, calc((100vh - 100vw / 2.39) / 2), 15vh);
+}
 
 .boot {
-    --boot-cream: #fff2d8;
-    --boot-gold: #e6bd72;
-    --boot-pink: #ff4fd8;
-    --boot-cyan: #62fff5;
-    text-align: center;
-    padding: 64px 24px 56px;
+    justify-content: flex-end;
+    align-items: flex-start;
+    text-align: left;
+    padding: calc(var(--bar) + 32px) var(--title-inset) calc(var(--bar) + 40px);
     background:
-        radial-gradient(ellipse 58% 46% at 50% 47%, rgba(5, 2, 12, 0.66), rgba(5, 2, 12, 0.38) 62%, rgba(5, 2, 12, 0) 100%),
-        radial-gradient(ellipse 110% 85% at 50% 45%, rgba(4, 2, 10, 0) 55%, rgba(4, 2, 10, 0.55) 100%),
-        linear-gradient(180deg, rgba(4, 2, 10, 0.82) 0%, rgba(4, 2, 10, 0.34) 30%, rgba(4, 2, 10, 0.42) 62%, rgba(4, 2, 10, 0.92) 100%);
-    backdrop-filter: blur(4px) saturate(0.85);
-    -webkit-backdrop-filter: blur(4px) saturate(0.85);
+        linear-gradient(90deg, rgba(0, 0, 0, 0.72) 0%, rgba(0, 0, 0, 0.42) 34%, rgba(0, 0, 0, 0) 66%),
+        linear-gradient(0deg, rgba(0, 0, 0, 0.6) 0%, rgba(0, 0, 0, 0) 48%);
 }
+
+.boot-frame::before,
+.boot-frame::after {
+    content: "";
+    position: absolute;
+    left: 0;
+    right: 0;
+    height: var(--bar);
+    background: var(--ink);
+    z-index: 1;
+}
+.boot-frame::before { top: 0; }
+.boot-frame::after { bottom: 0; }
 
 .boot-card {
+    position: relative;
+    z-index: 2;
     display: flex;
     flex-direction: column;
-    align-items: center;
-    width: min(1240px, 100%);
-}
-.boot-card > * { animation: boot-rise 0.9s cubic-bezier(0.2, 0.7, 0.2, 1) both; }
-.boot-card > :nth-child(2) { animation-delay: 0.08s; }
-.boot-card > :nth-child(3) { animation-delay: 0.22s; }
-.boot-card > :nth-child(4) { animation-delay: 0.34s; }
-.boot-card > :nth-child(n+5) { animation-delay: 0.46s; }
-@keyframes boot-rise {
-    from { opacity: 0; transform: translateY(10px); }
+    align-items: flex-start;
+    width: min(980px, 100%);
 }
 
-.boot-kicker {
-    display: flex;
-    align-items: center;
-    gap: 14px;
-    color: var(--boot-gold);
-    font: 700 12px/1 "Space Mono", monospace;
-    letter-spacing: 0.34em;
-    text-shadow: 0 1px 8px rgba(0, 0, 0, 0.8);
-}
-.boot-kicker::before,
-.boot-kicker::after {
-    content: "";
-    width: 44px;
-    height: 1px;
-    background: linear-gradient(90deg, transparent, var(--boot-gold));
-}
-.boot-kicker::after { background: linear-gradient(90deg, var(--boot-gold), transparent); }
-.boot-kicker i {
-    width: 5px;
-    height: 5px;
-    background: var(--boot-gold);
-    transform: rotate(45deg);
-}
+/* ---------- split-flap tiles ---------- */
 
 .boot-logo {
-    margin: 22px 0 6px;
+    display: flex;
+    flex-direction: column;
+    gap: 0.1em;
+    margin: 0;
+    font-size: clamp(50px, 9.4vw, 136px);
+    line-height: 1;
+}
+.flap-row {
+    display: inline-flex;
+    font: 900 1em/1 "Big Shoulders Display", "Oswald", Impact, sans-serif;
+    color: var(--paper);
+}
+.flap {
+    position: relative;
+    display: inline-grid;
+    place-items: center;
+    width: 0.66em;
+    height: 1.04em;
+    margin-right: 0.055em;
+    border-radius: 0.05em;
+    background: linear-gradient(var(--flap-top) 0 49.3%, #050506 49.3% 50.7%, var(--flap-bottom) 50.7% 100%);
+    box-shadow:
+        inset 0 1px 0 rgba(255, 255, 255, 0.08),
+        inset 0 -1px 0 rgba(0, 0, 0, 0.6),
+        0 0.05em 0.12em rgba(0, 0, 0, 0.55);
+    overflow: hidden;
+}
+/* Hinge pins at the fold. */
+.flap::before {
+    content: "";
+    position: absolute;
+    left: 0;
+    right: 0;
+    top: calc(50% - 0.035em);
+    height: 0.07em;
+    background: linear-gradient(90deg, #000 0 0.05em, transparent 0.05em calc(100% - 0.05em), #000 calc(100% - 0.05em));
+    z-index: 2;
+}
+.flap b {
+    font-weight: 900;
+    transform: translateY(0.035em);
+    text-shadow: 0 0.02em 0 rgba(0, 0, 0, 0.5);
+}
+.flap.flip::after {
+    content: "";
+    position: absolute;
+    inset: 0 0 50% 0;
+    background: linear-gradient(#302f36, var(--flap-top));
+    transform-origin: 50% 100%;
+    animation: flap-fold 90ms ease-in forwards;
+    z-index: 1;
+}
+@keyframes flap-fold {
+    from { transform: scaleY(1); }
+    to { transform: scaleY(0); }
+}
+.flap-gap {
+    width: 0.24em;
+    background: none;
+    box-shadow: none;
+}
+.flap-gap::before { display: none; }
+.flap-num { color: var(--tungsten); }
+.flap-colon { width: 0.3em; background: none; box-shadow: none; }
+.flap-colon::before { display: none; }
+
+/* ---------- departure line ---------- */
+
+.boot-departure {
     display: flex;
     flex-wrap: wrap;
-    justify-content: center;
-    align-items: baseline;
-    column-gap: 0.26em;
-    font-family: "Limelight", "Orbitron", serif;
-    font-weight: 400;
-    font-size: clamp(54px, 9vw, 116px);
-    line-height: 1;
-    letter-spacing: 0.01em;
+    align-items: center;
+    gap: 10px 14px;
+    margin: 22px 0 0;
 }
-.boot-logo-word {
-    color: var(--boot-cream);
-    text-shadow:
-        0 0 2px rgba(255, 255, 255, 0.7),
-        0 0 14px rgba(255, 79, 216, 0.85),
-        0 0 42px rgba(255, 0, 170, 0.5),
-        0 0 90px rgba(255, 0, 170, 0.25);
-    animation: boot-neon 1.6s steps(1, end) both;
-}
-.boot-logo-num {
-    color: #eafffd;
-    text-shadow:
-        0 0 2px rgba(255, 255, 255, 0.7),
-        0 0 14px rgba(98, 255, 245, 0.9),
-        0 0 42px rgba(0, 255, 247, 0.45),
-        0 0 90px rgba(0, 255, 247, 0.22);
-    animation: boot-neon 1.9s 0.25s steps(1, end) both;
-}
-@keyframes boot-neon {
-    0% { opacity: 0; }
-    12% { opacity: 0.85; }
-    16% { opacity: 0.15; }
-    24% { opacity: 1; }
-    30% { opacity: 0.4; }
-    36%, 100% { opacity: 1; }
-}
-.boot-logo::after {
-    content: "";
-    flex: 0 0 100%;
-    height: 1px;
-    margin-top: 0.2em;
-    background: linear-gradient(90deg, transparent 18%, rgba(255, 79, 216, 0.75) 42%, rgba(98, 255, 245, 0.75) 58%, transparent 82%);
+.flap-sm { font-size: 28px; }
+.flap-sm .flap { width: 0.64em; }
+.flap-year .flap { transition: color 180ms ease; }
+.flap-year.drift .flap { color: var(--signal); }
+.boot-departure-text {
+    color: rgba(239, 227, 196, 0.78);
+    font: 600 17px/1.2 "Big Shoulders Text", "Oswald", sans-serif;
+    letter-spacing: 0.04em;
 }
 
 .boot-line {
-    max-width: 46em;
-    margin: 14px 0 34px;
-    text-wrap: balance;
-    color: rgba(255, 242, 216, 0.86);
-    font: 17px/1.55 "Special Elite", "Space Mono", monospace;
-    letter-spacing: 0.02em;
+    max-width: 34em;
+    margin: 22px 0 30px;
+    color: rgba(239, 227, 196, 0.9);
+    font: 18px/1.62 "Special Elite", "Courier New", monospace;
+    text-wrap: pretty;
     text-shadow: 0 1px 10px rgba(0, 0, 0, 0.9);
 }
 
+/* ---------- call to action ---------- */
+
+.boot-actions {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 14px 24px;
+}
 .boot .cta {
-    position: relative;
-    min-width: 320px;
-    min-height: 64px;
-    padding: 20px 52px;
-    border: 2px solid var(--boot-pink);
+    min-height: 60px;
+    padding: 18px 34px 17px;
+    border: 0;
     border-radius: 2px;
-    background: linear-gradient(180deg, rgba(48, 6, 44, 0.62), rgba(12, 2, 18, 0.78));
-    color: #fff;
-    font: 900 18px/1 "Orbitron", sans-serif;
-    letter-spacing: 0.3em;
-    text-indent: 0.3em;
-    text-shadow: 0 0 12px rgba(255, 79, 216, 0.9);
+    background: var(--paper);
+    color: #0d0b08;
+    font: 900 22px/1 "Big Shoulders Display", "Oswald", sans-serif;
+    letter-spacing: 0.12em;
     cursor: pointer;
-    box-shadow:
-        0 0 0 1px rgba(255, 79, 216, 0.25),
-        0 0 26px rgba(255, 0, 200, 0.42),
-        inset 0 0 22px rgba(255, 0, 200, 0.22);
-    transition: background 160ms ease, color 160ms ease, box-shadow 160ms ease;
-    animation: boot-rise 0.9s 0.34s cubic-bezier(0.2, 0.7, 0.2, 1) both, boot-hum 3.2s 1.4s ease-in-out infinite alternate;
+    box-shadow: 0 10px 34px rgba(0, 0, 0, 0.45);
+    transition: background 140ms ease, transform 140ms ease;
 }
-.boot .cta:hover {
-    background: var(--boot-pink);
-    color: #16001a;
-    text-shadow: none;
-    box-shadow: 0 0 40px rgba(255, 0, 200, 0.7);
-}
+.boot .cta:hover { background: var(--tungsten); }
 .boot .cta:active { transform: translateY(1px); }
 .boot .cta:focus-visible {
-    outline: 1px solid rgba(255, 231, 168, 0.6);
-    outline-offset: 6px;
+    outline: 2px solid var(--paper);
+    outline-offset: 5px;
 }
-@keyframes boot-hum {
-    from { box-shadow: 0 0 0 1px rgba(255, 79, 216, 0.25), 0 0 22px rgba(255, 0, 200, 0.34), inset 0 0 18px rgba(255, 0, 200, 0.18); }
-    to { box-shadow: 0 0 0 1px rgba(255, 79, 216, 0.4), 0 0 38px rgba(255, 0, 200, 0.58), inset 0 0 26px rgba(255, 0, 200, 0.3); }
-}
-
-.boot-keys {
-    margin-top: 22px;
-    color: rgba(214, 222, 236, 0.62);
-    font: 11px/1.8 "Space Mono", monospace;
-    letter-spacing: 0.1em;
-    text-shadow: 0 1px 6px rgba(0, 0, 0, 0.9);
-}
-.boot-keys kbd {
-    font: inherit;
-    color: rgba(255, 242, 216, 0.9);
-    border: 1px solid rgba(255, 242, 216, 0.28);
-    border-radius: 3px;
-    padding: 1px 5px;
-}
-.keys-touch { display: none; }
 
 .boot-chip {
-    margin-top: 16px;
-    max-width: 100%;
-    padding: 6px 14px;
-    border: 1px solid rgba(230, 189, 114, 0.32);
-    border-radius: 16px;
-    background: rgba(18, 10, 4, 0.5);
+    max-width: 30em;
+    color: rgba(239, 227, 196, 0.72);
+    font: 600 15px/1.4 "Big Shoulders Text", "Oswald", sans-serif;
+    letter-spacing: 0.03em;
     text-wrap: balance;
-    color: rgba(255, 231, 168, 0.78);
-    font: 11px/1.5 "Space Mono", monospace;
-    letter-spacing: 0.06em;
 }
 .boot-chip:empty { display: none; }
 
-.vr-slot { margin-top: 14px; }
+.vr-slot { margin-top: 16px; }
 .vr-slot:empty { display: none; }
 #VRButton, .vr-native {
     position: relative !important;
@@ -186,25 +186,66 @@
     bottom: auto !important;
     display: inline-block !important;
     opacity: 1 !important;
-    font-family: "Orbitron", sans-serif !important;
+    font-family: "Big Shoulders Text", sans-serif !important;
 }
 
-.boot > .boot-sponsor {
+/* ---------- bottom bar: controls and tonight's board ---------- */
+
+.boot-foot {
     position: absolute;
-    left: 24px;
-    right: 24px;
-    bottom: max(20px, env(safe-area-inset-bottom));
+    left: var(--title-inset);
+    right: var(--title-inset);
+    bottom: 0;
+    height: var(--bar);
+    z-index: 2;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 24px;
+}
+.boot-keys {
+    color: rgba(239, 227, 196, 0.6);
+    font: 600 14px/1 "Big Shoulders Text", "Oswald", sans-serif;
+    letter-spacing: 0.04em;
+    white-space: nowrap;
+}
+.boot-keys kbd {
+    display: inline-block;
+    min-width: 1.7em;
+    margin: 0 4px 0 12px;
+    padding: 3px 6px 2px;
+    border-radius: 2px;
+    background: var(--flap-top);
+    box-shadow: inset 0 -1px 0 #000;
+    color: var(--paper);
+    font: inherit;
+    text-align: center;
+}
+.boot-keys kbd:first-child { margin-left: 0; }
+.keys-touch { display: none; }
+.boot-sponsor {
     margin: 0;
-    color: rgba(230, 189, 114, 0.5);
-    font: 10px/1.5 "Space Mono", monospace;
-    letter-spacing: 0.18em;
-    text-transform: uppercase;
+    color: rgba(242, 165, 65, 0.55);
+    font: 600 12px/1.3 "Big Shoulders Text", "Oswald", sans-serif;
+    letter-spacing: 0.08em;
+    text-align: right;
     text-wrap: balance;
-    animation: boot-rise 1.2s 0.6s ease both;
 }
 
-/* Before ENTER the visor is just glass: no telemetry, reticle, nav clutter or touch pads. */
-body.pre-night .visor-telemetry,
+/* ---------- the one opening sequence ---------- */
+
+.boot-frame::before,
+.boot-frame::after { animation: bars-in 900ms cubic-bezier(0.2, 0.8, 0.2, 1) both; }
+.boot-frame::before { transform-origin: top; }
+.boot-frame::after { transform-origin: bottom; }
+@keyframes bars-in { from { transform: scaleY(2.4); } }
+.boot-line,
+.boot-actions,
+.boot-departure-text { animation: title-fade 700ms 1.1s ease both; }
+@keyframes title-fade { from { opacity: 0; } }
+
+/* Before ENTER the visor is just glass: no HUD, reticle, nav clutter or touch pads. */
+body.pre-night .hud-cluster,
 body.pre-night .visor-reticle,
 body.pre-night .hud-bracket,
 body.pre-night .crosshair,
@@ -218,17 +259,25 @@ body.pre-night .visor-top .status,
 body.pre-night .top-links > :not(#muteBtn):not(#settingsBtn) {
     display: none !important;
 }
-/* Sits above the boot scrim so MUTE and settings stay clickable. */
-body.pre-night .visor-top { justify-content: flex-end; z-index: 3; }
+/* MUTE and settings sit in the top bar, above the title scrim. */
+body.pre-night .visor-top {
+    top: calc(var(--bar) / 2 - 18px);
+    right: var(--title-inset);
+    left: auto;
+    justify-content: flex-end;
+    z-index: 3;
+}
 body.pre-night .top-links .icon-btn {
-    border-color: rgba(255, 242, 216, 0.18);
-    background: rgba(5, 2, 12, 0.35);
-    color: rgba(255, 242, 216, 0.62);
+    border: 0;
+    background: transparent;
+    color: rgba(239, 227, 196, 0.6);
+    font: 600 14px/1 "Big Shoulders Text", "Oswald", sans-serif;
+    letter-spacing: 0.06em;
+    padding: 10px 8px;
 }
 body.pre-night .top-links .icon-btn:hover {
-    border-color: var(--magenta);
-    background: var(--magenta);
-    color: #000;
+    background: transparent;
+    color: var(--paper);
 }
 
 @media (max-width: 720px), (pointer: coarse) {
@@ -237,30 +286,34 @@ body.pre-night .top-links .icon-btn:hover {
 }
 
 @media (max-width: 720px) {
-    .boot { padding: 60px 22px 64px; }
-    .boot-kicker { font-size: 10px; letter-spacing: 0.28em; gap: 10px; }
-    .boot-kicker::before, .boot-kicker::after { width: 26px; }
-    .boot-logo { margin-top: 18px; font-size: clamp(40px, 13.4vw, 64px); row-gap: 0.04em; }
-    .boot-logo-num { font-size: 1.22em; }
-    .boot-line { font-size: 15px; margin: 14px 0 28px; }
-    .boot .cta { width: 100%; max-width: 340px; min-width: 0; min-height: 68px; padding: 20px 16px; font-size: 16px; letter-spacing: 0.24em; text-indent: 0.24em; }
-    .boot-chip { font-size: 10px; }
-    .boot > .boot-sponsor { font-size: 9px; letter-spacing: 0.12em; left: 20px; right: 20px; }
+    :root { --bar: 46px; }
+    .boot { padding-bottom: calc(var(--bar) + 28px); }
+    .boot-logo { font-size: clamp(34px, 11.4vw, 72px); }
+    .flap-sm { font-size: 22px; }
+    .boot-departure { margin-top: 16px; }
+    .boot-departure-text { font-size: 15px; }
+    .boot-line { font-size: 15px; margin: 16px 0 22px; }
+    .boot-actions { width: 100%; }
+    .boot .cta { width: 100%; min-height: 62px; font-size: 20px; }
+    .boot-foot { justify-content: center; }
+    .boot-keys { white-space: normal; text-align: center; font-size: 13px; }
+    .boot-sponsor { display: none; }
 }
 
-@media (max-height: 560px) {
-    .boot { padding-top: 56px; padding-bottom: 44px; }
-    .boot-logo { font-size: clamp(40px, 6.4vw, 84px); margin-top: 14px; }
-    .boot-line { margin: 10px 0 20px; }
-    .boot-chip { display: none; }
+@media (max-height: 600px) {
+    :root { --bar: 34px; }
+    .boot { padding-top: calc(var(--bar) + 16px); padding-bottom: calc(var(--bar) + 18px); }
+    .boot-logo { font-size: clamp(34px, 7vw, 84px); }
+    .boot-departure, .boot-chip { display: none; }
+    .boot-line { margin: 12px 0 16px; font-size: 15px; }
 }
 
 @media (prefers-reduced-motion: reduce) {
-    .boot-card > *, .boot-logo-word, .boot-logo-num, .boot .cta, .boot > .boot-sponsor { animation: none !important; }
+    .boot-frame::before, .boot-frame::after, .boot-line, .boot-actions, .boot-departure-text, .flap.flip::after { animation: none !important; }
 }
-html.reduced-fx .boot-card > *,
-html.reduced-fx .boot-logo-word,
-html.reduced-fx .boot-logo-num,
-html.reduced-fx .boot .cta,
-html.reduced-fx .boot > .boot-sponsor { animation: none !important; }
-html.reduced-fx .boot { backdrop-filter: none; -webkit-backdrop-filter: none; }
+html.reduced-fx .boot-frame::before,
+html.reduced-fx .boot-frame::after,
+html.reduced-fx .boot-line,
+html.reduced-fx .boot-actions,
+html.reduced-fx .boot-departure-text,
+html.reduced-fx .flap.flip::after { animation: none !important; }

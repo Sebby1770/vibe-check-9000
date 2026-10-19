@@ -93,6 +93,7 @@ export function createControls(camera, domElement, colliders) {
         get object() { return camera; },
         get floorY() { return floorY; },
         get riding() { return riding; },
+        get stickInput() { return { x: stick.x, y: stick.y }; },
         get airborne() { return !!air; },
         setRiding(v) { riding = !!v; },
         knock(hit) {
@@ -206,7 +207,7 @@ export function createControls(camera, domElement, colliders) {
                 return { moving: true, dancing: false, tipsy, airborne: true, forward: _fwd, floorY };
             }
             if (riding) {
-                camera.position.y = EYE + 0.55;
+                // The ride sets the camera itself (seated in the cab); just report movement.
                 return { moving: true, dancing: false, tipsy, forward: _fwd, floorY };
             }
             if (!enabled || xrPresenting) {

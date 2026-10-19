@@ -1,0 +1,221 @@
+/* In play the screen belongs to the street: no visor frame, only the time, your energy and your wallet. */
+
+.visor-mask,
+.scanlines,
+.hud-bracket,
+.visor-reticle,
+.visor-top .logo,
+.visor-top .status {
+    display: none !important;
+}
+/* The coloured fringe only comes back when the visor is tipsy. */
+.chroma { display: none; }
+body.tipsy .chroma { display: block; border-radius: 0; }
+
+/* The button bar (life, pockets, deck, mute, settings) is for the pause screen. */
+body:not(.pre-night):not([data-phase="pause"]) .visor-top { display: none; }
+body[data-phase="pause"] .visor-top {
+    top: 18px;
+    left: auto;
+    right: 22px;
+    z-index: 3;
+}
+body[data-phase="pause"] .top-links a,
+body[data-phase="pause"] .icon-btn {
+    border: 1px solid rgba(239, 227, 196, 0.22);
+    background: rgba(8, 7, 10, 0.6);
+    color: var(--paper);
+    font: 600 13px/1 "Big Shoulders Text", "Oswald", sans-serif;
+    letter-spacing: 0.06em;
+    padding: 10px 12px;
+}
+body[data-phase="pause"] .top-links a:hover,
+body[data-phase="pause"] .icon-btn:hover {
+    border-color: var(--paper);
+    background: var(--paper);
+    color: #0d0b08;
+}
+
+/* ---------- the readout: top left ---------- */
+
+.hud-cluster {
+    position: absolute;
+    top: 20px;
+    left: 24px;
+    display: flex;
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 10px;
+    pointer-events: none;
+    color: var(--paper);
+    text-shadow: 0 1px 8px rgba(0, 0, 0, 0.75);
+}
+.hud-cluster::before {
+    content: "";
+    position: absolute;
+    inset: -20px -60px -30px -24px;
+    z-index: -1;
+    background: radial-gradient(ellipse at 0 0, rgba(0, 0, 0, 0.5), rgba(0, 0, 0, 0) 70%);
+}
+body:not([data-phase="explore"]) .hud-cluster { display: none; }
+
+.hud-time { display: flex; flex-direction: column; gap: 3px; }
+.hud-time strong {
+    font: 900 34px/0.95 "Big Shoulders Display", "Oswald", sans-serif;
+    letter-spacing: 0.01em;
+    font-variant-numeric: tabular-nums;
+}
+.hud-time span {
+    font: 700 12px/1.2 "Big Shoulders Text", "Oswald", sans-serif;
+    letter-spacing: 0.1em;
+    color: rgba(239, 227, 196, 0.72);
+}
+.hud-time .hud-place { color: rgba(239, 227, 196, 0.52); }
+
+.hud-label {
+    font: 700 11px/1 "Big Shoulders Text", "Oswald", sans-serif;
+    letter-spacing: 0.08em;
+    color: rgba(239, 227, 196, 0.6);
+}
+.hud-energy {
+    display: flex;
+    align-items: center;
+    gap: 9px;
+}
+.hud-meter {
+    position: relative;
+    width: 112px;
+    height: 4px;
+    border-radius: 2px;
+    background: rgba(239, 227, 196, 0.18);
+    overflow: hidden;
+}
+.hud-meter i {
+    position: absolute;
+    inset: 0;
+    background: var(--tungsten);
+    transform-origin: left;
+    transform: scaleX(var(--energy, 0));
+    transition: transform 240ms linear;
+}
+.hud-energy em {
+    min-width: 2ch;
+    font: 700 13px/1 "Big Shoulders Text", "Oswald", sans-serif;
+    font-style: normal;
+    font-variant-numeric: tabular-nums;
+}
+
+.hud-wallet,
+.hud-menu {
+    pointer-events: auto;
+    display: inline-flex;
+    align-items: center;
+    gap: 9px;
+    min-height: 40px;
+    padding: 7px 11px;
+    border: 1px solid rgba(239, 227, 196, 0.22);
+    border-radius: 3px;
+    background: rgba(8, 7, 10, 0.5);
+    color: var(--paper);
+    cursor: pointer;
+    text-shadow: none;
+    transition: border-color 140ms ease, background 140ms ease;
+}
+.hud-wallet strong {
+    font: 900 21px/1 "Big Shoulders Display", "Oswald", sans-serif;
+    font-variant-numeric: tabular-nums;
+}
+.hud-wallet kbd {
+    padding: 3px 6px 2px;
+    border-radius: 2px;
+    background: rgba(239, 227, 196, 0.14);
+    font: 700 11px/1 "Big Shoulders Text", "Oswald", sans-serif;
+}
+.hud-wallet:hover,
+.hud-menu:hover { border-color: var(--paper); background: rgba(8, 7, 10, 0.75); }
+.hud-wallet:focus-visible,
+.hud-menu:focus-visible { outline: 2px solid var(--paper); outline-offset: 3px; }
+.hud-menu {
+    display: none;
+    font: 700 14px/1 "Big Shoulders Text", "Oswald", sans-serif;
+    letter-spacing: 0.06em;
+}
+.hud-hidden { display: none; }
+
+@media (pointer: coarse) {
+    .hud-menu { display: inline-flex; }
+    .hud-wallet kbd { display: none; }
+}
+
+/* ---------- centre: aim, prompts, directions ---------- */
+
+.crosshair {
+    width: 4px;
+    height: 4px;
+    border-radius: 50%;
+    background: rgba(255, 248, 232, 0.9);
+    box-shadow: 0 0 0 1px rgba(0, 0, 0, 0.45);
+    color: transparent;
+    font-size: 0;
+    text-shadow: none;
+}
+.interact {
+    top: 60%;
+    border: 0;
+    border-radius: 3px;
+    background: rgba(8, 7, 10, 0.62);
+    color: var(--paper);
+    font: 700 15px/1.1 "Big Shoulders Text", "Oswald", sans-serif;
+    letter-spacing: 0.07em;
+    padding: 10px 16px;
+    backdrop-filter: blur(6px);
+    -webkit-backdrop-filter: blur(6px);
+}
+.wayfinder {
+    top: 20px;
+    padding: 9px 15px;
+    border: 0;
+    border-radius: 3px;
+    background: rgba(8, 7, 10, 0.55);
+    color: rgba(239, 227, 196, 0.92);
+    font: 700 14px/1.3 "Big Shoulders Text", "Oswald", sans-serif;
+    letter-spacing: 0.05em;
+    backdrop-filter: blur(6px);
+    -webkit-backdrop-filter: blur(6px);
+}
+
+/* Next first-evening step sits under the readout, not over the street. */
+body[data-phase="explore"] .evening-hint:not([hidden]) {
+    top: 196px;
+    bottom: auto;
+    left: 24px;
+    max-width: min(320px, calc(100vw - 48px));
+    padding: 10px 14px;
+    border: 0;
+    border-left: 2px solid var(--tungsten);
+    border-radius: 0 3px 3px 0;
+    background: rgba(8, 7, 10, 0.55);
+    color: var(--paper);
+    box-shadow: none;
+    font: 600 14px/1.35 "Big Shoulders Text", "Oswald", sans-serif;
+    letter-spacing: 0.03em;
+}
+
+.toast {
+    bottom: 32px;
+    border-left: 3px solid var(--toast, var(--tungsten));
+    border-radius: 2px;
+    background: rgba(10, 9, 12, 0.88);
+    color: var(--paper);
+    font: 700 15px/1.3 "Big Shoulders Text", "Oswald", sans-serif;
+    letter-spacing: 0.07em;
+    box-shadow: 0 10px 30px rgba(0, 0, 0, 0.4);
+}
+
+@media (max-width: 720px) {
+    .hud-cluster { top: 14px; left: 16px; gap: 8px; }
+    .hud-time strong { font-size: 28px; }
+    .hud-meter { width: 84px; }
+    .wayfinder { top: auto; bottom: 214px; max-width: calc(100vw - 32px); font-size: 13px; }
+    body[data-phase="explore"] .evening-hint:not([hidden]) { top: 172px; left: 16px; max-width: calc(100vw - 32px); }
+}

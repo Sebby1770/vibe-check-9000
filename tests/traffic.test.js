@@ -29,3 +29,19 @@ assert.equal(hitByCar({ x: 4.2, z: 21.35, y: 1.7 }, [eastbound, westbound]).dir,
 assert.equal(hitByCar({ x: 20, z: 21.35, y: 1.7 }, [eastbound]), null);
 
 console.log("traffic.test.js ok");
+
+// Car-following: a queue forms behind a stop line, nobody passes it, and traffic moves on when it clears.
+{
+  const { stepTraffic, SPEED } = await import("../js/traffic.js");
+  const cars = [{ x: -40, dir: 1 }, { x: -60, dir: 1 }, { x: 30, dir: -1 }];
+  for (let i = 0; i < 400; i++) stepTraffic(cars, 0.05, { stops: [{ x: -3.5, dir: 1 }] });
+  assert.ok(cars[0].x < -3.5 && cars[0].x > -12, "the lead car waits at the line");
+  assert.ok(cars[1].x < cars[0].x - 6, "the follower keeps a gap");
+  assert.ok(cars[0].v < 0.2 && cars[0].braking, "stopped cars show brake lights");
+  for (let i = 0; i < 200; i++) stepTraffic(cars, 0.05, {});
+  assert.ok(cars[0].x > 20 && Math.abs(cars[0].v - SPEED) < 0.05, "traffic moves off when the line clears");
+  const wrap = [{ x: 183, dir: 1 }];
+  stepTraffic(wrap, 0.5, { span: [-96, 184] });
+  assert.ok(wrap[0].x < -90, "cars wrap at the end of the street");
+  console.log("traffic following ok");
+}

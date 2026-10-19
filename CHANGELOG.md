@@ -4,6 +4,21 @@ All notable changes to VIBE CHECK 9000™ are documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
+## [31.0.0] - 2026-10-19
+
+### The 12:04 — an open city, a story, real cars and saves that keep up
+
+- **Title and HUD.** A split-flap departures board flaps in over a letterboxed crane shot of rainy 47th Street. In play the visor frame, scanlines, brackets, telemetry and button row are gone; a top-left readout keeps the time, energy and a wallet button (L). Pause, dialogue, settings and recap panels share the new paper-and-tungsten look.
+- **Rendering.** Physical sky with stars and a moon, player-following sun shadows, time-of-day reflection probes (outdoor, room and club, all one size so walking between them never recompiles shaders), a film grade, SMAA or MSAA, GTAO on ultra, and Low/Medium/High/Ultra tiers (`?quality=`; software GL drops to Low). Crowds that can't be seen are culled for the draw only.
+- **Materials.** Brick, stone, pavement, asphalt and plaster carry normal and roughness maps at real-world scale; wet asphalt with puddles; a double yellow centre line and lane edges; light from lamps and signs on the road at night; windows dim to glass by day.
+- **People.** Every person is one skinned mesh with a sculpted body, face, period hair, hat and tailoring, coloured by a shared palette shader (one draw call each instead of 34–48). Better walk, idle and talking animation. First-person hands wear a suit sleeve, a shirt cuff and the visor's wristband.
+- **Cars and traffic.** Checker cab, '54 sedan, finned limousine, police cruiser, panel van and crosstown bus with clearcoat paint, chrome, glass, whitewalls, brake lights and seated drivers. Traffic keeps its distance, queues at the light and for pedestrians, and drives from Broadway to Pier 47. Hailing a Checker gives you a real ride. Parked cars are solid.
+- **Open world.** Four new districts — Broadway & Times Square, Belmont Park & the Belmont Plaza, the Pier 47 waterfront with the Meridian warehouse, and the Garment District under the El — with 242 buildings, lit-window facades, signs, a lake and bandshell, a river, freighter and cranes, an elevated railway with a running train, and pedestrians. The city now spans roughly 970 m by 700 m.
+- **Driving.** Press F (or Use) at any parked car: arcade handling, collisions, chase and driver's-seat cameras (Q), horn (H), headlights after dark.
+- **Story — The 12:04.** A prologue and five chapters, 27 objectives and two endings: a photograph that refuses the decade, a payphone, a silver test pressing that tunes the visor to echoes (hold V), a tail through Times Square, a break-in at Pier 47, and the last train home at 12:04 AM. Objective tracker, chapter cards, subtitles, cutscene letterbox, story waypoints, wallet rewards and labelled restore points. The pause menu can wait until midnight.
+- **Saves — SQLite.** Every save is mirrored, off the main thread, into SQLite (WebAssembly) on OPFS: instant autosaves with 20 rolling restore points (shown in the save sheet), tables for items, world objects (indexed by 64 m chunk for region queries), characters, story and events, and an outbox filled by triggers for future multiplayer sync. `server/schema.sql` and `js/db/sync.js` describe the shared Postgres side; nothing connects to a server yet.
+- Tests: `tests/db.test.js` (real SQL on the in-memory build: 6,000 world objects, region queries, restore points, outbox) and `tests/story.test.js` (full play-through, time windows, endings, backups); car-following traffic added to `tests/traffic.test.js`. The block, interiors, district, park-homes, neighborhood, life, expansion and first-evening browser suites were run against this release.
+
 ## [28.0.0] - 2026-09-24
 
 ### Neighbors and homes opposite the park

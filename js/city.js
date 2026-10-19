@@ -9,159 +9,21 @@ import { boxBatch } from "./interiors/batch.js";
 import { updateInteriors } from "./interiors/index.js";
 import { buildSubway, updateSubway } from "./under.js";
 import { SECOND_Y, HOTEL_STAIRS } from "./zones.js";
+import { buildVehicle, animateVehicle } from "./vehicles/models.js";
+import { stepTraffic, ROAD } from "./traffic.js";
 
 const RAIN_N = 420;
 const STEAM_N = 48;
 const _dummy = new THREE.Object3D();
 
-let SEDAN_GEO;
-const SEDAN_PAINT = new Map();
-let SEDAN_MAT;
-let SEDAN_CHECK;
-
-function sedanKit() {
-    if (SEDAN_GEO) return;
-    SEDAN_GEO = {
-        body: new THREE.BoxGeometry(3.7, 0.72, 1.55),
-        cabin: new THREE.BoxGeometry(1.85, 0.62, 1.42),
-        hood: new THREE.BoxGeometry(1.15, 0.16, 1.48),
-        trunk: new THREE.BoxGeometry(0.95, 0.16, 1.48),
-        roof: new THREE.BoxGeometry(1.72, 0.08, 1.36),
-        windshield: new THREE.PlaneGeometry(1.42, 0.5),
-        rearWin: new THREE.PlaneGeometry(1.28, 0.4),
-        sideWin: new THREE.PlaneGeometry(1.12, 0.38),
-        bumper: new THREE.BoxGeometry(0.2, 0.16, 1.64),
-        wheel: new THREE.CylinderGeometry(0.28, 0.28, 0.22, 10),
-        cap: new THREE.CylinderGeometry(0.14, 0.14, 0.05, 10),
-        wall: new THREE.TorusGeometry(0.22, 0.032, 6, 12),
-        grille: new THREE.BoxGeometry(0.08, 0.34, 1.18),
-        fender: new THREE.BoxGeometry(0.78, 0.22, 0.22),
-        running: new THREE.BoxGeometry(2.15, 0.05, 0.16),
-        handle: new THREE.BoxGeometry(0.14, 0.035, 0.04),
-        trim: new THREE.BoxGeometry(3.35, 0.035, 0.035),
-        light: new THREE.BoxGeometry(0.1, 0.1, 0.2),
-        beam: new THREE.BoxGeometry(0.16, 0.1, 0.24),
-        tail: new THREE.BoxGeometry(0.08, 0.1, 1.22),
-        lamp: new THREE.BoxGeometry(0.52, 0.14, 0.32),
-        check: new THREE.BoxGeometry(3.72, 0.16, 1.56),
-    };
-    SEDAN_MAT = {
-        chrome: new THREE.MeshStandardMaterial({ color: 0xc9cdd2, roughness: 0.22, metalness: 0.95 }),
-        dark: new THREE.MeshStandardMaterial({ color: 0x111114, roughness: 0.4, metalness: 0.3 }),
-        glass: new THREE.MeshStandardMaterial({ color: 0x9ec4d8, roughness: 0.08, metalness: 0.35, transparent: true, opacity: 0.45 }),
-        hub: new THREE.MeshStandardMaterial({ color: 0xd8dce0, roughness: 0.25, metalness: 0.9 }),
-        wall: new THREE.MeshStandardMaterial({ color: 0xf2eee6, roughness: 0.65 }),
-        head: new THREE.MeshBasicMaterial({ color: 0xfff3c4 }),
-        beam: new THREE.MeshBasicMaterial({ color: 0xfff6d0 }),
-        tail: new THREE.MeshBasicMaterial({ color: 0xff3355 }),
-        taxiLamp: new THREE.MeshBasicMaterial({ color: 0xffe7a8 }),
-    };
-}
-
-function paintFor(color) {
-    sedanKit();
-    let m = SEDAN_PAINT.get(color);
-    if (!m) {
-        m = new THREE.MeshStandardMaterial({ color, roughness: 0.32, metalness: 0.48 });
-        SEDAN_PAINT.set(color, m);
-    }
-    return m;
-}
-
-function sedan(scene, { x, z, yaw = 0, taxi = false, color = 0x2a2a32, moving = 0 }) {
-    sedanKit();
-    const G = SEDAN_GEO;
-    const M = SEDAN_MAT;
-    const g = new THREE.Group();
-    const bodyC = taxi ? 0xf5c518 : color;
-    const paint = paintFor(bodyC);
-    const body = new THREE.Mesh(G.body, paint);
-    body.position.y = 0.55;
-    const cabin = new THREE.Mesh(G.cabin, M.dark);
-    cabin.position.set(-0.15, 1.12, 0);
-    const hood = new THREE.Mesh(G.hood, paint);
-    hood.position.set(1.18, 0.84, 0);
-    const trunk = new THREE.Mesh(G.trunk, paint);
-    trunk.position.set(-1.22, 0.84, 0);
-    const roof = new THREE.Mesh(G.roof, paint);
-    roof.position.set(-0.15, 1.44, 0);
-    const windshield = new THREE.Mesh(G.windshield, M.glass);
-    windshield.position.set(0.74, 1.16, 0);
-    windshield.rotation.y = Math.PI / 2;
-    windshield.rotation.z = -0.38;
-    const rearWin = new THREE.Mesh(G.rearWin, M.glass);
-    rearWin.position.set(-1.05, 1.16, 0);
-    rearWin.rotation.y = -Math.PI / 2;
-    rearWin.rotation.z = 0.32;
-    const sideWin = new THREE.Mesh(G.sideWin, M.glass);
-    sideWin.position.set(-0.1, 1.14, 0.72);
-    const sideWin2 = sideWin.clone();
-    sideWin2.position.z = -0.72;
-    sideWin2.rotation.y = Math.PI;
-    const bumperF = new THREE.Mesh(G.bumper, M.chrome);
-    bumperF.position.set(1.92, 0.38, 0);
-    const bumperB = bumperF.clone();
-    bumperB.position.x = -1.92;
-    const grille = new THREE.Mesh(G.grille, M.chrome);
-    grille.position.set(1.88, 0.62, 0);
-    const wheels = [];
-    for (const [wx, wz] of [[1.15, 0.72], [1.15, -0.72], [-1.2, 0.72], [-1.2, -0.72]]) {
-        const hub = new THREE.Group();
-        hub.position.set(wx, 0.28, wz);
-        const tire = new THREE.Mesh(G.wheel, M.dark);
-        tire.rotation.x = Math.PI / 2;
-        const cap = new THREE.Mesh(G.cap, M.hub);
-        cap.rotation.x = Math.PI / 2;
-        const wall = new THREE.Mesh(G.wall, M.wall);
-        wall.rotation.y = Math.PI / 2;
-        hub.add(tire, cap, wall);
-        g.add(hub);
-        wheels.push(hub);
-        const fender = new THREE.Mesh(G.fender, paint);
-        fender.position.set(wx, 0.48, wz + (wz > 0 ? 0.12 : -0.12));
-        g.add(fender);
-    }
-    const runL = new THREE.Mesh(G.running, M.chrome);
-    runL.position.set(0, 0.32, 0.82);
-    const runR = runL.clone();
-    runR.position.z = -0.82;
-    const trimL = new THREE.Mesh(G.trim, M.chrome);
-    trimL.position.set(0, 0.7, 0.78);
-    const trimR = trimL.clone();
-    trimR.position.z = -0.78;
-    const handleL = new THREE.Mesh(G.handle, M.chrome);
-    handleL.position.set(0.35, 0.78, 0.8);
-    const handleR = handleL.clone();
-    handleR.position.z = -0.8;
-    g.add(body, cabin, hood, trunk, roof, bumperF, bumperB, grille, windshield, rearWin, sideWin, sideWin2, runL, runR, trimL, trimR, handleL, handleR);
-    if (taxi) {
-        if (!SEDAN_CHECK) SEDAN_CHECK = new THREE.MeshBasicMaterial({ map: checkerTex() });
-        const check = new THREE.Mesh(G.check, SEDAN_CHECK);
-        check.position.y = 0.72;
-        const lamp = new THREE.Mesh(G.lamp, M.taxiLamp);
-        lamp.position.set(0, 1.52, 0);
-        g.add(check, lamp);
-    }
-    const lightL = new THREE.Mesh(G.light, M.head);
-    lightL.position.set(1.9, 0.58, 0.5);
-    const lightR = lightL.clone();
-    lightR.position.z = -0.5;
-    g.add(lightL, lightR);
-    if (moving) {
-        const beam = new THREE.Mesh(G.beam, M.beam);
-        beam.position.set(1.97, 0.6, 0.42);
-        const beam2 = beam.clone();
-        beam2.position.z = -0.42;
-        const tail = new THREE.Mesh(G.tail, M.tail);
-        tail.position.set(-1.92, 0.58, 0);
-        g.add(beam, beam2, tail);
-    }
-    g.position.set(x, 0, z);
-    g.rotation.y = yaw;
-    g.userData.wheels = wheels;
-    g.userData.moving = moving;
-    scene.add(g);
-    return g;
+// Period vehicles come from js/vehicles/models.js; sedan() keeps the old call shape for every caller.
+function sedan(scene, { x, z, yaw = 0, taxi = false, color = 0x2a2a32, moving = 0, kind, seed = 0, driver }) {
+    const car = buildVehicle(kind || (taxi ? "checker" : "sedan"), { color, seed, driver: driver ?? !!moving });
+    car.position.set(x, 0, z);
+    car.rotation.y = yaw;
+    car.userData.moving = moving;
+    scene.add(car);
+    return car;
 }
 
 export function buildCity(scene, adConfig = mergeAdConfig()) {
@@ -635,8 +497,18 @@ export function buildCity(scene, adConfig = mergeAdConfig()) {
     }
     const steamGeo = new THREE.BufferGeometry();
     steamGeo.setAttribute("position", new THREE.BufferAttribute(steamPos, 3));
+    // Soft round puffs: a radial sprite instead of hard square points.
+    const puff = document.createElement("canvas");
+    puff.width = puff.height = 64;
+    const pg = puff.getContext("2d"), pgr = pg.createRadialGradient(32, 32, 0, 32, 32, 32);
+    pgr.addColorStop(0, "rgba(255,255,255,0.55)");
+    pgr.addColorStop(0.45, "rgba(255,255,255,0.18)");
+    pgr.addColorStop(1, "rgba(255,255,255,0)");
+    pg.fillStyle = pgr;
+    pg.fillRect(0, 0, 64, 64);
     const steam = new THREE.Points(steamGeo, new THREE.PointsMaterial({
-        color: 0xbbc4cc, size: 0.18, transparent: true, opacity: 0.28, depthWrite: false, sizeAttenuation: true,
+        color: 0xd8d4cc, size: 1.6, map: new THREE.CanvasTexture(puff), transparent: true, opacity: 0.32,
+        depthWrite: false, sizeAttenuation: true,
     }));
     scene.add(steam);
 
@@ -664,22 +536,26 @@ export function buildCity(scene, adConfig = mergeAdConfig()) {
 
     // Cars
     const parked = [
-        sedan(scene, { x: -20.1, z: 18.85, yaw: 0, color: 0x3a1a1a }),
-        sedan(scene, { x: -6.4, z: 18.85, yaw: Math.PI, color: 0x1a2a3a }),
+        sedan(scene, { x: -20.1, z: 18.85, yaw: 0, color: 0x5a1a1e }),
+        sedan(scene, { x: -6.4, z: 18.85, yaw: Math.PI, kind: "police" }),
         sedan(scene, { x: 14.4, z: 18.85, yaw: 0, taxi: true }),
-        sedan(scene, { x: 29.4, z: 18.85, yaw: Math.PI, color: 0x2a3a28 }),
-        sedan(scene, { x: -32.2, z: 26.85, yaw: 0, color: 0x2a2430 }),
+        sedan(scene, { x: 29.4, z: 18.85, yaw: Math.PI, kind: "limo" }),   // a black limousine waits outside the Astoria
+        sedan(scene, { x: -32.2, z: 26.85, yaw: 0, kind: "van", color: 0x2f4a3a }),
         sedan(scene, { x: 8.2, z: 26.85, yaw: Math.PI, taxi: true }),
     ];
-    const traffic = [
-        sedan(scene, { x: -40, z: 21.35, yaw: 0, taxi: true, moving: 1 }),
-        sedan(scene, { x: 20, z: 24.55, yaw: Math.PI, color: 0x2a2030, moving: -1 }),
-        sedan(scene, { x: -10, z: 21.35, yaw: 0, color: 0x3a2a18, moving: 1 }),
-        sedan(scene, { x: 36, z: 21.35, yaw: 0, taxi: true, moving: 1 }),
-        sedan(scene, { x: -28, z: 24.55, yaw: Math.PI, color: 0x4a1a1a, moving: -1 }),
-        sedan(scene, { x: 8, z: 24.55, yaw: Math.PI, taxi: true, moving: -1 }),
-        sedan(scene, { x: -22, z: 21.35, yaw: 0, color: 0x1a2438, moving: 1 }),
+    // Traffic drives the whole length of 47th Street, following and stopping (see traffic.js stepTraffic).
+    const fleet = [
+        [-40, 1, "checker"], [20, -1, "sedan", 0x2a3a5a], [-10, 1, "sedan", 0x6a5030], [36, 1, "checker"],
+        [-28, -1, "sedan", 0x7a1c1c], [8, -1, "checker"], [-70, 1, "bus", 0x2e5d3a], [70, -1, "van", 0x3a3a44],
+        [110, 1, "sedan", 0x1e3c34], [140, -1, "checker"], [-60, -1, "sedan", 0xc8b890], [90, 1, "checker"],
     ];
+    const traffic = fleet.map(([x, dir, kind, color], i) => {
+        const car = sedan(scene, { x, z: dir > 0 ? 21.35 : 24.55, yaw: dir > 0 ? 0 : Math.PI, kind, color, moving: dir, seed: i });
+        car.userData.sim = { x, dir, v: 8.2, braking: false };
+        return car;
+    });
+    const rideCab = sedan(scene, { x: 0, z: 21.35, kind: "checker", driver: true });
+    rideCab.visible = false;
 
     const puddleMat = new THREE.MeshStandardMaterial({
         color: 0x1a2838, metalness: 0.88, roughness: 0.16, transparent: true, opacity: 0.38,
@@ -733,6 +609,7 @@ export function buildCity(scene, adConfig = mergeAdConfig()) {
     scene.add(hotelUp);
 
     return {
+        windowMats: [winOn, winWarm],
         root,
         ads,
         winOn,
@@ -745,6 +622,7 @@ export function buildCity(scene, adConfig = mergeAdConfig()) {
         steamOrigins,
         traffic,
         parked,
+        rideCab,
         peds,
         bulbs,
         titlePlane,
@@ -820,13 +698,22 @@ export function updateCity(city, dt, t, { outside, reduced, lampMul = 1, zone, p
     }
     city.steamGeo.attributes.position.needsUpdate = true;
 
+    // Lit windows dim to glass by day.
+    for (const m of city.windowMats || []) m.color.setScalar(0.3 + 0.7 * Math.min(1, lampMul ?? 1));
+    // Red light at the club crossing, and anyone on a crossing, stop the traffic.
+    const stops = [];
+    if (Math.floor(t / 3.2) % 3 === 0) stops.push({ x: -3.4, dir: 1 }, { x: 3.6, dir: -1 });
+    for (const ped of city.peds) {
+        const path = ped.userData.path;
+        if (path.cross && ped.visible && ped.position.z > ROAD.minZ - 0.6 && ped.position.z < ROAD.maxZ + 0.6) stops.push({ x: path.x0 - 2.2, dir: 1 }, { x: path.x0 + 2.2, dir: -1 });
+    }
+    const sims = city.traffic.map((car) => car.userData.sim);
+    stepTraffic(sims, dt, { stops, span: [-428, 294] });
     for (const car of city.traffic) {
-        const dir = car.userData.moving || 1;
-        car.position.x += dt * 8.2 * dir;
-        if (dir > 0 && car.position.x > 52) car.position.x = -52;
-        if (dir < 0 && car.position.x < -52) car.position.x = 52;
-        car.rotation.y = dir > 0 ? 0 : Math.PI;
-        for (const w of car.userData.wheels || []) w.rotation.z -= dt * 9 * dir;
+        const sim = car.userData.sim;
+        car.position.x = sim.x;
+        car.rotation.y = sim.dir > 0 ? 0 : Math.PI;
+        animateVehicle(car, sim.v * dt, { braking: sim.braking });
     }
 
     for (const ped of city.peds) {

@@ -1,4 +1,5 @@
 import { DISTRICT_BOUNDS, districtColliders, districtZone } from './district-layout.js';
+import { WORLD_BOUNDS, openWorldZone, openWorldIndoor, openWorldColliders } from './openworld/layout.js';
 import { lifeColliders, HOME_BOUNDS, HOMES } from './life.js';
 import { streetColliders } from "./expansion.js";
 import { posterCollider } from "./ads.js";
@@ -33,7 +34,9 @@ export const HOTEL_STAIRS = {
     zBottom: 9.55, zTop: 1.35,
 };
 
-export const BOUNDS = { ...DISTRICT_BOUNDS };
+// The open city reaches well past the original loop (DISTRICT_BOUNDS), in every direction.
+export const BOUNDS = { ...WORLD_BOUNDS };
+void DISTRICT_BOUNDS;
 
 export const SHOPS = [
     { id: "records", label: "REX'S RECORDS", minX: -38.2, maxX: -28.2, minZ: 32.05, maxZ: 40.0, doorX: -33.2 },
@@ -94,6 +97,7 @@ export function shopAt(x, z) {
 export function isOutside(x, z, y = 0) {
     if (y < -1.2) return false;
     if(inParkResidence(x,z))return false;
+    if (openWorldIndoor(x, z)) return false;
     if (["books","bakery","arcade"].includes(districtZone(x,z))) return false;
     if (inSubStairs(x, z) && y < 0.5) return false;
     return !inClubFootprint(x, z) && !inDiner(x, z) && !inHotel(x, z) && !shopAt(x, z);
@@ -138,6 +142,8 @@ export function getZone(x, z, y = 0) {
         return "club";
     }
     if(inParkResidence(x,z))return 'mercerrow';
+    const open = openWorldZone(x, z);
+    if (open) return open;
     const eastZone = districtZone(x,z);
     if (eastZone) return eastZone;
     if (z < CLUB.minZ) return "alley";
@@ -176,6 +182,15 @@ export function zoneLabel(zone) {
         case "barber": return "TONY'S BARBER";
         case "subway": return "THE 12:04";
         case "suite": return "ASTORIA 2F";
+        case "broadway": return "BROADWAY";
+        case "timessquare": return "TIMES SQUARE";
+        case "belmont": return "BELMONT PARK";
+        case "plaza": return "THE BELMONT PLAZA";
+        case "waterfront": return "THE WATERFRONT";
+        case "pier": return "PIER 47";
+        case "meridian": return "MERIDIAN RADIO";
+        case "garment": return "GARMENT DISTRICT";
+        case "el": return "UNDER THE EL";
         default: return "MIDTOWN";
     }
 }
@@ -328,12 +343,12 @@ export function buildColliders(interiorBoxes = []) {
     for (const b of interiorBoxes) boxes.push({ ...b });
 
     // Parked cars — parallel to the curb, out of the driving lanes
-    wall(boxes, -22.1, -18.1, 18.05, 19.65, -1, 1.4);
-    wall(boxes, -8.4, -4.4, 18.05, 19.65, -1, 1.4);
-    wall(boxes, 12.4, 16.4, 18.05, 19.65, -1, 1.4);
-    wall(boxes, 27.4, 31.4, 18.05, 19.65, -1, 1.4);
-    wall(boxes, -34.2, -30.2, 26.05, 27.65, -1, 1.4);
-    wall(boxes, 6.2, 10.2, 26.05, 27.65, -1, 1.4);
+    wall(boxes, -22.1, -18.1, 18.05, 19.65, -1, 1.95);
+    wall(boxes, -8.4, -4.4, 18.05, 19.65, -1, 1.95);
+    wall(boxes, 12.4, 16.4, 18.05, 19.65, -1, 1.95);
+    wall(boxes, 27.4, 31.4, 18.05, 19.65, -1, 1.95);
+    wall(boxes, -34.2, -30.2, 26.05, 27.65, -1, 1.95);
+    wall(boxes, 6.2, 10.2, 26.05, 27.65, -1, 1.95);
 
     // Newsstand + phone booth
     wall(boxes, -13.3, -10.4, 15.35, 16.85, -1, 2.2);
@@ -356,7 +371,7 @@ export function buildColliders(interiorBoxes = []) {
     wall(boxes, 35.5, 35.78, 1.5, 9.4, -1, 6.4);
     wall(boxes, 38.18, 38.45, 1.5, 9.4, -1, 6.4);
 
-    boxes.push(...districtColliders(), ...streetColliders(), ...lifeColliders(), posterCollider());
+    boxes.push(...districtColliders(), ...streetColliders(), ...lifeColliders(), posterCollider(), ...openWorldColliders());
     wall(boxes,28.15,29.65,8.5,9.1,-1,1.3).sightMaxY=1.1;
     wall(boxes,8.95,10.85,-9.5,-8.7,-1,1.3).sightMaxY=1.1;
     return { bounds: BOUNDS, boxes, getFloorY };

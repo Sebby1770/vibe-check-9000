@@ -14,7 +14,7 @@
     <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Crect width='64' height='64' rx='10' fill='%2307060c'/%3E%3Ctext x='32' y='44' font-size='34' text-anchor='middle' fill='%23e0b25a' font-family='serif'%3E%E2%97%88%3C/text%3E%3C/svg%3E">
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Limelight&family=Orbitron:wght@400;700;900&family=Special+Elite&family=Space+Mono:wght@400;700&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Big+Shoulders+Display:wght@700;900&family=Big+Shoulders+Text:wght@500;700&family=Limelight&family=Orbitron:wght@400;700;900&family=Special+Elite&family=Space+Mono:wght@400;700&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="style.css">
     <link rel="stylesheet" href="shops.css">
     <script type="importmap">
@@ -30,6 +30,9 @@
     <link rel="stylesheet" href="neighborhood.css">
     <link rel="stylesheet" href="ads.css">
     <link rel="stylesheet" href="boot.css">
+    <link rel="stylesheet" href="hud.css">
+    <link rel="stylesheet" href="panels.css">
+    <link rel="stylesheet" href="story.css">
 </head>
 <body data-zone="club" data-phase="boot" class="pre-night">
     <button id="cameraCapture" class="camera-trigger" type="button" hidden>CAMERA [C]</button>
@@ -61,30 +64,49 @@
             </nav>
         </header>
 
-        <div class="visor-telemetry" id="telemetry" aria-hidden="true">
-            <span>CLK <em id="hudClock">10:00 PM</em></span>
-            <span>PHASE <em id="hudPhase">DOORS OPEN</em></span>
-            <span>ZONE <em id="hudZone">THE FLOOR</em></span>
-            <span>BPM <em id="hudBpm">128</em></span>
-            <span>TRACK <em id="hudTrack">HOUSE SYSTEM</em></span>
-            <span>ENERGY <em id="hudEnergy">0</em></span>
+        <div class="hud-cluster" id="telemetry">
+            <div class="hud-time">
+                <strong id="hudClock">10:00 PM</strong>
+                <span id="hudPhase">DOORS OPEN</span>
+                <span class="hud-place" id="hudZone">THE FLOOR</span>
+            </div>
+            <div class="hud-energy" aria-label="Energy">
+                <span class="hud-label">Energy</span>
+                <span class="hud-meter" aria-hidden="true"><i id="hudEnergyBar"></i></span>
+                <em id="hudEnergy">0</em>
+            </div>
+            <button type="button" class="hud-wallet" id="hudWallet" aria-label="Open your wallet"><span class="hud-label">Wallet</span><strong id="hudCash">$120</strong><kbd>L</kbd></button>
+            <button type="button" class="hud-menu" id="hudMenu">Menu</button>
+            <span class="hud-hidden" aria-hidden="true"><em id="hudBpm">128</em><em id="hudTrack">HOUSE SYSTEM</em></span>
         </div>
         <div class="visor-reticle" aria-hidden="true"></div>
 
         <section id="boot" class="overlay boot" aria-labelledby="bootTitle">
+            <div class="boot-frame" aria-hidden="true"></div>
             <div class="boot-card">
-                <p class="boot-kicker"><span>MIDTOWN</span><i aria-hidden="true"></i><span>NOV 12, 1954</span></p>
-                <h1 id="bootTitle" class="boot-logo"><span class="boot-logo-word">VIBE CHECK</span> <span class="boot-logo-num">9000</span></h1>
-                <p class="boot-line">Put on the visor. It's raining on 47th Street, and the floor is already moving.</p>
-                <button type="button" class="cta" id="enterBtn">ENTER THE NIGHT</button>
-                <p class="boot-keys">
-                    <span class="keys-desk"><kbd>ENTER</kbd> to begin · <kbd>WASD</kbd> walk · mouse look · <kbd>E</kbd> use · <kbd>ESC</kbd> menu</span>
-                    <span class="keys-touch">Stick to walk · drag to look · USE to talk</span>
+                <h1 id="bootTitle" class="boot-logo" aria-label="Vibe Check 9000">
+                    <span class="flap-row" data-flaps="VIBE CHECK" aria-hidden="true">VIBE CHECK</span>
+                    <span class="flap-row flap-num" data-flaps="9000" aria-hidden="true">9000</span>
+                </h1>
+                <p class="boot-departure" aria-label="The 12:04 uptown local, November 12, 1954">
+                    <span class="flap-row flap-sm" data-flaps="12:04" aria-hidden="true">12:04</span>
+                    <span class="boot-departure-text" aria-hidden="true">Uptown local, 47th Street</span>
+                    <span class="flap-row flap-sm flap-year" id="bootYear" data-flaps="1954" aria-hidden="true">1954</span>
                 </p>
-                <p class="boot-chip" id="bootDare"></p>
+                <p class="boot-line">Midtown, November 12, 1954. It&rsquo;s raining on 47th Street, the floor is already moving, and the visor on your face is from later.</p>
+                <div class="boot-actions">
+                    <button type="button" class="cta" id="enterBtn">ENTER THE NIGHT</button>
+                    <p class="boot-chip" id="bootDare"></p>
+                </div>
                 <div id="vr-slot" class="vr-slot"></div>
             </div>
-            <p class="boot-sponsor" id="bootSponsor">TONIGHT'S BOARD · THE STREET STILL SELLS LIGHT</p>
+            <div class="boot-foot">
+                <p class="boot-keys">
+                    <span class="keys-desk"><kbd>WASD</kbd> walk <kbd>Mouse</kbd> look <kbd>E</kbd> use <kbd>F</kbd> drive <kbd>L</kbd> wallet <kbd>Esc</kbd> menu</span>
+                    <span class="keys-touch">Left stick to walk, drag to look, tap Use to talk</span>
+                </p>
+                <p class="boot-sponsor" id="bootSponsor">TONIGHT'S BOARD · THE STREET STILL SELLS LIGHT</p>
+            </div>
         </section>
 
         <section id="talk" class="overlay panel-wrap hidden" aria-live="polite">
@@ -102,7 +124,7 @@
                 <h2>NIGHT AIR</h2>
                 <p class="dim" id="pauseBill">Pointer lock off. The night is still going.</p>
                 <p class="bill-line" id="pauseClock">10:00 PM</p>
-                <div class="result-actions"><button type="button" class="btn-secondary" id="waitMorningBtn">WAIT UNTIL 7 AM</button><button type="button" class="btn-secondary" id="waitEveningBtn">WAIT UNTIL 10 PM</button></div>
+                <div class="result-actions"><button type="button" class="btn-secondary" id="waitMorningBtn">WAIT UNTIL 7 AM</button><button type="button" class="btn-secondary" id="waitEveningBtn">WAIT UNTIL 10 PM</button><button type="button" class="btn-secondary" id="waitMidnightBtn">WAIT UNTIL MIDNIGHT</button></div>
                 <p class="dim" id="pauseLook">STOCK VISOR</p>
                 <p class="boot-dare" id="pauseDare"></p>
                 <div class="result-actions">
@@ -167,6 +189,9 @@
                 </label>
                 <label>FOV <span id="fovVal">82</span>
                     <input id="fovSlider" type="range" min="70" max="110" step="1" value="82">
+                </label>
+                <label>GRAPHICS
+                    <select id="qualitySelect"><option value="auto">Auto</option><option value="low">Low</option><option value="medium">Medium</option><option value="high">High</option><option value="ultra">Ultra</option></select>
                 </label>
                 <label class="check"><input id="muteToggle" type="checkbox"> MUTE AUDIO</label>
                 <label class="check"><input id="fxToggle" type="checkbox"> REDUCED FX</label>
