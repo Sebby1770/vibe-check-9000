@@ -15,6 +15,16 @@
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Big+Shoulders+Display:wght@700;900&family=Big+Shoulders+Text:wght@500;700&family=Limelight&family=Orbitron:wght@400;700;900&family=Special+Elite&family=Space+Mono:wght@400;700&display=swap" rel="stylesheet">
+    <script>
+        // v10 registered a service worker that cached the old site; v12 dropped it but never unregistered it.
+        // Retire it and its caches so returning visitors always get the live game.
+        if ("serviceWorker" in navigator) navigator.serviceWorker.getRegistrations().then((list) => {
+            Promise.all(list.map((r) => r.unregister())).then(() => {
+                if (navigator.serviceWorker.controller && !sessionStorage.getItem("vc9k-sw-retired")) { sessionStorage.setItem("vc9k-sw-retired", "1"); location.reload(); }
+            });
+        }).catch(() => {});
+        if (window.caches) caches.keys().then((keys) => keys.forEach((k) => caches.delete(k))).catch(() => {});
+    </script>
     <link rel="stylesheet" href="style.css">
     <link rel="stylesheet" href="shops.css">
     <script type="importmap">
@@ -83,6 +93,7 @@
 
         <section id="boot" class="overlay boot" aria-labelledby="bootTitle">
             <div class="boot-frame" aria-hidden="true"></div>
+            <p class="boot-build" id="bootBuild" data-build="dev">v31.0.0 · local</p>
             <div class="boot-card">
                 <h1 id="bootTitle" class="boot-logo" aria-label="Vibe Check 9000">
                     <span class="flap-row" data-flaps="VIBE CHECK" aria-hidden="true">VIBE CHECK</span>

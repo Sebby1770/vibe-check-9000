@@ -38,7 +38,11 @@ jobs:
           [ -d assets ] && cp -R assets/. _site/assets/
           [ -f sponsor.html ] && cp sponsor.html _site/
           [ -f MARKETING.md ] && cp MARKETING.md _site/
+          [ -f sw.js ] && cp sw.js _site/
           touch _site/.nojekyll
+
+      - name: Version module URLs for this deploy
+        run: node tools/stamp-build.mjs _site "${GITHUB_SHA::7}" "$(git log -1 --format=%cd --date=format:'%d %b %Y')"
 
       - name: Configure GitHub Pages
         uses: actions/configure-pages@v5

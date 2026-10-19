@@ -5,7 +5,7 @@
   "type": "module",
   "description": "First-person 1954 Midtown open world: The 12:04 story, drivable 1950s cars, SQLite saves, a visor from later.",
   "scripts": {
-    "test": "node tests/people.test.js && node tests/engine.test.js && node tests/zones.test.js && node tests/night.test.js && node tests/progress.test.js && node tests/commerce.test.js && node tests/interactions.test.js && node tests/expansion.test.js && node tests/life.test.js && node tests/ads.test.js && node tests/traffic.test.js && node tests/district.test.js && node tests/neighborhood.test.js && node tests/collision.test.js && node tests/block-loop.test.js && node tests/save-backup.test.js && node tests/daylight.test.js && node tests/db.test.js && node tests/story.test.js",
+    "test": "node tests/people.test.js && node tests/engine.test.js && node tests/zones.test.js && node tests/night.test.js && node tests/progress.test.js && node tests/commerce.test.js && node tests/interactions.test.js && node tests/expansion.test.js && node tests/life.test.js && node tests/ads.test.js && node tests/traffic.test.js && node tests/district.test.js && node tests/neighborhood.test.js && node tests/collision.test.js && node tests/block-loop.test.js && node tests/save-backup.test.js && node tests/daylight.test.js && node tests/db.test.js && node tests/story.test.js && node tests/stamp.test.js",
     "start": "python3 -m http.server 8000",
     "test:browser": "node tests/browser.test.js",
     "test:life": "node tests/life-browser.test.js",
