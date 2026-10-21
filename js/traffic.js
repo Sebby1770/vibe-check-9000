@@ -30,32 +30,60 @@ export function hitByCar(player, cars = []) {
   return null;
 }
 
-/* Car-following traffic along one street. Pure: cars are {x, dir, v, braking}; stops are {x, dir} lines a
-   car must not pass (a red light, a pedestrian on the crossing). Speeds ease toward SPEED and fall away
-   smoothly as the gap to whatever is ahead closes. Cars wrap at the ends of the street. */
+/* Car-following traffic along one street. Pure: cars are {x, dir, v, braking, len?} (len defaults to a 4.9 m
+   sedan); stops are {x, dir} lines a car must not pass:
+     - a signal (the default): a car too close to stop comfortably carries on through (amber) if it can clear
+       the junction ({box: length}) before cross traffic moves ({clearBy: seconds}); otherwise it brakes hard;
+     - {hard: true}: an obstacle (you, or a parked car): never driven through, even if it appears under a bumper;
+     - {gate: exit}: a green junction: enter only if there is room for the whole car past `exit` and it can be
+       through ({box}) before cross traffic moves ({clearBy}), so nobody is left inside the box.
+   Speeds ease toward SPEED and fall away as the clearance ahead closes. Cars wrap at the ends of the street. */
 export const SPEED = 8.2;
-const MIN_GAP = 7.5;
+const GAP = 2.6;          // bumper-to-bumper gap when queued
 const BRAKE_DIST = 16;
+const lenOf = (c) => c.len || 4.9;
 
 export function stepTraffic(cars, dt, { stops = [], span = [-96, 184] } = {}) {
   if (!(dt > 0)) return cars;
   for (const car of cars) {
-    let ahead = Infinity;
+    let aheadD = Infinity, aheadCar = null;
     for (const other of cars) {
       if (other === car || other.dir !== car.dir) continue;
       let d = (other.x - car.x) * car.dir;
       if (d < 0) d += span[1] - span[0];
-      if (d > 0 && d < ahead) ahead = d;
+      if (d > 0 && d < aheadD) { aheadD = d; aheadCar = other; }
     }
+    const half = lenOf(car) / 2, v0 = car.v ?? SPEED;
+    let clear = aheadCar ? aheadD - half - lenOf(aheadCar) / 2 - GAP : Infinity, emergency = false, hard = false;
     for (const stop of stops) {
       if (stop.dir !== car.dir) continue;
-      const d = (stop.x - car.x) * car.dir;
-      // A stop line counts like a car whose centre is 2.6 m past it, unless a real car is already closer.
-      if (d > 0.5) ahead = Math.min(ahead, d - 2.6 + MIN_GAP);
+      const d = (stop.x - car.x) * car.dir, toLine = d - half - 0.15;
+      if (stop.hard) {
+        if (d > -half) { clear = Math.min(clear, toLine); if (toLine < 0.3) emergency = true; }
+        continue;
+      }
+      if (d < 0.5) continue;
+      if (stop.gate != null) {
+        if (toLine < -0.2) continue; // already in the junction
+        // Enter only with room past the exit, and only if the whole car can be through before cross traffic moves.
+        const room = aheadCar ? aheadD - lenOf(aheadCar) / 2 - (stop.gate - car.x) * car.dir : Infinity;
+        const late = stop.clearBy != null && (toLine + (stop.box ?? 0) + lenOf(car) + 0.3) / Math.max(v0, 2.5) > stop.clearBy;
+        if (room < lenOf(car) + 1 || late) {
+          clear = Math.min(clear, toLine);
+          if (late && v0 > 3 && (v0 * v0) / 28 > toLine) hard = true;
+        }
+        continue;
+      }
+      if (v0 > 3 && (v0 * v0) / 28 > toLine) {
+        // Too close to stop comfortably: through on amber if it will clear the junction in time, else brake hard.
+        if ((toLine + (stop.box ?? 0) + lenOf(car) + 0.3) / v0 < (stop.clearBy ?? Infinity)) continue;
+        hard = true;
+      }
+      clear = Math.min(clear, toLine);
     }
-    const want = SPEED * Math.max(0, Math.min(1, (ahead - MIN_GAP) / BRAKE_DIST));
-    const v0 = car.v ?? SPEED;
-    const v = v0 + Math.max(-14 * dt, Math.min(4.5 * dt, want - v0));
+    const want = SPEED * Math.max(0, Math.min(1, clear / BRAKE_DIST));
+    // About to touch something solid (you, a parked car): stop dead rather than drive into it.
+    const v = emergency ? 0 : v0 + Math.max((hard ? -32 : -14) * dt, Math.min(4.5 * dt, want - v0));
     car.braking = v < v0 - 0.02 || (v < 0.3 && want < 0.3);
     car.v = Math.max(0, v);
     car.x += car.v * car.dir * dt;

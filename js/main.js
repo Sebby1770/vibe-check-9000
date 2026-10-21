@@ -1091,8 +1091,11 @@ async function boot() {
             phase,
             dancing: move.dancing && onFloor,
             // Avenue cars stop for you on foot, or for the car you're driving.
-            trafficObstacles: driving.active ? [{ x: driving.car.position.x, z: driving.car.position.z, r: 3.4 }]
-                : fy < 0.5 && fy > -0.5 ? [{ x: p.x, z: p.z, r: 0.7 }] : [],
+            trafficObstacles: [
+                ...(driving.active ? [{ x: driving.car.position.x, z: driving.car.position.z, r: 3.4, w: 1.1 }]
+                    : fy < 0.5 && fy > -0.5 ? [{ x: p.x, z: p.z, r: 0.7, w: 0.45 }] : []),
+                ...(!driving.active && driving.lastCar ? [{ x: driving.lastCar.position.x, z: driving.lastCar.position.z, r: 3.4, w: 1.1 }] : []),
+            ],
         });
         if (hud.phase === "explore") {
             const seen = world.city?.ads?.lastSeen || [];

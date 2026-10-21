@@ -20,8 +20,9 @@ export function buildAvenues(scene) {
     scene.add(car);
     pool.push(car);
   }
-  const sizeOf = (sim) => sim.mesh?.userData.spec || (sim.kind === "bus" ? { length: 10.5, width: 2.5 } : { length: 4.9, width: 1.85 });
   let assignT = 0;
+  // Only cars you can see can hit you or block your car.
+  const drawn = { get cars() { return fleet.cars.filter((c) => c.mesh); } };
 
   function assign(pos) {
     const near = [];
@@ -31,15 +32,18 @@ export function buildAvenues(scene) {
       if (d < RANGE) near.push({ sim, d });
     }
     near.sort((a, b) => a.d - b.d);
-    const want = new Set(near.slice(0, POOL).map((n) => n.sim));
+    // Nearest first, as long as the pool still has a model of that kind.
+    const left = {};
+    for (const c of pool) left[c.userData.kind] = (left[c.userData.kind] || 0) + 1;
+    const want = new Set();
+    for (const { sim } of near) if (left[sim.kind] > 0) { left[sim.kind]--; want.add(sim); }
     // Release pool cars whose sim fell out of the wanted set.
     for (const car of pool) if (car.userData.sim && !want.has(car.userData.sim)) { car.userData.sim.mesh = null; car.userData.sim = null; car.visible = false; }
-    // Lend free cars to wanted sims, preferring a pool car of the same kind.
+    // Lend free cars to wanted sims, always of the same kind, so a car's length matches its simulation.
     for (const sim of want) {
       if (sim.mesh) continue;
-      const free = pool.filter((c) => !c.userData.sim);
-      if (!free.length) break;
-      const car = free.find((c) => c.userData.kind === sim.kind) || free[0];
+      const car = pool.find((c) => !c.userData.sim && c.userData.kind === sim.kind);
+      if (!car) continue;
       car.userData.sim = sim;
       sim.mesh = car;
     }
@@ -47,7 +51,7 @@ export function buildAvenues(scene) {
 
   return {
     fleet,
-    /** obstacles: [{x, z, r}] — you on foot, or your car. */
+    /** obstacles: [{x, z, r, w}] — you on foot, your car, or the car you left in the road. */
     update(dt, t, { position, outside = true, obstacles = [] }) {
       stepAvenues(fleet, dt, t, { obstacles });
       assignT -= dt;
@@ -63,7 +67,7 @@ export function buildAvenues(scene) {
         animateVehicle(car, sim.v * dt, { braking: sim.braking });
       }
     },
-    hit(player) { return hitAvenueCar(player, fleet, sizeOf); },
-    blocks(x, z, r) { return avenueBlocks(fleet, x, z, r, sizeOf); },
+    hit(player) { return hitAvenueCar(player, drawn); },
+    blocks(x, z, r) { return avenueBlocks(drawn, x, z, r); },
   };
 }

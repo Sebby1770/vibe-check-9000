@@ -47,7 +47,7 @@ export function createDriving({ scene, camera, colliders, city, audio, hud, aven
     pool.position.set(9, 0.06, 0);
     beams.add(pool);
 
-    let car = null, speed = 0, steer = 0, firstPerson = false, hornCool = 0;
+    let car = null, lastCar = null, speed = 0, steer = 0, firstPerson = false, hornCool = 0;
     const keys = {};
     const camPos = new THREE.Vector3();
     window.addEventListener("keydown", (e) => {
@@ -87,6 +87,8 @@ export function createDriving({ scene, camera, colliders, city, audio, hud, aven
     return {
         get active() { return !!car; },
         get car() { return car; },
+        /** The car you last got out of, wherever you left it (traffic treats it as solid). */
+        get lastCar() { return lastCar; },
         get speed() { return speed; },
         /** The nearest parked car within reach of a pedestrian, if any. */
         nearest(p, reach = 3.4) {
@@ -122,6 +124,7 @@ export function createDriving({ scene, camera, colliders, city, audio, hud, aven
             spot ||= { x: c.position.x, z: c.position.z + 3 };
             c.remove(beams);
             placeCollider(c);
+            lastCar = c;
             animateVehicle(c, 0, { braking: false });
             car = null;
             document.body.classList.remove("driving");

@@ -312,16 +312,17 @@ export function buildCity(scene, adConfig = mergeAdConfig()) {
     addBox(root, unitBox, brickBrown, 1.2, 8.2, 43.15, 82, 16.4, 5.9);
     addBox(root, unitBox, black, 1.2, 16.5, 43.15, 82.6, 0.4, 6.3);
     addBox(root, unitBox, brickDark, 1.2, 17.3, 43.4, 40, 1.2, 3.6);
-    addWindows(1.2, 0.4, 40.22, 78, 16, Math.PI, 21);
-    addWindows(1.2, 0.4, 46.08, 78, 16, 0, 22);
+    // Panes sit 5 cm proud of the wall faces (z 40.2 and 46.1), where the facade kit expects them.
+    addWindows(1.2, 0.4, 40.15, 78, 16, Math.PI, 21);
+    addWindows(1.2, 0.4, 46.15, 78, 16, 0, 22);
     waterTower(-18, 18.2, 42.8);
     waterTower(22, 18.2, 43.6);
 
     // Bookend lots beside diner / hotel — windows so they read as buildings
-    addWindows(-48, 0.4, 12.48, 16, 16, 0, 31);
-    addWindows(-48, 0.4, -16.48, 16, 16, Math.PI, 32);
-    addWindows(48, 0.4, 12.48, 16, 18, 0, 33);
-    addWindows(48, 0.4, -16.48, 16, 18, Math.PI, 34);
+    addWindows(-48, 0.4, 12.55, 16, 16, 0, 31);
+    addWindows(-48, 0.4, -16.55, 16, 16, Math.PI, 32);
+    addWindows(48, 0.4, 12.55, 16, 18, 0, 33);
+    addWindows(48, 0.4, -16.55, 16, 18, Math.PI, 34);
 
     for (const x of [20, 25, 30, 35]) {
         for (const y of [5.2, 8.2, 11.2]) {
@@ -561,7 +562,7 @@ export function buildCity(scene, adConfig = mergeAdConfig()) {
     ];
     const traffic = fleet.map(([x, dir, kind, color], i) => {
         const car = sedan(scene, { x, z: dir > 0 ? 21.35 : 24.55, yaw: dir > 0 ? 0 : Math.PI, kind, color, moving: dir, seed: i });
-        car.userData.sim = { x, dir, v: 8.2, braking: false };
+        car.userData.sim = { x, dir, v: 8.2, braking: false, len: car.userData.spec?.length || 4.9 };
         return car;
     });
     const rideCab = sedan(scene, { x: 0, z: 21.35, kind: "checker", driver: true });
