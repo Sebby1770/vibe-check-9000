@@ -18,6 +18,12 @@ The parks have four usable benches. The club plays original jazz-house, while a 
 
 No install. Click **ENTER THE NIGHT**.
 
+## New in v34: a living city
+
+- **Traffic everywhere.** Cars, Checker cabs, vans and crosstown buses now drive every street and avenue, not just 47th Street. They follow each other, stop at signals that take turns at every junction, wait for you if you step into the road (and knock you over if you don't look), and pull up behind the car you're driving.
+- **47th Street's towers** have stone window surrounds, deep sills and keystone lintels round every window, and carved brackets under every cornice.
+- **Busier pavements.** Over two hundred people walk the open city's streets, spaced by street length, and little groups stand talking in Times Square, outside the Belmont Plaza, at the Pier 47 gate and under the El.
+
 ## New in v33: Velvet Tuesday, doors, and people who look like people
 
 - **The club.** The ground floor is now a 1954 Art Deco ballroom around the lit dance floor: black lacquer and fluted plum walls, gilded pilasters with shell sconces, a coffered ceiling with a warm cove, polished black terrazzo, a mirrored onyx backbar lined with bottles behind a fluted bar with red-leather stools, tufted velvet booths, a gilt proscenium with velvet curtains round REXA's stage, a gilded halo rig with pendant lamps, and a crystal chandelier hanging through the atrium. Upstairs, the lounge has crystal chandeliers, round tables in white cloths, velvet tub chairs and a gilt sunburst over Velma's stage.

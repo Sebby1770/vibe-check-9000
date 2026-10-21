@@ -452,7 +452,7 @@ async function boot() {
     controls = createControls(world.camera, canvas, world.colliders);
     const storyUI = createStoryUI();
     const storyWorld = createStoryWorld(world.scene);
-    const driving = createDriving({ scene: world.scene, camera: world.camera, colliders: world.colliders, city: world.city, audio, hud });
+    const driving = createDriving({ scene: world.scene, camera: world.camera, colliders: world.colliders, city: world.city, audio, hud, avenues: world.avenues });
     world.markShadows(world.scene);
     function toggleDrive() {
         if (hud.phase !== "explore" || ride) return false;
@@ -1031,7 +1031,7 @@ async function boot() {
         else move = controls.update(dt, audio.bpm, xr);
         const p = world.camera.position;
         if (!ride && !driving.active && hud.phase === "explore" && !controls.airborne && !controls.sitting) {
-            const struck = hitByCar(p, world.city.traffic);
+            const struck = hitByCar(p, world.city.traffic) || world.avenues.hit(p);
             if (struck && controls.knock(struck)) {
                 audio.horn();
                 hud.toast("THE CHECKER DOESN'T YIELD", "#f5c518");
@@ -1090,6 +1090,12 @@ async function boot() {
             seconds: attract ? TITLE_SECONDS : clock.seconds,
             phase,
             dancing: move.dancing && onFloor,
+            // Avenue cars stop for you on foot, or for the car you're driving.
+            trafficObstacles: [
+                ...(driving.active ? [{ x: driving.car.position.x, z: driving.car.position.z, r: 3.4, w: 1.1 }]
+                    : fy < 0.5 && fy > -0.5 ? [{ x: p.x, z: p.z, r: 0.7, w: 0.45 }] : []),
+                ...(!driving.active && driving.lastCar ? [{ x: driving.lastCar.position.x, z: driving.lastCar.position.z, r: 3.4, w: 1.1 }] : []),
+            ],
         });
         if (hud.phase === "explore") {
             const seen = world.city?.ads?.lastSeen || [];

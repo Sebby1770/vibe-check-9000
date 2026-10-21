@@ -241,7 +241,8 @@ export function decorateClub(world, scene, env, { hangLeds = [] } = {}) {
   b.box(m.lacquer, -16.27, 3.33, 0.03, 0.02, 0.2, 0.03, 0, 0.6);
   b.box(m.lacquer, -16.27, 3.25, 0.07, 0.02, 0.03, 0.18, 0, 0.9);
   // Stools: chrome pedestals, red leather seats, foot rings (seated drinkers keep their spots).
-  for (const z of [-6, -3.8, -1.6, 0.6, 2.8, 5.0, 7.2, -8.35]) {
+  // No stool at z 0.6: that's where Ion stands.
+  for (const z of [-6, -3.8, -1.6, 2.8, 5.0, 7.2, -8.35]) {
     b.cyl(m.chrome, -14.15, 0.02, z, 0.24, 0.26, 0.04, 20);
     b.cyl(m.chrome, -14.15, 0.36, z, 0.04, 0.05, 0.66, 10);
     b.geo(m.chrome, new THREE.TorusGeometry(0.2, 0.015, 6, 20), -14.15, 0.32, z, 1, 1, 1, 0, Math.PI / 2, 0);

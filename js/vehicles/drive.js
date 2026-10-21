@@ -14,7 +14,7 @@ const PARKED = [
     [-120, -114.2, 0, "police"], [150, -174.2, Math.PI, "sedan", 0x2a3a5a],
 ];
 
-export function createDriving({ scene, camera, colliders, city, audio, hud }) {
+export function createDriving({ scene, camera, colliders, city, audio, hud, avenues = null }) {
     const cars = [...(city.parked || [])];
     for (const [x, z, yaw, kind, color] of PARKED) {
         const car = buildVehicle(kind, { color, driver: false, seed: Math.round(Math.abs(x)) });
@@ -47,7 +47,7 @@ export function createDriving({ scene, camera, colliders, city, audio, hud }) {
     pool.position.set(9, 0.06, 0);
     beams.add(pool);
 
-    let car = null, speed = 0, steer = 0, firstPerson = false, hornCool = 0;
+    let car = null, lastCar = null, speed = 0, steer = 0, firstPerson = false, hornCool = 0;
     const keys = {};
     const camPos = new THREE.Vector3();
     window.addEventListener("keydown", (e) => {
@@ -79,6 +79,7 @@ export function createDriving({ scene, camera, colliders, city, audio, hud }) {
             const B = colliders.bounds;
             if (px < B.minX || px > B.maxX || pz < B.minZ || pz > B.maxZ) return true;
             for (const t of city.traffic) if (Math.abs(t.position.x - px) < (t.userData.spec?.length || 5) / 2 + 0.7 && Math.abs(t.position.z - pz) < 1.9) return true;
+            if (avenues?.blocks(px, pz, r)) return true;
         }
         return false;
     }
@@ -86,6 +87,8 @@ export function createDriving({ scene, camera, colliders, city, audio, hud }) {
     return {
         get active() { return !!car; },
         get car() { return car; },
+        /** The car you last got out of, wherever you left it (traffic treats it as solid). */
+        get lastCar() { return lastCar; },
         get speed() { return speed; },
         /** The nearest parked car within reach of a pedestrian, if any. */
         nearest(p, reach = 3.4) {
@@ -121,6 +124,7 @@ export function createDriving({ scene, camera, colliders, city, audio, hud }) {
             spot ||= { x: c.position.x, z: c.position.z + 3 };
             c.remove(beams);
             placeCollider(c);
+            lastCar = c;
             animateVehicle(c, 0, { braking: false });
             car = null;
             document.body.classList.remove("driving");

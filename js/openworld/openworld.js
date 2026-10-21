@@ -493,8 +493,10 @@ export function buildOpenWorld(scene) {
     let ws = 11;
     const r3 = () => ((ws = (ws * 16807) % 2147483647) / 2147483647);
     const streets = OW_ROADS.filter((r) => r.a[0] === r.b[0] || r.a[1] === r.b[1]);
-    for (let i = 0; i < 44; i++) {
-        const road = streets[i % streets.length];
+    // About one walker per 28 m of street, so long avenues are as busy as short ones.
+    const lots = streets.flatMap((road) => Array.from({ length: Math.max(1, Math.round(Math.hypot(road.b[0] - road.a[0], road.b[1] - road.a[1]) / 28)) }, () => road));
+    for (let i = 0; i < lots.length; i++) {
+        const road = lots[i];
         const side = r3() < 0.5 ? -1 : 1, axisX = road.a[1] === road.b[1];
         const off = road.width / 2 + 2.4 + r3() * 1.6;
         const h = randomPedestrian(r3(), { anim: "walk", umbrella: r3() < 0.4 });
@@ -503,10 +505,24 @@ export function buildOpenWorld(scene) {
         walkers.push(h);
     }
 
+    // Little knots of people talking at the landmarks.
+    const groups = [];
+    const knots = [[-262, 50, 5], [-262, 68, 4], [-226, 60, 3], [58, 156, 4], [72, 156, 3], [286, 15, 3], [44, -131, 3], [70, 194.2, 4], [120, 206, 3]];
+    for (const [gx, gz, n] of knots) for (let k = 0; k < n; k++) {
+        const a = (k / n) * Math.PI * 2 + r3(), r = 0.75 + r3() * 0.25;
+        const h = randomPedestrian(r3(), { anim: "idle", umbrella: r3() < 0.25 });
+        h.position.set(gx + Math.cos(a) * r, 0, gz + Math.sin(a) * r);
+        h.rotation.y = Math.atan2(gx - h.position.x, gz - h.position.z);
+        h.userData.knot = { phase: k * 1.7 + gx * 0.01 };
+        root.add(h);
+        groups.push(h);
+    }
+
     let trainT = 0;
     return {
         root,
         walkers,
+        groups,
         update(dt, t, { position, lampMul = 1, drawDistance = 360, reduced = false }) {
             const k = Math.min(1.2, lampMul);
             for (const m of allFacades) m.emissiveIntensity = 0.05 + k * 0.75;
@@ -527,9 +543,15 @@ export function buildOpenWorld(scene) {
                 const z = w.axisX ? az + w.side * w.off : az + (bz - az) * w.t;
                 h.position.set(x, 0, z);
                 h.rotation.y = w.axisX ? (w.dir * Math.sign(bx - ax) > 0 ? Math.PI / 2 : -Math.PI / 2) : (w.dir * Math.sign(bz - az) > 0 ? 0 : Math.PI);
-                const near = Math.abs(x - position.x) + Math.abs(z - position.z) < 70;
-                h.visible = near;
-                if (near) animateHuman(h, t, { mode: "walk" });
+                // Drawn out to 110 m so far pavements aren't empty; only the nearer ones animate.
+                const dist = Math.abs(x - position.x) + Math.abs(z - position.z);
+                h.visible = dist < 110;
+                if (dist < 70) animateHuman(h, t, { mode: "walk" });
+            }
+            for (const h of groups) {
+                const dist = Math.abs(h.position.x - position.x) + Math.abs(h.position.z - position.z);
+                h.visible = dist < 110;
+                if (dist < 70) animateHuman(h, t, { mode: "idle", talking: Math.sin(t * 0.7 + h.userData.knot.phase) > 0.2 });
             }
         },
     };

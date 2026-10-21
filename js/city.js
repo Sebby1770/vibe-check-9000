@@ -11,6 +11,8 @@ import { buildSubway, updateSubway } from "./under.js";
 import { SECOND_Y, HOTEL_STAIRS } from "./zones.js";
 import { buildVehicle, animateVehicle } from "./vehicles/models.js";
 import { stepTraffic, ROAD } from "./traffic.js";
+import { junctionStops47th } from "./openworld/avenue-sim.js";
+import { dressFacades } from "./facade-kit.js";
 
 const RAIN_N = 420;
 const STEAM_N = 48;
@@ -188,6 +190,7 @@ export function buildCity(scene, adConfig = mergeAdConfig()) {
     const winWarm = new THREE.MeshBasicMaterial({ map: windowPaneTex("warm") });
     const winOff = new THREE.MeshBasicMaterial({ map: windowPaneTex("off") });
     const winDummy = [];
+    const brackets = [];
 
     function addWindows(cx, y0, zFace, w, h, rotY, seed) {
         const cols = Math.max(3, Math.floor(w / 1.75));
@@ -247,6 +250,13 @@ export function buildCity(scene, adConfig = mergeAdConfig()) {
             addBox(root, unitBox, black, x, cy + h + 0.18, z, cw + 0.55, 0.36, cd + 0.55);
             addBox(root, unitBox, cream, x, cy + h + 0.42, z, cw + 0.72, 0.16, cd + 0.72);
             addBox(root, unitBox, black, x, cy + h * 0.5, z, cw + 0.22, 0.14, cd + 0.22);
+            // Corbels under this tier's cornice, every 1.3 m round all four faces.
+            for (let bx = x - cw / 2 + 0.7; bx <= x + cw / 2 - 0.6; bx += 1.3) {
+                brackets.push({ x: bx, y: cy + h - 0.2, z: z - cd / 2, ry: Math.PI }, { x: bx, y: cy + h - 0.2, z: z + cd / 2, ry: 0 });
+            }
+            for (let bz = z - cd / 2 + 0.7; bz <= z + cd / 2 - 0.6; bz += 1.3) {
+                brackets.push({ x: x - cw / 2, y: cy + h - 0.2, z: bz, ry: -Math.PI / 2 }, { x: x + cw / 2, y: cy + h - 0.2, z: bz, ry: Math.PI / 2 });
+            }
             if (t === 0 && seed % 2 === 0) fireEscape(x - cw * 0.18, z - cd / 2 - 0.58, Math.min(5, n), -1);
             addWindows(x, cy, z - cd / 2 - 0.05, cw, h, Math.PI, seed + t * 9);
             addWindows(x, cy, z + cd / 2 + 0.05, cw * 0.9, h, 0, seed + t * 5);
@@ -302,16 +312,17 @@ export function buildCity(scene, adConfig = mergeAdConfig()) {
     addBox(root, unitBox, brickBrown, 1.2, 8.2, 43.15, 82, 16.4, 5.9);
     addBox(root, unitBox, black, 1.2, 16.5, 43.15, 82.6, 0.4, 6.3);
     addBox(root, unitBox, brickDark, 1.2, 17.3, 43.4, 40, 1.2, 3.6);
-    addWindows(1.2, 0.4, 40.22, 78, 16, Math.PI, 21);
-    addWindows(1.2, 0.4, 46.08, 78, 16, 0, 22);
+    // Panes sit 5 cm proud of the wall faces (z 40.2 and 46.1), where the facade kit expects them.
+    addWindows(1.2, 0.4, 40.15, 78, 16, Math.PI, 21);
+    addWindows(1.2, 0.4, 46.15, 78, 16, 0, 22);
     waterTower(-18, 18.2, 42.8);
     waterTower(22, 18.2, 43.6);
 
     // Bookend lots beside diner / hotel — windows so they read as buildings
-    addWindows(-48, 0.4, 12.48, 16, 16, 0, 31);
-    addWindows(-48, 0.4, -16.48, 16, 16, Math.PI, 32);
-    addWindows(48, 0.4, 12.48, 16, 18, 0, 33);
-    addWindows(48, 0.4, -16.48, 16, 18, Math.PI, 34);
+    addWindows(-48, 0.4, 12.55, 16, 16, 0, 31);
+    addWindows(-48, 0.4, -16.55, 16, 16, Math.PI, 32);
+    addWindows(48, 0.4, 12.55, 16, 18, 0, 33);
+    addWindows(48, 0.4, -16.55, 16, 18, Math.PI, 34);
 
     for (const x of [20, 25, 30, 35]) {
         for (const y of [5.2, 8.2, 11.2]) {
@@ -551,7 +562,7 @@ export function buildCity(scene, adConfig = mergeAdConfig()) {
     ];
     const traffic = fleet.map(([x, dir, kind, color], i) => {
         const car = sedan(scene, { x, z: dir > 0 ? 21.35 : 24.55, yaw: dir > 0 ? 0 : Math.PI, kind, color, moving: dir, seed: i });
-        car.userData.sim = { x, dir, v: 8.2, braking: false };
+        car.userData.sim = { x, dir, v: 8.2, braking: false, len: car.userData.spec?.length || 4.9 };
         return car;
     });
     const rideCab = sedan(scene, { x: 0, z: 21.35, kind: "checker", driver: true });
@@ -608,7 +619,11 @@ export function buildCity(scene, adConfig = mergeAdConfig()) {
     hotelUp.position.set(27, fy + 2.2, -2);
     scene.add(hotelUp);
 
+    // Stone surrounds, sills and lintels round every window, corbels under the cornices (skipping anything behind a sign).
+    const facadeKit = dressFacades(root, { windows: winDummy, brackets });
+
     return {
+        facadeKit,
         windowMats: [winOn, winWarm],
         root,
         ads,
@@ -703,6 +718,8 @@ export function updateCity(city, dt, t, { outside, reduced, lampMul = 1, zone, p
     // Red light at the club crossing, and anyone on a crossing, stop the traffic.
     const stops = [];
     if (Math.floor(t / 3.2) % 3 === 0) stops.push({ x: -3.4, dir: 1 }, { x: 3.6, dir: -1 });
+    // ...and the junctions 47th Street shares with the avenues take turns with them.
+    stops.push(...junctionStops47th(t));
     for (const ped of city.peds) {
         const path = ped.userData.path;
         if (path.cross && ped.visible && ped.position.z > ROAD.minZ - 0.6 && ped.position.z < ROAD.maxZ + 0.6) stops.push({ x: path.x0 - 2.2, dir: 1 }, { x: path.x0 + 2.2, dir: -1 });

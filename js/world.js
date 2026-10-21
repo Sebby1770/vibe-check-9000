@@ -3,6 +3,7 @@ import { buildOpenWorld } from "./openworld/openworld.js";
 import { buildStationFixtures } from "./openworld/kiosks.js";
 import { buildDoors } from "./doors.js";
 import { buildClubQueue } from "./club-queue.js";
+import { buildAvenues } from "./openworld/avenues.js";
 import { buildBlockLoop } from './block-loop.js';
 import { buildDistrict } from './district.js';
 import { buildLifeWorld } from './life-world.js';
@@ -124,6 +125,9 @@ export function createWorld(canvas, adConfig) {
     buildStationFixtures(scene);
     const doors = buildDoors(scene);
     const clubQueue = buildClubQueue(scene);
+    const avenues = buildAvenues(scene);
+    // The facade kit is fine detail: the Low tier goes without it.
+    if (quality.low) for (const m of city.facadeKit?.meshes || []) m.visible = false;
     const colliders = buildColliders(interiorColliders());
     const streetLife = buildStreetLife(scene);
     const lifeWorld = buildLifeWorld(scene,colliders);
@@ -269,6 +273,7 @@ export function createWorld(canvas, adConfig) {
         openWorld,
         doors,
         clubQueue,
+        avenues,
         streetLife,
         district,
         lifeWorld,
@@ -571,6 +576,7 @@ export function createWorld(canvas, adConfig) {
             }
 
             updateCity(city, dt, t, { outside, reduced, lampMul: look.lamp, zone, position:p, camera });
+            avenues.update(dt, t, { position: p, outside, obstacles: ctx.trafficObstacles || [] });
             openWorld.update(dt, t, { position: p, lampMul: look.lamp, drawDistance: quality.drawDistance, reduced });
             reflections.update(look.daylight, outside);
             grade.uniforms.uTime.value = t;

@@ -265,6 +265,8 @@ export function buildColliders(interiorBoxes = []) {
     wall(boxes, 7.45, 8.85, 10.15, 10.75, -1, 2.2);
     // The velvet rope along the club facade keeps the queue in line (low enough to see over).
     wall(boxes, -10.42, -2.18, 14.37, 14.53, -1, 1.9).sightMaxY = 1.05;
+    // ...and the people waiting behind it are solid, so you walk round the line rather than through it.
+    wall(boxes, -10.3, -2.4, 12.7, 14.37, -1, 1.9).sightMaxY = 1.05;
     // Host stand and the palms either side of the front door.
     wall(boxes, 2.55, 3.25, 10.45, 10.95, -1, 1.9).sightMaxY = 1.15;
     for (const x of [-2.4, 2.4]) wall(boxes, x - 0.34, x + 0.34, 11.41, 12.09, -1, 1.9).sightMaxY = 0.7;
