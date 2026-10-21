@@ -1144,6 +1144,7 @@ async function boot() {
             marker.textContent=`${arrow} ${destination.name} · ${Math.round(dist)} m${hint?" · "+hint:""} · M map`;
         }
         if(hud.phase==="explore")mapUI.updateMini(mapState());
+        world.doors.update(dt,world.camera.position,controls.floorY,document.body.classList.contains("reduced-motion"));
         if(restoringProgress)return;
         savedAt+=dt;
         if(savedAt>10&&hud.run.entered){savedAt=0;progress={...progress,night:{...progress.night,elapsed:clock.elapsedReal,commerce}};saveProgress(progress);}

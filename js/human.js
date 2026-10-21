@@ -4,9 +4,14 @@
 import * as THREE from "three";
 
 // ---------------------------------------------------------------- palette slots
-const S = { skin: 0, top: 1, bottom: 2, hair: 3, shoes: 4, accent: 5, white: 6, iris: 7, shirt: 8, hat: 9, lips: 10, metal: 11, brow: 12, lining: 13 };
-const SLOTS = 14;
-const ROUGH = [0.58, 0.84, 0.82, 0.78, 0.46, 0.55, 0.22, 0.12, 0.72, 0.8, 0.45, 0.28, 0.75, 0.85];
+const S = { skin: 0, top: 1, bottom: 2, hair: 3, shoes: 4, accent: 5, white: 6, iris: 7, shirt: 8, hat: 9, lips: 10, metal: 11, brow: 12, lining: 13, pupil: 14 };
+const SLOTS = 15;
+const ROUGH = [0.52, 0.86, 0.84, 0.42, 0.24, 0.55, 0.14, 0.08, 0.72, 0.8, 0.38, 0.28, 0.75, 0.88, 0.05];
+// Fabric slots get a soft sheen and a slow tone variation in the shader.
+const CLOTH = [S.top, S.bottom, S.shirt, S.hat, S.lining, S.accent];
+let DETAIL = "high";
+/** "low" keeps people on the cheaper standard material (the Low graphics tier). */
+export function setPersonDetail(level) { DETAIL = level === "low" ? "low" : "high"; }
 
 // ---------------------------------------------------------------- outfits
 const OUTFITS = {
@@ -33,6 +38,7 @@ const OUTFITS = {
     cook: { top: 0xf2eee0, bottom: 0x2a241c, accent: 0xc45c28, hat: "none", extra: "apron", shoes: 0x111111, cut: "tunicShort" },
     bellhop: { top: 0x8b1e1e, bottom: 0x1a1010, accent: 0xc9a227, hat: "bellhop", extra: "none", shoes: 0x111111, cut: "jacket" },
     florist: { top: 0x3a4a32, bottom: 0x2a241c, accent: 0xff6b9a, hat: "none", extra: "apron", shoes: 0x111111, cut: "cardigan" },
+    bouncer: { top: 0x0d0d11, bottom: 0x0d0d11, accent: 0xf2eee6, hat: "none", extra: "bowtie", shoes: 0x0a0a0a, cut: "suit" },
 };
 
 // Jacket lengths, below the spine joint (spine sits 12 cm above the hips joint).
@@ -159,8 +165,48 @@ class Builder {
         this.n += P.count;
         geometry.dispose();
     }
+    /** Ambient occlusion from the body's own parts: under the chin, the armpits, between the legs, at the feet. */
+    bakeAO() {
+        const w = (n) => this.b[n].getWorldPosition(new THREE.Vector3());
+        const parts = [];
+        const cap = (a, b, r, bones) => parts.push({ a, b, r, bones });
+        const hips = w("hips"), spine = w("spine"), head = w("head");
+        cap(spine.clone().setY(spine.y - 0.08), spine.clone().setY(spine.y + 0.38), 0.15, ["spine"]);
+        cap(hips.clone().setY(hips.y - 0.05), hips.clone().setY(hips.y + 0.02), 0.145, ["hips"]);
+        cap(head.clone().setY(head.y - 0.08), head.clone().setY(head.y - 0.02), 0.045, ["spine"]);
+        cap(head.clone().setY(head.y + 0.005), head.clone().setY(head.y + 0.03), 0.1, ["head", "eyeL", "eyeR"]);
+        for (const s of ["l", "r"]) {
+            const u = w(`${s}Upper`), f = w(`${s}Fore`), h = w(`${s}Hand`), t = w(`${s}Thigh`), k = w(`${s}Shin`);
+            cap(u, f, 0.047, [`${s}Upper`, `${s}Clav`]);
+            cap(f, h, 0.038, [`${s}Fore`]);
+            cap(h.clone().setY(h.y - 0.03), h.clone().setY(h.y - 0.08), 0.035, [`${s}Hand`]);
+            cap(t.clone().setY(t.y - 0.03), k, 0.072, [`${s}Thigh`, `${s}Hip`]);
+            cap(k, k.clone().setY(0.08), 0.052, [`${s}Shin`]);
+        }
+        const P = this.pos, N = this.nor, ao = new Float32Array(this.n), c = new THREE.Vector3(), p = new THREE.Vector3(), nrm = new THREE.Vector3(), ab = new THREE.Vector3();
+        for (let i = 0; i < this.n; i++) {
+            p.set(P[i * 3], P[i * 3 + 1], P[i * 3 + 2]);
+            nrm.set(N[i * 3], N[i * 3 + 1], N[i * 3 + 2]);
+            const own = BONES[this.si[i * 4]];
+            let occ = 0;
+            for (const q of parts) {
+                if (q.bones.includes(own)) continue;
+                ab.subVectors(q.b, q.a);
+                const t = Math.max(0, Math.min(1, c.subVectors(p, q.a).dot(ab) / Math.max(1e-6, ab.lengthSq())));
+                c.copy(q.a).addScaledVector(ab, t).sub(p);
+                const d = c.length();
+                if (d < q.r * 0.98) { occ += 0.6; continue; }
+                const cos = c.dot(nrm) / d;
+                if (cos > 0) occ += Math.min(0.6, (q.r * q.r) / (d * d)) * cos;
+            }
+            if (p.y < 0.28) occ += Math.pow(1 - p.y / 0.28, 2) * 0.45 * (0.5 - nrm.y * 0.5);
+            ao[i] = 1 - Math.min(0.62, occ * 0.85);
+        }
+        return ao;
+    }
     build() {
         const g = new THREE.BufferGeometry();
+        g.setAttribute("ao", new THREE.Float32BufferAttribute(this.bakeAO(), 1));
         g.setAttribute("position", new THREE.Float32BufferAttribute(this.pos, 3));
         g.setAttribute("normal", new THREE.Float32BufferAttribute(this.nor, 3));
         g.setAttribute("slot", new THREE.Float32BufferAttribute(this.slot, 1));
@@ -186,14 +232,20 @@ function coatProfile(cut, female) {
 }
 
 function headGeometry(female) {
-    return shaped(new THREE.SphereGeometry(0.1, 30, 24), (v) => {
+    const bump = (d, w) => Math.exp(-(d * d) / (w * w));
+    return shaped(new THREE.SphereGeometry(0.1, 40, 32), (v) => {
         const jaw = Math.max(0, -v.y / 0.1);
         v.y *= 1.2;
-        v.x *= (1 - (female ? 0.26 : 0.2) * jaw) * (female ? 0.95 : 1);
+        v.x *= (1 - (female ? 0.26 : 0.17) * jaw) * (female ? 0.95 : 1);
         v.z *= 1 - 0.07 * jaw;
-        if (v.z > 0 && v.y < -0.085) v.z += 0.012 * (1 - Math.abs(v.x) / 0.05);           // chin
-        if (v.z > 0.05 && Math.abs(v.y) < 0.035) v.x *= 1.03;                            // cheekbones
-        if (v.z > 0.06 && v.y > 0.02 && v.y < 0.06) v.z -= 0.006;                         // eye sockets
+        const ax = Math.abs(v.x), front = Math.max(0, v.z / 0.1);
+        if (v.z > 0 && v.y < -0.085) v.z += 0.012 * (1 - ax / 0.05);                      // chin
+        if (!female && v.y < -0.06 && ax > 0.045) v.x *= 1 + 0.06 * Math.min(1, (-v.y - 0.06) / 0.03); // jaw angle
+        v.x *= 1 + 0.035 * bump(v.y + 0.012, 0.02) * front;                              // cheekbones
+        v.z -= 0.009 * bump(ax - 0.037, 0.018) * bump(v.y - 0.018, 0.016) * front;        // eye sockets
+        v.z += (female ? 0.003 : 0.006) * bump(v.y - 0.046, 0.01) * bump(ax - 0.036, 0.03) * front; // brow ridge
+        v.x *= 1 - 0.03 * bump(v.y - 0.06, 0.025) * (ax > 0.07 ? 1 : 0);                  // temples
+        v.z -= 0.006 * bump(ax - 0.06, 0.02) * bump(v.y + 0.035, 0.02) * front;           // under the cheekbone
         if (v.z < -0.02) v.z *= 1.06;                                                     // occiput
     });
 }
@@ -212,8 +264,8 @@ function hairGeometry(style, female) {
     } else if (style === "updo") {
         parts.push([cap(0.109, -0.05), {}]);
         parts.push([sphere(0.052, 14, 10), { x: 0, y: 0.1, z: -0.07 }]);
-        parts.push([new THREE.TorusGeometry(0.03, 0.017, 8, 14, Math.PI), { x: -0.05, y: 0.1, z: 0.035, ry: Math.PI / 2, rz: 0.4 }]);
-        parts.push([new THREE.TorusGeometry(0.03, 0.017, 8, 14, Math.PI), { x: 0.05, y: 0.1, z: 0.035, ry: Math.PI / 2, rz: -0.4 }]);
+        parts.push([capsule(0.017, 0.08, 8), { x: -0.036, y: 0.086, z: 0.052, rz: Math.PI / 2 - 0.2, ry: 0.95 }]);
+        parts.push([capsule(0.017, 0.08, 8), { x: 0.036, y: 0.086, z: 0.052, rz: -Math.PI / 2 + 0.2, ry: -0.95 }]);
     } else if (style === "victory") {
         parts.push([cap(0.109, -0.06), {}]);
         parts.push([capsule(0.024, 0.06), { x: -0.045, y: 0.11, z: 0.04, rz: Math.PI / 2 - 0.5, rx: 0.2 }]);
@@ -337,8 +389,8 @@ function buildGeometry(o, spec, female) {
         : [[0, 0.01], [0.058, 0.0], [0.058, -0.1], [0.055, -0.25], [0.054, -0.42], [0.056, -0.43], [0, -0.44]];
     const legSlot = o.dress ? S.skin : S.bottom;
     for (const s of ["l", "r"]) {
-        B.add(lathe(thighP, 14), `${s}Thigh`, o.dress ? S.skin : S.bottom, { blend: 0.06, blendTo: "hips" });
-        B.add(lathe(shinP, 14), `${s}Shin`, legSlot, { blend: 0.05, blendTo: `${s}Thigh` });
+        B.add(lathe(thighP, 16), `${s}Thigh`, o.dress ? S.skin : S.bottom, { blend: 0.1, blendTo: "hips" });
+        B.add(lathe(shinP, 16), `${s}Shin`, legSlot, { blend: 0.08, blendTo: `${s}Thigh` });
         if (female && o.dress) {
             B.add(shaped(roundBox(0.072, 0.05, 0.21, 0.022), (v) => { if (v.z > 0.04) v.x *= 1 - (v.z - 0.04) * 2.2; }), `${s}Shin`, S.shoes, { y: -0.47, z: 0.04, rx: 0.12 });
             B.add(new THREE.CylinderGeometry(0.008, 0.012, 0.07, 6), `${s}Shin`, S.shoes, { y: -0.475, z: -0.045 });
@@ -362,10 +414,10 @@ function buildGeometry(o, spec, female) {
     const foreP = [[0, 0.02], [0.043, 0.01], [0.046, -0.05], [0.039, -0.16], [0.032, -0.235], [0.03, -0.25], [0, -0.26]];
     for (const s of ["l", "r"]) {
         const armSlot = sleeve === "shirt" ? S.shirt : sleeve === "long" || sleeve === "short" ? S.top : S.skin;
-        B.add(lathe(upperP, 12, female ? 0.88 : 1, female ? 0.88 : 1), `${s}Upper`, armSlot, { blend: 0.05, blendTo: `${s}Clav` });
+        B.add(lathe(upperP, 14, female ? 0.88 : 1, female ? 0.88 : 1), `${s}Upper`, armSlot, { blend: 0.085, blendTo: `${s}Clav` });
         if (sleeve === "short" || sleeve === "cap") B.add(lathe([[0.058, 0.02], [0.06, -0.02], [0.056, -0.11], [0.05, -0.12]], 12), `${s}Upper`, S.top, {});
         const foreSlot = sleeve === "long" ? S.top : sleeve === "shirt" ? S.shirt : S.skin;
-        B.add(lathe(foreP, 12, female ? 0.86 : 1, female ? 0.86 : 1), `${s}Fore`, foreSlot, { blend: 0.05, blendTo: `${s}Upper` });
+        B.add(lathe(foreP, 14, female ? 0.86 : 1, female ? 0.86 : 1), `${s}Fore`, foreSlot, { blend: 0.08, blendTo: `${s}Upper` });
         if (sleeve === "long" && !o.dress) B.add(lathe([[0.033, -0.215], [0.034, -0.245]], 12), `${s}Fore`, S.shirt, {});
         // Hand: palm, four slightly curled fingers and a thumb.
         const side = s === "l" ? -1 : 1, hs = female ? 0.9 : 1;
@@ -379,16 +431,26 @@ function buildGeometry(o, spec, female) {
 
     // --- head and face
     B.add(headGeometry(female), "head", S.skin, {});
-    B.add(sphere(0.02, 10, 8), "head", S.skin, { y: -0.012, z: 0.1, sx: 0.85, sy: 1.5, sz: 1.05 });          // nose bridge
-    B.add(sphere(0.022, 10, 8), "head", S.skin, { y: -0.034, z: 0.098, sx: 1.15, sy: 0.62, sz: 0.85 });      // nose tip
+    B.add(sphere(0.017, 10, 8), "head", S.skin, { y: -0.013, z: 0.097, sx: 0.72, sy: 1.6, sz: 0.85 });         // nose bridge
+    B.add(sphere(0.016, 12, 10), "head", S.skin, { y: -0.034, z: 0.095, sx: 1.1, sy: 0.66, sz: 0.7 });        // nose tip
     for (const s of [-1, 1]) {
-        B.add(sphere(0.03, 10, 8), "head", S.skin, { x: s * (female ? 0.095 : 0.1), y: -0.006, z: -0.006, sx: 0.36, sy: 0.75, sz: 0.55 });
-        B.add(capsule(0.0042, 0.03, 4), "head", S.brow, { x: s * 0.037, y: 0.047, z: 0.099, rz: Math.PI / 2 + s * (female ? 0.16 : 0.06) });
+        B.add(sphere(0.0095, 8, 6), "head", S.skin, { x: s * 0.0125, y: -0.037, z: 0.09, sx: 1.1, sy: 0.8, sz: 0.85 }); // alar wings
+        // Ear: a lobe and a rolled helix round a shallow bowl.
+        const ex = s * (female ? 0.094 : 0.099);
+        B.add(sphere(0.026, 10, 8), "head", S.skin, { x: ex, y: -0.004, z: -0.006, sx: 0.32, sy: 0.82, sz: 0.56 });
+        B.add(new THREE.TorusGeometry(0.019, 0.0055, 6, 14, Math.PI * 1.35), "head", S.skin, { x: ex + s * 0.004, y: 0.0, z: -0.008, ry: s * Math.PI / 2, rz: -0.5 });
+        B.add(sphere(0.008, 8, 6), "head", S.skin, { x: ex + s * 0.002, y: -0.024, z: -0.002, sx: 0.6 });
+        B.add(capsule(female ? 0.0026 : 0.0032, 0.03, 4), "head", S.brow, { x: s * 0.037, y: 0.047, z: 0.1, rz: Math.PI / 2 + s * (female ? 0.16 : 0.06), sz: 0.6 });
+        // Upper lid: a skin hood over the top of the eyeball.
+        B.add(new THREE.SphereGeometry(0.0158, 14, 8, 0, Math.PI * 2, 0, Math.PI * 0.3), "head", S.skin, { x: s * 0.036, y: 0.0205, z: 0.0902, sx: 1.05, sy: 0.85, sz: 0.58, rx: -0.35 });
+        // Lower lid: gives the eye an almond shape instead of a round stare.
+        B.add(new THREE.SphereGeometry(0.0155, 14, 6, 0, Math.PI * 2, Math.PI * 0.74, Math.PI * 0.26), "head", S.skin, { x: s * 0.036, y: 0.0115, z: 0.0902, sx: 1.05, sy: 0.75, sz: 0.58, rx: 0.2 });
     }
     for (const eye of ["eyeL", "eyeR"]) {
-        B.add(sphere(0.014, 12, 10), eye, S.white, { z: 0.09, sx: 1, sy: 0.72, sz: 0.5 });
-        B.add(sphere(0.0068, 10, 8), eye, S.iris, { z: 0.096, sz: 0.42 });
-        B.add(capsule(0.0035, 0.022, 4), eye, female ? S.iris : S.brow, { y: 0.009, z: 0.095, rz: Math.PI / 2 });   // lash line
+        B.add(sphere(0.014, 14, 12), eye, S.white, { z: 0.09, sx: 1, sy: 0.72, sz: 0.5 });
+        B.add(sphere(0.0068, 12, 10), eye, S.iris, { z: 0.096, sz: 0.42 });
+        B.add(sphere(0.0032, 8, 6), eye, S.pupil, { z: 0.0989, sz: 0.3 });
+        B.add(capsule(0.0035, 0.022, 4), eye, female ? S.pupil : S.brow, { y: 0.009, z: 0.095, rz: Math.PI / 2 });   // lash line
     }
     if (spec.mouth !== false) {
         B.add(capsule(0.0058, 0.026, 6), "head", S.lips, { y: -0.055, z: 0.094, rz: Math.PI / 2 });
@@ -407,6 +469,19 @@ function buildGeometry(o, spec, female) {
     }
 
     const geometry = B.build();
+    {
+        const headY = bones.head.getWorldPosition(new THREE.Vector3()).y, P = geometry.attributes.position, N = geometry.attributes.normal, SI = geometry.attributes.skinIndex;
+        const heads = new Set(["head", "eyeL", "eyeR"].map((n) => BONES.indexOf(n))), kx = 0.85, kz = 0.95;
+        for (let i = 0; i < P.count; i++) {
+            if (!heads.has(SI.getX(i))) continue;
+            P.setX(i, P.getX(i) * kx);
+            P.setZ(i, P.getZ(i) * kz);
+            _n.set(N.getX(i) / kx, N.getY(i), N.getZ(i) / kz).normalize();
+            N.setXYZ(i, _n.x, _n.y, _n.z);
+            void headY;
+        }
+        geometry.computeBoundingSphere();
+    }
     GEO_CACHE.set(key, geometry);
     return geometry;
 }
@@ -414,23 +489,66 @@ function buildGeometry(o, spec, female) {
 // ---------------------------------------------------------------- palette material (one program for everyone)
 function paletteMaterial(colors, glow = 0) {
     const palette = colors.map((c, i) => new THREE.Vector4(c.r, c.g, c.b, ROUGH[i]));
-    const m = new THREE.MeshStandardMaterial({ roughness: 0.6, metalness: 0.0 });
+    const physical = DETAIL !== "low";
+    const m = physical
+        ? new THREE.MeshPhysicalMaterial({ roughness: 0.6, metalness: 0.0, sheen: 1, sheenRoughness: 0.55, sheenColor: new THREE.Color(0xffffff) })
+        : new THREE.MeshStandardMaterial({ roughness: 0.6, metalness: 0.0 });
     m.userData.palette = palette;
     m.userData.glow = { value: glow };
+    const cloth = CLOTH.map((k) => `si == ${k}`).join(" || ");
     m.onBeforeCompile = (shader) => {
         shader.uniforms.palette = { value: palette };
         shader.uniforms.glow = m.userData.glow;
         shader.vertexShader = shader.vertexShader
-            .replace("#include <common>", "#include <common>\nattribute float slot;\nvarying float vSlot;")
-            .replace("#include <begin_vertex>", "#include <begin_vertex>\nvSlot = slot;");
+            .replace("#include <common>", "#include <common>\nattribute float slot;\nattribute float ao;\nvarying float vSlot;\nvarying float vAo;\nvarying vec3 vObj;")
+            .replace("#include <begin_vertex>", "#include <begin_vertex>\nvSlot = slot;\nvAo = ao;\nvObj = position;");
         shader.fragmentShader = shader.fragmentShader
-            .replace("#include <common>", `#include <common>\nuniform vec4 palette[${SLOTS}];\nuniform float glow;\nvarying float vSlot;`)
-            .replace("vec4 diffuseColor = vec4( diffuse, opacity );", "int si = int(vSlot + 0.5);\nvec4 pc = palette[si];\nvec4 diffuseColor = vec4( pc.rgb, opacity );")
+            .replace("#include <common>", `#include <common>
+uniform vec4 palette[${SLOTS}];
+uniform float glow;
+varying float vSlot;
+varying float vAo;
+varying vec3 vObj;
+float pnoise(vec3 p) {
+    vec3 i = floor(p), f = fract(p); f = f * f * (3.0 - 2.0 * f);
+    float n = dot(i, vec3(1.0, 57.0, 113.0));
+    vec4 a = fract(sin(vec4(n, n + 1.0, n + 57.0, n + 58.0)) * 43758.5453);
+    vec4 b = fract(sin(vec4(n + 113.0, n + 114.0, n + 170.0, n + 171.0)) * 43758.5453);
+    vec4 c = mix(a, b, f.z);
+    vec2 d = mix(c.xy, c.zw, f.y);
+    return mix(d.x, d.y, f.x);
+}`)
+            .replace("vec4 diffuseColor = vec4( diffuse, opacity );", `int si = int(vSlot + 0.5);
+vec4 pc = palette[si];
+vec3 base = pc.rgb;
+if (si == ${S.skin}) {
+    // Flushed cheeks, nose and ears; a faint shadow under the eyes; pores and freckle-scale variation.
+    vec3 h = vObj - vec3(0.0, 1.687, 0.0);
+    float cheeks = exp(-pow((abs(h.x) - 0.043) / 0.022, 2.0) - pow((h.y + 0.02) / 0.026, 2.0)) * step(0.043, h.z);
+    float nose = exp(-dot(h - vec3(0.0, -0.032, 0.095), h - vec3(0.0, -0.032, 0.095)) / 0.0004);
+    float ears = exp(-pow((abs(h.x) - 0.085) / 0.012, 2.0) - pow(h.y / 0.035, 2.0));
+    float under = exp(-pow((abs(h.x) - 0.031) / 0.014, 2.0) - pow((h.y - 0.002) / 0.007, 2.0)) * step(0.066, h.z);
+    base = mix(base, base * vec3(1.14, 0.8, 0.78), clamp(cheeks * 0.42 + nose * 0.38 + ears * 0.35, 0.0, 0.6));
+    base *= 1.0 - under * 0.14;
+    base *= 0.95 + 0.1 * pnoise(vObj * 180.0);
+} else if (${cloth}) {
+    base *= 0.92 + 0.16 * pnoise(vObj * 9.0 + float(si) * 3.1);
+} else if (si == ${S.hair} || si == ${S.brow}) {
+    base *= 0.82 + 0.3 * pnoise(vec3(vObj.x * 60.0, vObj.y * 900.0, vObj.z * 60.0));
+}
+vec4 diffuseColor = vec4( base * mix(1.0, vAo, 0.9), opacity );`)
             .replace("#include <roughnessmap_fragment>", "float roughnessFactor = pc.a;")
             .replace("#include <metalnessmap_fragment>", `float metalnessFactor = si == ${S.metal} ? 0.85 : 0.0;`)
-            .replace("vec3 totalEmissiveRadiance = emissive;", `vec3 totalEmissiveRadiance = emissive + (si == ${S.accent} ? pc.rgb * glow : vec3(0.0));`);
+            .replace("vec3 totalEmissiveRadiance = emissive;", `vec3 totalEmissiveRadiance = emissive + (si == ${S.accent} ? pc.rgb * glow : vec3(0.0));
+// Light scatters under skin: a little warmth survives in shadow.
+if (si == ${S.skin} || si == ${S.lips}) totalEmissiveRadiance += base * vec3(0.05, 0.022, 0.016) * vAo;`);
+        if (physical) shader.fragmentShader = shader.fragmentShader.replace("#include <lights_physical_fragment>", `#include <lights_physical_fragment>
+#ifdef USE_SHEEN
+material.sheenColor = (${cloth}) ? mix(base, vec3(1.0), 0.25) * 0.55 : vec3(0.0);
+material.sheenRoughness = 0.5;
+#endif`);
     };
-    m.customProgramCacheKey = () => "vc9k-person";
+    m.customProgramCacheKey = () => (physical ? "vc9k-person-p" : "vc9k-person");
     return m;
 }
 
@@ -468,6 +586,13 @@ function mat(color, extra = {}) {
 }
 
 const _c = new THREE.Color();
+const _hsl = { h: 0, s: 0, l: 0 };
+/** Cartoon skin hexes (very saturated yellow-oranges) become believable complexions: less saturation, a touch redder. */
+function naturalSkin(hex) {
+    _c.setHex(hex).getHSL(_hsl);
+    _c.setHSL(Math.max(0, _hsl.h - 0.012), _hsl.s * 0.62, _hsl.l * (_hsl.l > 0.6 ? 0.97 : 1));
+    return _c.getHex();
+}
 function lin(hex) { return _c.setHex(hex).clone(); }
 function shade(hex, k) { return _c.setHex(hex).multiplyScalar(k).clone(); }
 
@@ -482,7 +607,7 @@ export function createHuman(spec = {}) {
     const glasses = spec.glasses ?? (outfitName === "clerk" || outfitName === "pharmacist" || outfitName === "salesman");
     const geometry = buildGeometry(o, { ...spec, outfitName, hairStyle, moustache, glasses }, female);
 
-    const skinC = spec.skin ?? 0xc68642;
+    const skinC = naturalSkin(spec.skin ?? 0xc68642);
     const hairC = spec.hair ?? 0x1a1208;
     const colors = new Array(SLOTS);
     colors[S.skin] = lin(skinC);
@@ -499,6 +624,7 @@ export function createHuman(spec = {}) {
     colors[S.metal] = lin(o.extra === "badge" ? 0xc9a227 : 0x8a8478);
     colors[S.brow] = shade(hairC, 0.8);
     colors[S.lining] = shade(o.top, 0.55);
+    colors[S.pupil] = lin(0x050404);
     const glow = outfitName === "raver" || outfitName === "dj" ? 0.6 : 0;
 
     const root = new THREE.Group();
@@ -551,6 +677,10 @@ export function createHuman(spec = {}) {
 
     const scale = spec.scale || 1;
     root.scale.setScalar(scale);
+    const build = spec.build ?? (female ? 0.94 + seed * 0.1 : 0.94 + seed * 0.16);
+    b.spine.scale.set(build, 1, build);
+    b.head.scale.set(1 / build, 1, 1 / build);
+    for (const hip of [b.lHip, b.rHip]) hip.scale.set(0.96 + (build - 1) * 0.6, 1, 0.96 + (build - 1) * 0.6);
     root.userData.joints = { hips: b.hips, spine: b.spine, head: b.head, lUpper: b.lUpper, rUpper: b.rUpper, lFore: b.lFore, rFore: b.rFore, lThigh: b.lThigh, rThigh: b.rThigh, lShin: b.lShin, rShin: b.rShin, lHand: b.lHand, rHand: b.rHand };
     root.userData.eyelids = [b.eyeL, b.eyeR];
     root.userData.body = mesh;

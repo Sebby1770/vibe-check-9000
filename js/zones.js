@@ -263,6 +263,11 @@ export function buildColliders(interiorBoxes = []) {
     wall(boxes, -16.4, -13.55, -8.5, 8.5, -1, 2.9).sightMaxY = 1.2;
     wall(boxes, -8.95, -7.45, 10.0, 11.15, -1, 2.5);
     wall(boxes, 7.45, 8.85, 10.15, 10.75, -1, 2.2);
+    // The velvet rope along the club facade keeps the queue in line (low enough to see over).
+    wall(boxes, -10.42, -2.18, 14.37, 14.53, -1, 1.9).sightMaxY = 1.05;
+    // Host stand and the palms either side of the front door.
+    wall(boxes, 2.55, 3.25, 10.45, 10.95, -1, 1.9).sightMaxY = 1.15;
+    for (const x of [-2.4, 2.4]) wall(boxes, x - 0.34, x + 0.34, 11.41, 12.09, -1, 1.9).sightMaxY = 0.7;
 
     // Atrium railings (second floor) — full rectangle
     wall(boxes, -7.7, 7.7, 5.28, 5.78, 4.2, 5.75);

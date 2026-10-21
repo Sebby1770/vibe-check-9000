@@ -168,6 +168,11 @@ export function buildOpenWorld(scene) {
         trainBody: new THREE.MeshStandardMaterial({ color: 0x4a5a3a, roughness: 0.6, metalness: 0.3 }),
         trainGlow: new THREE.MeshStandardMaterial({ color: 0xfff0c0, emissive: 0xffe0a0, emissiveIntensity: 1.4 }),
         seam: new THREE.MeshStandardMaterial({ color: 0x9adfff, emissive: 0x62d8ff, emissiveIntensity: 2.2 }),
+        doorWood: new THREE.MeshStandardMaterial({ color: 0x3a2418, roughness: 0.45 }),
+        doorGlass: new THREE.MeshStandardMaterial({ color: 0x3a3428, emissive: 0xffc27a, emissiveIntensity: 0.55, roughness: 0.15 }),
+        brass: new THREE.MeshStandardMaterial({ color: 0xc9a24a, roughness: 0.3, metalness: 0.9 }),
+        awning: new THREE.MeshStandardMaterial({ color: 0x23402e, roughness: 0.8 }),
+        rollup: new THREE.MeshStandardMaterial({ color: 0x5e5448, roughness: 0.6, metalness: 0.45 }),
     };
     const facades = {};
     for (const style of Object.keys(FACADES)) for (const v of [0, 1]) facades[`${style}${v}`] = facadeMaterial(style, v);
@@ -225,6 +230,43 @@ export function buildOpenWorld(scene) {
         }
     }
 
+    // --- a real front door on every building, on the face that looks onto its street: a stone portal with
+    // glazed double doors and a lit transom (with a canopy in Belmont), or a steel roll-up door and a side door
+    // on the waterfront warehouses.
+    function entrance(b, baseH) {
+        const f = streetFace(b), half = f.nx ? b.w / 2 : b.d / 2, face = half + (baseH ? 0.1 : 0);
+        const cx = b.x + f.nx * face, cz = b.z + f.nz * face;
+        const at = (along, out) => [cx + (f.nx ? 0 : along) + f.nx * out, cz + (f.nx ? along : 0) + f.nz * out];
+        const S = (a, depth, h) => (f.nx ? [depth, h, a] : [a, h, depth]);
+        const put = (mat, along, out, y, a, depth, h) => { const [x, z] = at(along, out); box(mat, x, y, z, ...S(a, depth, h)); };
+        if (b.district === "waterfront") {
+            put(M.iron, 0, 0.06, 2.1, 4.6, 0.12, 4.3);
+            put(M.rollup, 0, 0.1, 2.0, 4.2, 0.08, 4.0);
+            for (let k = 0; k < 9; k++) put(M.iron, 0, 0.15, 0.3 + k * 0.42, 4.2, 0.02, 0.04);
+            put(M.doorWood, 3.2, 0.05, 1.1, 1.0, 0.08, 2.2);
+            put(M.iron, 3.2, 0.06, 2.3, 1.2, 0.1, 0.12);
+            put(M.glow, 3.2, 0.2, 2.65, 0.25, 0.25, 0.2);
+            return;
+        }
+        put(M.stone, 0, 0.32, 0.08, 3.1, 0.64, 0.16);
+        for (const s of [-1, 1]) {
+            put(M.stone, s * 1.22, 0.13, 1.72, 0.38, 0.26, 3.44);
+            put(M.stone, s * 1.22, 0.16, 0.2, 0.46, 0.32, 0.4);
+        }
+        put(M.stone, 0, 0.15, 3.6, 3.0, 0.3, 0.34);
+        put(M.stone, 0, 0.2, 3.82, 3.3, 0.4, 0.12);
+        put(M.doorWood, 0, 0.02, 1.47, 2.06, 0.08, 2.94);
+        for (const s of [-1, 1]) put(M.doorGlass, s * 0.5, 0.03, 1.85, 0.62, 0.08, 1.4);
+        put(M.doorWood, 0, 0.04, 1.47, 0.06, 0.09, 2.94);
+        put(M.doorGlass, 0, 0.03, 3.17, 2.06, 0.08, 0.24);
+        for (const s of [-1, 1]) put(M.brass, s * 0.16, 0.08, 1.15, 0.04, 0.05, 0.34);
+        if (b.district === "belmont") {
+            put(M.awning, 0, 1.7, 3.42, 2.7, 3.1, 0.12);
+            put(M.brass, 0, 3.22, 3.42, 2.74, 0.06, 0.16);
+            for (const s of [-1, 1]) put(M.brass, s * 1.3, 3.15, 1.7, 0.06, 0.06, 3.42);
+        } else put(M.glow, 0, 0.32, 3.3, 0.22, 0.22, 0.2);
+    }
+
     // --- procedural buildings
     const list = buildings();
     for (const b of list) {
@@ -237,6 +279,7 @@ export function buildOpenWorld(scene) {
             box(fac, b.x, top + (b.h - top) / 2, b.z, b.w * 0.7, b.h - top, b.d * 0.7);
             box(M.stone, b.x, top + 0.3, b.z, b.w + 0.5, 0.6, b.d + 0.5);
         }
+        entrance(b, baseH);
         if (b.cornice) box(M.stone, b.x, b.h + 0.35, b.z, (b.setback ? b.w * 0.7 : b.w) + 0.8, 0.7, (b.setback ? b.d * 0.7 : b.d) + 0.8);
         box(M.roof, b.x, b.h + (b.cornice ? 0.72 : 0.05), b.z, (b.setback ? b.w * 0.7 : b.w) - 0.2, 0.1, (b.setback ? b.d * 0.7 : b.d) - 0.2);
         if (b.tower) {
