@@ -19,7 +19,8 @@ export function doorways() {
     { id: "club-back", x: 0, z: -16.55, w: 2.8, h: 3.1, out: Math.PI, style: "steel", swing: "out" },
     { id: "diner", x: -27, z: DINER.maxZ + 0.05, w: 2.8, h: 3.0, out: 0, style: "diner" },
     { id: "hotel", x: 25, z: HOTEL.maxZ + 0.05, w: 2.8, h: 3.0, out: 0, style: "revolving" },
-    ...SHOPS.map((s) => ({ id: s.id, x: s.doorX, z: s.minZ, w: 2.5, h: 2.55, out: Math.PI, style: "shop", tone: s.id })),
+    // Midtown Gin's left leaf would sweep over the display just inside, so it opens a little less.
+    ...SHOPS.map((s) => ({ id: s.id, x: s.doorX, z: s.minZ, w: 2.5, h: 2.55, out: Math.PI, style: "shop", tone: s.id, ...(s.id === "liquor" ? { maxOpen: 1.05 } : {}) })),
     ...DISTRICT_BUILDINGS.filter((b) => b.id).map((b) => ({ id: b.id, x: b.x, z: b.z - b.d / 2 + 0.09, w: 2.6, h: 3.2, out: Math.PI, style: "shop", tone: b.id })),
     ...HOMES.filter((h) => h.floorY === 0).map((h) => ({ id: `entry-${h.id}`, x: h.entryX, z: 31.8, w: 2.2, h: 3.0, out: Math.PI, style: "home", color: h.color })),
     { id: "meridian", x: SITES.meridian.x - SITES.meridian.w / 2 + 0.2, z: (SITES.meridian.door.z0 + SITES.meridian.door.z1) / 2, w: SITES.meridian.door.z1 - SITES.meridian.door.z0, h: SITES.meridian.door.h, out: -Math.PI / 2, style: "sliding" },
@@ -179,7 +180,7 @@ export function buildDoors(scene) {
         if (d.wings) d.wings.rotation.y += dt * (0.25 + d.open * 1.8);
         for (const L of d.leaves) {
           if (L.slide) L.pivot.position.x = L.base + L.slide * d.open * (d.w / 2 - 0.2);
-          else L.pivot.rotation.y = L.sign * L.inward * d.open * (openAngle[d.style] || 1.45);
+          else L.pivot.rotation.y = L.sign * L.inward * d.open * (d.maxOpen || openAngle[d.style] || 1.45);
         }
       }
     },

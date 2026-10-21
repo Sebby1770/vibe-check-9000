@@ -17,7 +17,7 @@ export const STORY_PLACES = {
     pierGate: { x: 296, z: 22.8, y: 0, name: "Pier 47 gate" },
     warehouse: { x: 338, z: -7.5, y: 0, name: "The Meridian warehouse" },
     pierEnd: { x: 500, z: 22, y: 0, name: "The end of Pier 47" },
-    limo: { x: 62, z: 152.6, y: 0, name: "Kessler's limousine, outside the Belmont Plaza" },
+    limo: { x: 62, z: 153.9, y: 0, name: "Kessler's limousine, outside the Belmont Plaza" }, // at the kerb, clear of the 50th Street lanes
     hatch: { x: 36.9, z: -0.6, y: 4.4, name: "The Astoria roof hatch" },
     platform: { x: -14, z: 29, y: -5.2, name: "The 47th Street platform" },
 };

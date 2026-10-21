@@ -852,8 +852,12 @@ export function animateHuman(obj, t, ctx = {}) {
         j.hips.rotation.set(0, 0, 0); j.spine.rotation.set(0, 0, 0); j.head.rotation.set(0, 0, 0);
         if (!obj.userData.saxPose) {
             // Two-bone reach: fingers rest on the key stack, with elbows bent out.
-            const pose = (upper, target, side) => {
-                const shoulder = upper.parent.position, delta = target.clone().sub(shoulder), distance = delta.length();
+            // Targets are on the sax, in the spine's space; the arm works in the clavicle's, which undoes the
+            // spine's build scale. Measured from the shoulder, a spine-space offset is scaled by the build.
+            const pose = (upper, rawTarget, side) => {
+                const shoulder = upper.parent.position, build = upper.parent.parent.scale;
+                const target = rawTarget.clone().sub(shoulder).multiply(build).add(shoulder);
+                const delta = target.clone().sub(shoulder), distance = delta.length();
                 const direction = delta.clone().normalize(), bend = new THREE.Vector3(side, -.4, 0);
                 bend.addScaledVector(direction, -bend.dot(direction)).normalize();
                 const along = (.28 ** 2 - .26 ** 2 + distance ** 2) / (2 * distance);

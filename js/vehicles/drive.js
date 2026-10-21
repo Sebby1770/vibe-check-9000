@@ -14,7 +14,7 @@ const PARKED = [
     [-120, -114.2, 0, "police"], [150, -174.2, Math.PI, "sedan", 0x2a3a5a],
 ];
 
-export function createDriving({ scene, camera, colliders, city, audio, hud }) {
+export function createDriving({ scene, camera, colliders, city, audio, hud, avenues = null }) {
     const cars = [...(city.parked || [])];
     for (const [x, z, yaw, kind, color] of PARKED) {
         const car = buildVehicle(kind, { color, driver: false, seed: Math.round(Math.abs(x)) });
@@ -79,6 +79,7 @@ export function createDriving({ scene, camera, colliders, city, audio, hud }) {
             const B = colliders.bounds;
             if (px < B.minX || px > B.maxX || pz < B.minZ || pz > B.maxZ) return true;
             for (const t of city.traffic) if (Math.abs(t.position.x - px) < (t.userData.spec?.length || 5) / 2 + 0.7 && Math.abs(t.position.z - pz) < 1.9) return true;
+            if (avenues?.blocks(px, pz, r)) return true;
         }
         return false;
     }

@@ -4,6 +4,17 @@ All notable changes to VIBE CHECK 9000™ are documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
+## [34.0.0] - 2026-10-22
+
+### A living city
+
+- **Avenue traffic** (`js/openworld/avenue-sim.js`, `avenues.js`): every street except 47th Street (which keeps its own fleet) runs a car-following simulation in both directions: 16 roads (collinear pieces merged), 184 cars. Signals at every junction alternate between crosstown streets and the avenues with an all-red between, and 47th Street's fleet obeys the same signals where it crosses them. Cars stop for you on foot and for the car you're driving, knock you over if you walk into one, and block your car. All cars are simulated; a pool of 26 period models is lent to the nearest. Kessler's limousine moves to the 50th Street kerb, clear of the lanes.
+- **Fix: traffic could drive into the car in front.** In `stepTraffic`, a stop line nearer than the car ahead replaced the distance to that car instead of taking the closer of the two.
+- **Facade kit** (`js/facade-kit.js`): stone surrounds with recessed panes, sills and keystone lintels on all 10,973 windows of the original 47th Street towers, and corbels under every cornice, in two instanced draws. Anything behind a sign is skipped; the Low tier goes without it.
+- **Pedestrians**: about one walker per 28 m of open-city street (over two hundred), drawn out to 110 m, and nine groups of people talking at the landmarks.
+- **From the v33 review**: Midtown Gin's left door opens less so it clears the display inside; no bar stool where Ion stands; the club queue is solid, so you walk round it.
+- Tests: `tests/avenues.test.js` (merging, junctions, signals, two minutes of traffic with no collisions, red lights, stopping for you, knockback, 47th Street junction stops).
+
 ## [33.0.0] - 2026-10-21
 
 ### Velvet Tuesday, doors everywhere, and people who look like people

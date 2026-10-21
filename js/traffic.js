@@ -50,7 +50,8 @@ export function stepTraffic(cars, dt, { stops = [], span = [-96, 184] } = {}) {
     for (const stop of stops) {
       if (stop.dir !== car.dir) continue;
       const d = (stop.x - car.x) * car.dir;
-      if (d > 0.5 && d - 2.6 < ahead) ahead = d - 2.6 + MIN_GAP;
+      // A stop line counts like a car whose centre is 2.6 m past it, unless a real car is already closer.
+      if (d > 0.5) ahead = Math.min(ahead, d - 2.6 + MIN_GAP);
     }
     const want = SPEED * Math.max(0, Math.min(1, (ahead - MIN_GAP) / BRAKE_DIST));
     const v0 = car.v ?? SPEED;
