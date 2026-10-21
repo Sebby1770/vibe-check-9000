@@ -4,6 +4,7 @@ import * as THREE from "three";
 import { addBox, unitBox, neonCanvas } from "./kit.js";
 import { SUBWAY_Y, PLATFORM, SUB_STAIRS } from "./zones.js";
 import { randomPedestrian } from "./human.js";
+import { decorateSubway } from "./subway-deco.js";
 
 export function buildSubway(root, scene, mats) {
     const y = SUBWAY_Y;
@@ -63,6 +64,8 @@ export function buildSubway(root, scene, mats) {
     addBox(root, unitBox, mats.wood, -8.4, y + 0.55, 28.15, 2.4, 1.1, 1.1);
     addBox(root, unitBox, mats.cream, -8.4, y + 1.12, 28.15, 2.2, 0.06, 0.95);
     addBox(root, unitBox, mats.neonAmber, -8.4, y + 1.7, 28.7, 1.6, 0.35, 0.04);
+
+    decorateSubway(root);
 
     const lamp = new THREE.PointLight(0xffc078, 28, 16, 2);
     lamp.position.set(cx, y + 2.1, 28.4);

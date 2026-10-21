@@ -4,6 +4,7 @@ import { SECOND_Y, ATRIUM, STAIRS, FIRE_ESC } from "./zones.js";
 import { addBox, unitBox, neonCanvas } from "./kit.js";
 import { woodTex, plasterTex, carpetTex, damaskTex } from "./textures.js";
 import { createHuman, createCat, randomRaver, randomLounge } from "./human.js";
+import { decorateClub, decorateLounge } from "./club-deco.js";
 
 const FLOOR_N = 16;
 const FLOOR_COUNT = FLOOR_N * FLOOR_N;
@@ -91,31 +92,17 @@ export function buildClub(scene, env) {
     addBox(world, unitBox, emissiveLime, 0, 3.18, -16.48, 3.0, 0.08, 0.08);
 
     const exitSign = new THREE.Mesh(new THREE.PlaneGeometry(1.4, 0.35), new THREE.MeshBasicMaterial({ map: neonCanvas("EXIT", "#39FF14", 512, 128, "#051005") }));
-    // Lightbox on the back wall beside the LED wall (the wall covers the door head), under the rear mezzanine.
-    addBox(world, unitBox, metal, -5.4, 3.55, -16.385, 1.56, 0.5, 0.05);
-    exitSign.position.set(-5.4, 3.55, -16.348);
+    // Lightbox on the back wall, clear of the proscenium curtains beside the LED wall, under the rear mezzanine.
+    addBox(world, unitBox, metal, -7.4, 3.55, -16.385, 1.56, 0.5, 0.05);
+    exitSign.position.set(-7.4, 3.55, -16.348);
     scene.add(exitSign);
 
-    // Columns
-    for (const [x, z] of [[-16.1, -13], [16.1, -13], [-16.1, 12], [16.1, 12], [-16.1, 0], [16.1, 0]]) {
-        addBox(world, unitBox, metalDark, x, 4.1, z, 0.5, 8.3, 0.5);
-    }
-
-    // Truss + ceiling LEDs
-    for (let i = -3; i <= 3; i++) addBox(world, unitBox, metal, 0, 4.05, i * 3.2, 32, 0.1, 0.16);
-    for (let i = -2; i <= 3; i++) {
-        addBox(world, unitBox, i % 2 ? emissiveMag : emissiveCyan, 0, 4.12, i * 3.4, 16, 0.04, 0.08);
-    }
-
+    // Pilasters, the coffered ceiling and the halo rig come from decorateClub (club-deco.js).
     const hangLeds = [];
     const hangColors = [0xff00aa, 0x00fff7, 0x39ff14, 0xffb703, 0xff2ea6, 0x66ffff, 0xccff00, 0xff66cc];
     for (let i = 0; i < 8; i++) {
-        const x = (i - 3.5) * 1.85;
-        const z = i % 2 === 0 ? -3.1 : 2.6;
-        addBox(world, unitBox, metalDark, x, 3.95, z, 0.05, 0.28, 0.05);
-        const mat = new THREE.MeshBasicMaterial({ color: hangColors[i] });
-        addBox(world, unitBox, mat, x, 3.78, z, 1.35, 0.07, 0.16);
-        hangLeds.push(mat);
+        // Each pendant on the halo rig carries this colour as a glowing band.
+        hangLeds.push(new THREE.MeshBasicMaterial({ color: hangColors[i] }));
     }
 
     // LED dance floor
@@ -137,21 +124,15 @@ export function buildClub(scene, env) {
     scene.add(floor);
     addBox(world, unitBox, metal, 0, 0.01, 0, 16.4, 0.04, 16.4);
 
-    // DJ stage
-    addBox(world, unitBox, metalDark, 0, 0.3, -12, 10, 0.6, 4.2);
-    addBox(world, unitBox, metal, 0, 0.64, -12.1, 9.6, 0.08, 3.8);
-    addBox(world, unitBox, wood, 0, 1.08, -12.35, 3.4, 0.1, 1.35);
-    addBox(world, unitBox, metal, -0.85, 1.2, -12.2, 0.7, 0.12, 0.55);
-    addBox(world, unitBox, metal, 0.85, 1.2, -12.2, 0.7, 0.12, 0.55);
-    addBox(world, unitBox, emissiveCyan, 0, 1.24, -12.55, 0.42, 0.01, 0.28);
-    function speakerStack(x) {
-        addBox(world, unitBox, metalDark, x, 0.7, -12.35, 1.1, 1.4, 1.1);
-        addBox(world, unitBox, metal, x, 1.7, -12.35, 1.25, 0.7, 1.2);
-        addBox(world, unitBox, emissiveMag, x, 1.7, -11.72, 0.7, 0.08, 0.04);
+    // DJ stage: the bandstand, console, proscenium and speakers come from decorateClub. The decks and the
+    // visor-era mixer screen sit on the console.
+    for (const x of [-0.85, 0.85]) {
+        const platter = new THREE.Mesh(new THREE.CylinderGeometry(0.19, 0.19, 0.03, 28), metalDark);
+        platter.position.set(x, 1.38, -12.25);
+        world.add(platter);
+        addBox(world, unitBox, metal, x + 0.16, 1.41, -12.38, 0.02, 0.02, 0.26).rotation.y = 0.4;
     }
-    speakerStack(-5.4);
-    speakerStack(5.4);
-    addBox(world, unitBox, metal, 0, 1.15, -10.05, 10.1, 0.06, 0.08);
+    addBox(world, unitBox, emissiveCyan, 0, 1.37, -12.3, 0.42, 0.01, 0.28);
 
     const ledCanvas = document.createElement("canvas");
     ledCanvas.width = 512;
@@ -222,16 +203,27 @@ export function buildClub(scene, env) {
         lasers.push({ pivot, mat, phase: i * 0.9 });
     }
 
-    const washGeo = new THREE.PlaneGeometry(4.8, 0.18);
+    // Uplight fans washing up the fluted walls between the pilasters (clear of the backbar and the stairs).
+    const fanCanvas = document.createElement("canvas");
+    fanCanvas.width = 64; fanCanvas.height = 128;
+    const fg = fanCanvas.getContext("2d");
+    const fade = fg.createLinearGradient(0, 128, 0, 0);
+    fade.addColorStop(0, "rgba(255,255,255,0.95)"); fade.addColorStop(0.45, "rgba(255,255,255,0.35)"); fade.addColorStop(1, "rgba(255,255,255,0)");
+    fg.fillStyle = fade; fg.fillRect(0, 0, 64, 128);
+    const side = fg.createLinearGradient(0, 0, 64, 0);
+    side.addColorStop(0, "rgba(0,0,0,1)"); side.addColorStop(0.5, "rgba(0,0,0,0)"); side.addColorStop(1, "rgba(0,0,0,1)");
+    fg.globalCompositeOperation = "destination-out"; fg.fillStyle = side; fg.fillRect(0, 0, 64, 128);
+    const fanTex = new THREE.CanvasTexture(fanCanvas);
+    const washGeo = new THREE.PlaneGeometry(1.7, 3.4);
     const washes = [];
-    for (let i = 0; i < 8; i++) {
+    for (const [x, z] of [[-16.36, -15], [-16.36, -10.6], [-16.36, 10.1], [16.36, -15], [16.36, -10.6], [16.36, -6.6], [16.36, -3.1]]) {
         const mat = new THREE.MeshBasicMaterial({
-            color: i % 2 ? 0xff00aa : 0x00fff7, transparent: true, opacity: 0.55,
+            color: washes.length % 2 ? 0xff00aa : 0x00fff7, map: fanTex, transparent: true, opacity: 0.55,
             blending: THREE.AdditiveBlending, depthWrite: false,
         });
         const w = new THREE.Mesh(washGeo, mat);
-        w.position.set(i < 4 ? -16.35 : 16.35, 1.8 + (i % 4) * 0.7, -6 + (i % 4) * 4);
-        w.rotation.y = i < 4 ? Math.PI / 2 : -Math.PI / 2;
+        w.position.set(x, 1.75, z);
+        w.rotation.y = x < 0 ? Math.PI / 2 : -Math.PI / 2;
         scene.add(w);
         washes.push(mat);
     }
@@ -257,59 +249,13 @@ export function buildClub(scene, env) {
     }));
     scene.add(particles);
 
-    // Bar
-    addBox(world, unitBox, wood, -15, 0.55, 0, 1.1, 1.1, 16);
-    addBox(world, unitBox, metalDark, -15.7, 1.6, 0, 0.2, 2.2, 16);
-    addBox(world, unitBox, emissiveMag, -15, 0.06, 0, 1.0, 0.04, 15.6);
-    addBox(world, unitBox, emissiveCyan, -15.55, 1.15, 0, 0.06, 0.05, 15.4);
-    const bottleGeo = new THREE.CylinderGeometry(0.05, 0.06, 0.32, 6);
-    const bottleMat = new THREE.MeshStandardMaterial({ color: 0x1a3322, roughness: 0.3, metalness: 0.4, transparent: true, opacity: 0.85 });
-    const bottles = new THREE.InstancedMesh(bottleGeo, bottleMat, 40);
-    for (let i = 0; i < 40; i++) {
-        _dummy.position.set(-15.55 - (i % 2) * 0.12, 1.35 + (i % 5) * 0.22, -7.4 + i * 0.38);
-        _dummy.scale.set(1, 0.75 + (i % 4) * 0.22, 1);
-        _dummy.rotation.set(0, 0, 0);
-        _dummy.updateMatrix();
-        bottles.setMatrixAt(i, _dummy.matrix);
-    }
-    scene.add(bottles);
-    addBox(world, unitBox, metal, -15.55, 1.85, 0, 0.08, 0.04, 15.2);
-    addBox(world, unitBox, metal, -15.55, 2.25, 0, 0.08, 0.04, 15.2);
-    const glassGeo = new THREE.CylinderGeometry(0.04, 0.035, 0.12, 8);
-    const glassMat = new THREE.MeshStandardMaterial({ color: 0x88ccee, roughness: 0.1, metalness: 0.2, transparent: true, opacity: 0.45 });
-    const glasses = new THREE.InstancedMesh(glassGeo, glassMat, 10);
-    for (let i = 0; i < 10; i++) {
-        _dummy.position.set(-14.55, 1.16, -6.5 + i * 1.4);
-        _dummy.scale.set(1, 1, 1);
-        _dummy.rotation.set(0, 0, 0);
-        _dummy.updateMatrix();
-        glasses.setMatrixAt(i, _dummy.matrix);
-    }
-    scene.add(glasses);
-    const stoolGeo = new THREE.CylinderGeometry(0.2, 0.17, 0.07, 10);
-    for (let i = 0; i < 7; i++) {
-        const z = i === 6 ? -8.35 : -6 + i * 2.2;
-        addBox(world, unitBox, metalDark, -14.15, 0.34, z, 0.08, 0.68, 0.08);
-        const s = new THREE.Mesh(stoolGeo, metal);
-        s.position.set(-14.15, 0.7, z);
-        scene.add(s);
-        addBox(world, unitBox, metalDark, -14.15, 0.92, z + 0.14, 0.22, 0.32, 0.06);
-    }
-
-    // Photo booth + coat rumor
-    addBox(world, unitBox, metalDark, -8.2, 1.15, 10.55, 1.35, 2.3, 1.1);
-    addBox(world, unitBox, emissiveMag, -8.2, 1.35, 10.02, 1.05, 1.4, 0.04);
-    addBox(world, unitBox, emissiveCyan, -8.2, 2.15, 10.02, 0.7, 0.12, 0.04);
-    addBox(world, unitBox, wood, 8.15, 0.95, 10.45, 1.2, 1.9, 0.35);
-    addBox(world, unitBox, metal, 8.15, 1.85, 10.45, 1.15, 0.06, 0.08);
-    addBox(world, unitBox, metalDark, 7.7, 1.35, 10.55, 0.08, 0.7, 0.08);
-    addBox(world, unitBox, metalDark, 8.6, 1.35, 10.55, 0.08, 0.7, 0.08);
-
-    // Ground-floor VIP couches
-    for (const [x, z, rot] of [[13.6, -4.2, -0.4], [13.6, 1.8, 0.25], [13.2, 6.6, 0.15]]) {
-        addBox(world, unitBox, wood, x, 0.32, z, 2.0, 0.28, 0.78);
-        addBox(world, unitBox, metalDark, x, 0.58, z - 0.28, 2.0, 0.48, 0.18);
-        addBox(world, unitBox, emissiveAmber, x, 0.78, z + 0.1, 0.12, 0.04, 0.12);
+    // The bar, backbar, stools, booths, photo booth and coat check come from decorateClub.
+    const coupe = new THREE.LatheGeometry([[0, 0], [0.035, 0.005], [0.006, 0.02], [0.006, 0.09], [0.05, 0.1], [0.055, 0.14]].map(([x, y]) => new THREE.Vector2(x, y)), 14);
+    const coupeMat = new THREE.MeshStandardMaterial({ color: 0xdfeaf0, roughness: 0.05, metalness: 0.1, transparent: true, opacity: 0.5 });
+    for (const z of [-6.4, -4.4, -2.1, 1.1, 3.3, 5.6, 6.9]) {
+        const c = new THREE.Mesh(coupe, coupeMat);
+        c.position.set(-14.62, 1.112, z);
+        world.add(c);
     }
 
     // Signs
@@ -393,9 +339,7 @@ export function buildClub(scene, env) {
 
     addBox(world, unitBox, wood, 0, fy + 0.22, -13.2, 7.2, 0.44, 2.6);
     addBox(world, unitBox, brass, 0, fy + 1.15, -14.45, 6.2, 0.06, 0.08);
-    const curtain = addBox(world, unitBox, new THREE.MeshStandardMaterial({ color: 0x5a1020, roughness: 0.8 }), 0, fy + 1.7, -14.58, 7.4, 2.4, 0.08);
-    curtain.material.emissive = new THREE.Color(0x300010);
-    curtain.material.emissiveIntensity = 0.28;
+    addBox(world, unitBox, new THREE.MeshStandardMaterial({ color: 0x14060a, roughness: 0.9 }), 0, fy + 1.7, -14.62, 7.4, 2.4, 0.04);
     addBox(world, unitBox, wood, -1.7, fy + 0.55, -13.4, 1.7, 0.55, 0.85);
     addBox(world, unitBox, brass, -1.7, fy + 0.86, -13.4, 1.5, 0.04, 0.7);
     addBox(world, unitBox, new THREE.MeshBasicMaterial({ color: 0xf2eee0 }), -1.7, fy + 0.84, -13.15, 1.35, 0.02, 0.18);
@@ -404,20 +348,7 @@ export function buildClub(scene, env) {
     addBox(world, unitBox, metal, 0.15, fy + 1.35, -12.55, 0.04, 1.1, 0.04);
     addBox(world, unitBox, metal, 0.15, fy + 1.95, -12.4, 0.08, 0.06, 0.12);
 
-    function chandelier(x, z) {
-        addBox(world, unitBox, brass, x, fy + 3.55, z, 0.06, 0.55, 0.06);
-        addBox(world, unitBox, gold, x, fy + 3.22, z, 0.95, 0.07, 0.95);
-        addBox(world, unitBox, brass, x, fy + 3.05, z, 0.55, 0.05, 0.55);
-        for (const [dx, dz] of [[0.34, 0.34], [-0.34, 0.34], [0.34, -0.34], [-0.34, -0.34], [0.46, 0], [-0.46, 0], [0, 0.46], [0, -0.46]]) {
-            addBox(world, unitBox, emissiveAmber, x + dx, fy + 2.95, z + dz, 0.1, 0.16, 0.1);
-        }
-    }
-    chandelier(-11.2, 6.4);
-    chandelier(10.6, 6.2);
-    chandelier(-10.8, -4.5);
-    chandelier(10.4, -5.2);
-    chandelier(-11.0, 1.0);
-    chandelier(10.5, 1.2);
+    // The lounge chandeliers, tables, chairs and stage shell come from decorateLounge (club-deco.js).
 
     for (let i = -3; i <= 3; i++) {
         addBox(world, unitBox, gold, 0, 8.05, i * 3.4, 32, 0.08, 0.16);
@@ -442,18 +373,6 @@ export function buildClub(scene, env) {
         [9.6, -4.2], [11.5, -6.4],
         [-12.0, 1.2],
     ];
-    for (const [x, z] of loungeTables) {
-        addBox(world, unitBox, marble, x, fy + 0.4, z, 1.05, 0.07, 1.05);
-        addBox(world, unitBox, brass, x, fy + 0.2, z, 0.09, 0.38, 0.09);
-        addBox(world, unitBox, new THREE.MeshStandardMaterial({ color: 0xf4eee0, roughness: 0.85 }), x, fy + 0.445, z, 1.0, 0.02, 1.0);
-        addBox(world, unitBox, emissiveAmber, x, fy + 0.56, z, 0.07, 0.18, 0.07);
-        addBox(world, unitBox, gold, x, fy + 0.66, z, 0.04, 0.04, 0.04);
-        for (const sx of [-0.72, 0.72]) {
-            addBox(world, unitBox, velvet, x + sx, fy + 0.24, z, 0.5, 0.12, 0.48);
-            addBox(world, unitBox, velvet, x + sx, fy + 0.5, z + (sx > 0 ? 0.16 : -0.16), 0.5, 0.4, 0.12);
-        }
-    }
-
     addBox(world, unitBox, velvet, 10.6, fy + 0.28, 8.55, 3.6, 0.28, 1.15);
     addBox(world, unitBox, velvet, 10.6, fy + 0.48, 9.0, 3.6, 0.42, 0.28);
     addBox(world, unitBox, gold, 10.6, fy + 0.12, 8.55, 3.7, 0.05, 1.25);
@@ -534,7 +453,7 @@ export function buildClub(scene, env) {
                 color: npc.color,
                 accent: npc.color,
                 anim: npc.anim,
-                scale: npc.id === "rexa" ? 1.06 : 1,
+                scale: npc.scale || (npc.id === "rexa" ? 1.06 : 1),
             });
         }
         obj.position.set(npc.x, npc.y || 0, npc.z);
@@ -625,6 +544,9 @@ export function buildClub(scene, env) {
         loungeCrowd.push(placePerson(randomLounge(2.1 + Math.abs(z) * 0.02, { anim: "idle", outfit: "clerk" }), x, z, fy, yaw, "idle"));
     }
 
+    decorateClub(world, scene, env, { hangLeds });
+    decorateLounge(world, env, { tables: loungeTables });
+
     const lights = {
         hemi: null,
         spot: null,
@@ -643,7 +565,7 @@ export function buildClub(scene, env) {
     const boothFill = new THREE.PointLight(0x66ffff, 55, 14, 2);
     boothFill.position.set(0, 2.8, -12);
     scene.add(boothFill);
-    const barLight = new THREE.PointLight(0xff2299, 70, 14, 2);
+    const barLight = new THREE.PointLight(0xffaa66, 70, 14, 2); // warm, off the onyx backbar
     barLight.position.set(-14.5, 1.4, 0);
     scene.add(barLight);
     const loungeLight = new THREE.PointLight(0xe0b25a, 55, 18, 2);

@@ -608,6 +608,45 @@ export const NPCS = [
         },
     },
     {
+        id: "bruno",
+        name: "BRUNO",
+        role: "THE DOOR",
+        x: -1.95,
+        z: 13.3,
+        y: 0,
+        facing: 0.2,
+        scale: 1.12,
+        color: "#e0b25a",
+        outfit: "bouncer",
+        skin: 0x8d5524,
+        hair: 0x120c08,
+        hairStyle: "short",
+        anim: "idle",
+        greeting: "List's tight tonight.",
+        nodes: {
+            start: {
+                say: "Evening. Velvet Tuesday, REXA's set, and a line to Sixth Avenue if you let it. Nobody passes the rope without a nod from me.",
+                choices: [
+                    { text: "I'm with REXA.", next: "rexa" },
+                    { text: "What's everyone waiting for?", next: "line" },
+                    { text: "Just admiring the canopy.", next: null },
+                ],
+            },
+            rexa: {
+                say: "Course you are. A visor like that, you're either with REXA or you're the reason she's nervous. Go on in, mind the step.",
+                choices: [{ text: "Thanks, Bruno.", next: null }],
+            },
+            line: {
+                say: "Half of them want to see the floor that lights up. The other half want to be seen seeing it. Me, I like the coats. Nobody dresses like this in a hurry.",
+                choices: [{ text: "And the nod is free?", next: "nod" }],
+            },
+            nod: {
+                say: "The nod's free. The look on my face is extra.",
+                choices: [{ text: "Worth every penny.", next: null }],
+            },
+        },
+    },
+    {
         id: "harold",
         name: "HAROLD",
         role: "NEWSSTAND",

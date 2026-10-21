@@ -1,0 +1,188 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+    <title>VIBE CHECK 9000 — a night in Midtown, 1954</title>
+    <meta name="description" content="A free first-person game in your browser. November 12, 1954: a club on 47th Street, an open Manhattan to walk, drive and ride, and the last uptown train at 12:04.">
+    <meta name="theme-color" content="#07060c">
+    <meta property="og:title" content="VIBE CHECK 9000">
+    <meta property="og:description" content="A first-person night in Midtown Manhattan, November 12, 1954. Free in your browser.">
+    <meta property="og:type" content="website">
+    <meta property="og:image" content="img/hero.jpg">
+    <meta name="twitter:card" content="summary_large_image">
+    <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Crect width='64' height='64' rx='10' fill='%2307060c'/%3E%3Ctext x='32' y='44' font-size='34' text-anchor='middle' fill='%23f2a541' font-family='serif'%3E%E2%97%88%3C/text%3E%3C/svg%3E">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Big+Shoulders+Display:wght@700;900&family=Big+Shoulders+Text:wght@500;600;700&family=Newsreader:opsz,wght@6..72,400;6..72,500&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="site.css">
+    <script>
+        // v10 of the game registered a service worker that cached the old site; retire it for returning visitors.
+        if ("serviceWorker" in navigator) navigator.serviceWorker.getRegistrations().then((list) => list.forEach((r) => r.unregister())).catch(() => {});
+    </script>
+</head>
+<body>
+    <a class="skip" href="#play">Skip to the game</a>
+
+    <header class="hero">
+        <nav class="topbar" aria-label="Site">
+            <a class="wordmark" href="./">Vibe Check 9000</a>
+            <span class="topbar-links">
+                <a href="#how">How to play</a>
+                <a href="#new">What's new</a>
+                <a href="https://github.com/Sebby1770/vibe-check-9000">GitHub</a>
+            </span>
+        </nav>
+        <figure class="hero-still">
+            <img src="img/hero.jpg" alt="Inside Velvet Tuesday: a lit dance floor under a gilded ring of pendant lamps and a crystal chandelier, with a balcony above." width="1600" height="900">
+        </figure>
+        <div class="hero-copy">
+            <h1 class="board" aria-label="Vibe Check 9000">
+                <span class="row" aria-hidden="true">VIBE CHECK</span>
+                <span class="row amber" aria-hidden="true">9000</span>
+            </h1>
+            <p class="lede">A first-person night in Midtown Manhattan, November 12, 1954. You came through the DJ booth from 2026, and the last train home leaves at 12:04.</p>
+            <p class="actions" id="play">
+                <a class="button" href="play/">Enter the night</a>
+                <a class="quiet" href="#how">How to play</a>
+            </p>
+            <p class="small">Free in your browser. Nothing to install. Works best on a computer with a keyboard and mouse.</p>
+        </div>
+        <p class="departure" aria-label="The 12:04 uptown local, 47th Street">
+            <span class="row small-row" aria-hidden="true">12:04</span>
+            <span>Uptown local, 47th Street</span>
+        </p>
+    </header>
+
+    <main>
+        <section class="night" aria-labelledby="night-title">
+            <h2 id="night-title">Tonight's stops</h2>
+            <p class="intro">The night runs from doors at ten to the last uptown local. Follow the story, or ignore it and live in 1954 for a while.</p>
+            <ol class="stops">
+                <li class="stop">
+                    <span class="time" aria-label="10:00 PM"><span class="row small-row" aria-hidden="true">10:00</span></span>
+                    <div class="stop-text">
+                        <h3>Velvet Tuesday</h3>
+                        <p>The club on 47th Street: a lit glass dance floor, a mirrored onyx bar and REXA at the booth. Bruno decides who gets past the rope.</p>
+                    </div>
+                    <img src="img/door.jpg" alt="The queue outside Velvet Tuesday at night: a red carpet, a velvet rope and a bouncer by the porthole doors." loading="lazy" width="800" height="450">
+                </li>
+                <li class="stop">
+                    <span class="time" aria-label="10:30 PM"><span class="row small-row" aria-hidden="true">10:30</span></span>
+                    <div class="stop-text">
+                        <h3>Upstairs in the lounge</h3>
+                        <p>Crystal chandeliers, white tablecloths and Velma singing under a gilt sunburst. Somebody in this room has seen your visor before.</p>
+                    </div>
+                    <img src="img/lounge.jpg" alt="The supper-club lounge: round tables in white cloths, velvet tub chairs and crystal chandeliers." loading="lazy" width="800" height="450">
+                </li>
+                <li class="stop">
+                    <span class="time" aria-label="11:00 PM"><span class="row small-row" aria-hidden="true">11:00</span></span>
+                    <div class="stop-text">
+                        <h3>Dottie's and 47th Street</h3>
+                        <p>Pie and coffee under a pressed-tin ceiling, a paid shift if your wallet's light, and a row of shops across the street to wander into.</p>
+                    </div>
+                    <img src="img/diner.jpg" alt="Dottie's diner: a checkered floor, a long counter and a pressed-tin ceiling." loading="lazy" width="800" height="450">
+                </li>
+                <li class="stop">
+                    <span class="time" aria-label="11:20 PM"><span class="row small-row" aria-hidden="true">11:20</span></span>
+                    <div class="stop-text">
+                        <h3>Times Square</h3>
+                        <p>Tail a man in a grey hat crosstown through the lights. Stay close enough to follow and far enough that he never looks twice.</p>
+                    </div>
+                    <img src="img/times.jpg" alt="Times Square at night, with lit signs on the towers and a subway entrance on the plaza." loading="lazy" width="800" height="450">
+                </li>
+                <li class="stop">
+                    <span class="time" aria-label="11:45 PM"><span class="row small-row" aria-hidden="true">11:45</span></span>
+                    <div class="stop-text">
+                        <h3>Pier 47</h3>
+                        <p>Slip past the watchmen into the Meridian warehouse, where somebody has been working out the Seam on a blackboard.</p>
+                    </div>
+                    <img src="img/meridian.jpg" alt="Inside the Meridian warehouse: whitewashed brick, roof trusses, hanging lamps and benches of radio equipment." loading="lazy" width="800" height="450">
+                </li>
+                <li class="stop">
+                    <span class="time" aria-label="12:04 AM"><span class="row small-row amber" aria-hidden="true">12:04</span></span>
+                    <div class="stop-text">
+                        <h3>The uptown local</h3>
+                        <p>The last train. Be on the platform, or stay in 1954 for good. There are two endings.</p>
+                    </div>
+                    <img src="img/subway.jpg" alt="The 47th Street subway platform: white tile, mosaic name tablets, period advertisements and the tracks." loading="lazy" width="800" height="450">
+                </li>
+            </ol>
+        </section>
+
+        <section class="city" aria-labelledby="city-title">
+            <h2 id="city-title">The whole city is open</h2>
+            <p class="intro">Walk from the club to Broadway, Belmont Park, the Garment District under the El and the North River piers: about a kilometre of 1954 Manhattan, and every door you can open.</p>
+            <div class="city-grid">
+                <figure>
+                    <img src="img/map.jpg" alt="The in-game street map: named streets, parks, the El and five subway stops." loading="lazy" width="800" height="450">
+                    <figcaption><strong>Press M for a street map.</strong> Click anywhere to mark a route; the arrow at the top of the screen leads you there.</figcaption>
+                </figure>
+                <figure>
+                    <img src="img/drive.jpg" alt="A 1950s sedan on a wet street at night." loading="lazy" width="800" height="450">
+                    <figcaption><strong>Drive any parked car.</strong> Checker cabs, '54 sedans, a finned limousine and a police cruiser. Press F at the door.</figcaption>
+                </figure>
+                <figure>
+                    <img src="img/kiosk.jpg" alt="A subway stair head with green globe lamps on Times Square." loading="lazy" width="800" height="450">
+                    <figcaption><strong>Take the subway.</strong> Five stops on the IRT and the Third Avenue El. Press E at the green globes and pick a stop.</figcaption>
+                </figure>
+            </div>
+        </section>
+
+        <section class="how" id="how" aria-labelledby="how-title">
+            <h2 id="how-title">How to play</h2>
+            <div class="how-grid">
+                <dl class="keys">
+                    <div><dt><kbd>W</kbd><kbd>A</kbd><kbd>S</kbd><kbd>D</kbd></dt><dd>Walk. Hold Shift to hurry.</dd></div>
+                    <div><dt><kbd>Mouse</kbd></dt><dd>Look around. Click the screen to grab the mouse.</dd></div>
+                    <div><dt><kbd>E</kbd></dt><dd>Talk, use, buy, sit, board the train.</dd></div>
+                    <div><dt><kbd>F</kbd></dt><dd>Get in or out of a parked car.</dd></div>
+                    <div><dt><kbd>M</kbd></dt><dd>Open the street map.</dd></div>
+                    <div><dt><kbd>L</kbd></dt><dd>Your wallet, job and home.</dd></div>
+                    <div><dt><kbd>V</kbd></dt><dd>Hold to see echoes, once the visor is tuned.</dd></div>
+                    <div><dt><kbd>Esc</kbd></dt><dd>Pause, settings and saves.</dd></div>
+                </dl>
+                <div class="how-notes">
+                    <p>On a phone or tablet, use the stick on the left to walk, drag to look, and tap Use to talk.</p>
+                    <p>Your progress saves itself in this browser as you play. To move it to another computer, open the menu, choose Save &amp; backup, and download a backup file.</p>
+                    <p>If the game feels slow, choose a lower graphics setting in Settings. It reloads with the new setting and keeps your place.</p>
+                </div>
+            </div>
+        </section>
+
+        <section class="new" id="new" aria-labelledby="new-title">
+            <h2 id="new-title">What's new</h2>
+            <ol class="releases">
+                <li>
+                    <h3>Velvet Tuesday</h3>
+                    <p class="when">Version 33, October 2026</p>
+                    <p>The club rebuilt as a 1954 ballroom, doors that open on every building, a line with a bouncer, a real IRT platform, and far more lifelike people.</p>
+                </li>
+                <li>
+                    <h3>The map and the subway</h3>
+                    <p class="when">Version 32, October 2026</p>
+                    <p>A street map of the whole city, a minimap, subway rides between five stops, and new interiors from pressed-tin ceilings to the Meridian warehouse.</p>
+                </li>
+                <li>
+                    <h3>The 12:04</h3>
+                    <p class="when">Version 31, October 2026</p>
+                    <p>The story, the open city, drivable 1950s cars, a new look for the street and saves that keep up with you.</p>
+                </li>
+            </ol>
+            <p class="more"><a href="https://github.com/Sebby1770/vibe-check-9000/blob/main/CHANGELOG.md">Read the full changelog</a></p>
+        </section>
+
+        <section class="last-call" aria-label="Play">
+            <p>Doors are open.</p>
+            <a class="button" href="play/">Enter the night</a>
+        </section>
+    </main>
+
+    <footer class="footer">
+        <p>Made with three.js. Your saves stay in this browser.</p>
+        <p><a href="https://github.com/Sebby1770/vibe-check-9000">Source on GitHub</a></p>
+        <p class="build">{{BUILD}}</p>
+    </footer>
+    <script src="site.js" defer></script>
+</body>
+</html>

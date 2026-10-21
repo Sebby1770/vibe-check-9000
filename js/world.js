@@ -1,6 +1,8 @@
 import { buildParkResidences } from './park-residences.js';
 import { buildOpenWorld } from "./openworld/openworld.js";
 import { buildStationFixtures } from "./openworld/kiosks.js";
+import { buildDoors } from "./doors.js";
+import { buildClubQueue } from "./club-queue.js";
 import { buildBlockLoop } from './block-loop.js';
 import { buildDistrict } from './district.js';
 import { buildLifeWorld } from './life-world.js';
@@ -21,7 +23,7 @@ import { createGradePass } from "./render/grade.js";
 import { upgradeMaterials, addRoadMarkings, addStreetReflections } from "./render/materials.js";
 import { buildClub } from "./club.js";
 import { buildCity, updateCity } from "./city.js";
-import { animateHuman } from "./human.js";
+import { animateHuman, setPersonDetail } from "./human.js";
 import { buildColliders, getFloorY, getZone, isOutside } from "./zones.js";
 import { interiorColliders } from "./interiors/index.js";
 import { makeCubeEnv, makeDuskSky, paintSky } from "./kit.js";
@@ -50,6 +52,8 @@ export function createWorld(canvas, adConfig) {
         if (quality.auto && /swiftshader|llvmpipe|software|basic render/i.test(gpu)) Object.assign(quality, lowTier(), { software: true });
         quality.gpu = gpu;
     } catch { /* no debug info: keep the detected tier */ }
+    // People use the sheen material except on the Low tier.
+    setPersonDetail(quality.low ? "low" : "high");
     renderer.setPixelRatio(quality.pixelRatio);
     renderer.setSize(window.innerWidth, window.innerHeight);
     renderer.outputColorSpace = THREE.SRGBColorSpace;
@@ -118,6 +122,8 @@ export function createWorld(canvas, adConfig) {
     buildParkResidences(scene);
     const openWorld = buildOpenWorld(scene);
     buildStationFixtures(scene);
+    const doors = buildDoors(scene);
+    const clubQueue = buildClubQueue(scene);
     const colliders = buildColliders(interiorColliders());
     const streetLife = buildStreetLife(scene);
     const lifeWorld = buildLifeWorld(scene,colliders);
@@ -261,6 +267,8 @@ export function createWorld(canvas, adConfig) {
         city,
         club,
         openWorld,
+        doors,
+        clubQueue,
         streetLife,
         district,
         lifeWorld,
@@ -455,6 +463,7 @@ export function createWorld(canvas, adConfig) {
                     for (const person of club.barCrowd || []) if (person.visible) animateHuman(person, t, { mode: person.userData.mode || "idle", bpm });
                     for (const person of club.loungeCrowd || []) if (person.visible) animateHuman(person, t, { mode: person.userData.mode || "idle", bpm: 96 });
                 }
+                clubQueue.update(t, p);
                 for (const ped of city.peds) {
                     if (!ped.visible) continue;
                     if (Math.hypot(p.x - ped.position.x, p.z - ped.position.z) > 36) continue;
