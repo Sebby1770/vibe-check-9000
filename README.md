@@ -1,6 +1,8 @@
 # VIBE CHECK 9000™
 
-**Play it in the browser:** [sebby1770.github.io/vibe-check-9000](https://sebby1770.github.io/vibe-check-9000/)
+**Website:** [sebby1770.github.io/vibe-check-9000](https://sebby1770.github.io/vibe-check-9000/) · **Play now:** [/play/](https://sebby1770.github.io/vibe-check-9000/play/)
+
+The site is built by `node tools/build-site.mjs` (the website from `site/` at `/`, the game at `/play/`, every module URL versioned per build). GitHub Pages and Vercel both run that same build (`.github/workflows/pages.yml`, `vercel.json`).
 
 **Current mode:** single-player, with progress saved in this browser. Other visitors play separate worlds. See the [improvement, multiplayer and launch plan](MARKETING.md) for proposed next steps and optional supporter products. Sponsorship configuration exists, but no paid billboard placements or Stripe checkout links are currently configured.
 
@@ -15,6 +17,14 @@ Keep walking east past the Corner Set to discover Mercer Pocket Garden, East Ave
 The parks have four usable benches. The club plays original jazz-house, while a swung electric-piano quartet follows your walk through the gardens.
 
 No install. Click **ENTER THE NIGHT**.
+
+## New in v33: Velvet Tuesday, doors, and people who look like people
+
+- **The club.** The ground floor is now a 1954 Art Deco ballroom around the lit dance floor: black lacquer and fluted plum walls, gilded pilasters with shell sconces, a coffered ceiling with a warm cove, polished black terrazzo, a mirrored onyx backbar lined with bottles behind a fluted bar with red-leather stools, tufted velvet booths, a gilt proscenium with velvet curtains round REXA's stage, a gilded halo rig with pendant lamps, and a crystal chandelier hanging through the atrium. Upstairs, the lounge has crystal chandeliers, round tables in white cloths, velvet tub chairs and a gilt sunburst over Velma's stage.
+- **The line.** Outside, a red carpet runs to the kerb under the canopy, guests in evening clothes wait behind a velvet rope, and **Bruno** works the door. Talk to him.
+- **Doors.** Every building you can enter has real doors that open as you walk up and close behind you: porthole doors at the club, glazed doors on the shops and east-side venues, chrome and glass at Dottie's, a brass revolving door at the Astoria, rolling steel doors on the Meridian. Every building in the open city has a proper front entrance too.
+- **The subway platform** is a real 1950s IRT station now: white tile, mosaic "47" tablets, the station name across the tracks, period ad cards, green columns, rails and benches.
+- **People.** Real head proportions, eyes with pupils and lids, brows, ears and a finer nose; skin that stays warm in shadow with flushed cheeks; fabric with a soft sheen; contact shadows under the chin, in the arms and at the feet; smoother joints; and a range of builds.
 
 ## New in v32: the map, the subway and rooms that feel lived in
 

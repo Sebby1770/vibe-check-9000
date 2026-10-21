@@ -25,24 +25,8 @@ jobs:
       - name: Check out repository
         uses: actions/checkout@v4
 
-      - name: Stage static night
-        run: |
-          mkdir -p _site/js _site/vendor _site/assets
-          cp index.html _site/
-          cp *.css _site/
-          cp -R js/. _site/js/
-          [ -f .nojekyll ] && cp .nojekyll _site/
-          [ -f LICENSE ] && cp LICENSE _site/
-          [ -f ads.config.json ] && cp ads.config.json _site/
-          [ -d vendor ] && cp -R vendor/. _site/vendor/
-          [ -d assets ] && cp -R assets/. _site/assets/
-          [ -f sponsor.html ] && cp sponsor.html _site/
-          [ -f MARKETING.md ] && cp MARKETING.md _site/
-          [ -f sw.js ] && cp sw.js _site/
-          touch _site/.nojekyll
-
-      - name: Version module URLs for this deploy
-        run: node tools/stamp-build.mjs _site "${GITHUB_SHA::7}" "$(git log -1 --format=%cd --date=format:'%d %b %Y')"
+      - name: Build the website (/) and the game (/play/)
+        run: node tools/build-site.mjs _site
 
       - name: Configure GitHub Pages
         uses: actions/configure-pages@v5

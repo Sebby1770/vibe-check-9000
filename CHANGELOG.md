@@ -4,6 +4,19 @@ All notable changes to VIBE CHECK 9000™ are documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
+## [33.0.0] - 2026-10-21
+
+### Velvet Tuesday, doors everywhere, and people who look like people
+
+- **Club ground floor** (`js/club-deco.js`): an Art Deco ballroom round the LED floor — lacquer wainscot and fluted plum walls with a gilt frieze and warm cove, gilded pilasters with shell sconces (replacing the bare steel columns), a coffered plum-and-gilt ceiling, black terrazzo with a brass-framed dance floor, a fluted bar with a marble top and brass rail, a mirrored onyx backbar with 160 bottles and a clock, chrome-and-leather stools, tufted crescent booths with lamp tables, a lacquer bandstand with uplights, a stepped gilt proscenium with velvet curtains and radio-cabinet speakers round the screen, a gilded halo rig carrying the lasers and eight pendant lamps, a three-tier crystal chandelier through the atrium, a carpet runner, palms and a host stand. The wall washes became uplight fans; the bar light is warm.
+- **Lounge**: crystal chandeliers, round tables in white cloths with shaded lamps and champagne buckets, velvet tub chairs (same seats and sitters), folded velvet curtains and a gilt sunburst behind the stage.
+- **Outside the club** (`js/club-queue.js`): a red carpet to the kerb, canopy poles, lanterns, a topiary, a velvet rope on brass stanchions (solid), nine regulars queuing in evening clothes, and Bruno on the door (new cast member and outfit) with his own dialogue. One warm lamp under the canopy.
+- **Doors** (`js/doors.js`): double doors that swing open as you approach and close behind you at the club (porthole doors), the shops and east-side venues (glazed, per-shop wood), Dottie's (chrome and glass), Mercer Row (painted, glazed), the club's back fire door (opens outward), a brass revolving door at the Astoria and rolling steel doors at the Meridian. Every open-city building gets a street entrance: a stone portal with glazed double doors and a lit transom, with canopies in Belmont and roll-up doors on waterfront warehouses.
+- **Subway** (`js/subway-deco.js`): white tile, a mosaic band, "47" tablets, "47 STREET · RIVOLI" across the tracks, six period ad cards, green riveted columns, a warning strip, rails and ties, steel ceiling beams with lamps, and benches where people sit.
+- **People** (`js/human.js`): heads at real proportions (about 16 cm wide), a sculpted brow ridge, eye sockets, cheekbones and a squarer male jaw, ears with a rolled helix, a finer nose with alar wings, pupils, upper and lower lids; contact shadows baked per vertex from the body's own parts and the floor; warm subsurface-style skin with flushed cheeks, nose and ears; fabric sheen (MeshPhysicalMaterial, standard material on Low) and tone variation; hair strands; natural skin tones; smoother shoulders, elbows, hips and knees; and a range of builds.
+- Club colliders for the host stand, entrance palms and the queue rope.
+- **A real website.** `site/` is a landing page in the game's own language (split-flap title, letterboxed stills, the night as a departures board, controls and release notes); the game moves to `/play/`. `tools/build-site.mjs` builds both into one folder with versioned module URLs, used by GitHub Pages and by Vercel (`vercel.json`).
+
 ## [32.0.0] - 2026-10-20
 
 ### The map, the subway, and rooms that feel lived in

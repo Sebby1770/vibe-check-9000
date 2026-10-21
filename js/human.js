@@ -93,7 +93,11 @@ const _m = new THREE.Matrix4(), _nm = new THREE.Matrix3(), _v = new THREE.Vector
 const _p = new THREE.Vector3(), _q = new THREE.Quaternion(), _e = new THREE.Euler(), _s = new THREE.Vector3();
 
 function lathe(profile, segments = 18, sx = 1, sz = 1) {
-    const g = new THREE.LatheGeometry(profile.map(([r, y]) => new THREE.Vector2(Math.max(0, r), y)), segments);
+    // LatheGeometry faces outward only for profiles that climb; limb, sleeve and skirt profiles are written
+    // top-down, which used to turn them inside out (lit from the wrong side, skirts showing their lining).
+    const climbs = profile[profile.length - 1][1] >= profile[0][1];
+    const pts = (climbs ? profile : [...profile].reverse()).map(([r, y]) => new THREE.Vector2(Math.max(0, r), y));
+    const g = new THREE.LatheGeometry(pts, segments);
     if (sx !== 1 || sz !== 1) g.scale(sx, 1, sz);
     return g;
 }
@@ -175,13 +179,16 @@ class Builder {
         cap(hips.clone().setY(hips.y - 0.05), hips.clone().setY(hips.y + 0.02), 0.145, ["hips"]);
         cap(head.clone().setY(head.y - 0.08), head.clone().setY(head.y - 0.02), 0.045, ["spine"]);
         cap(head.clone().setY(head.y + 0.005), head.clone().setY(head.y + 0.03), 0.1, ["head", "eyeL", "eyeR"]);
+        // Limb capsules stop short of each joint and stay inside the limb, so a segment never shades the
+        // first ring of the next one (no dark bands under knees and elbows).
+        const trim = (a, b, ka, kb) => { const d = b.clone().sub(a).normalize(); return [a.clone().addScaledVector(d, ka), b.clone().addScaledVector(d, -kb)]; };
         for (const s of ["l", "r"]) {
             const u = w(`${s}Upper`), f = w(`${s}Fore`), h = w(`${s}Hand`), t = w(`${s}Thigh`), k = w(`${s}Shin`);
-            cap(u, f, 0.047, [`${s}Upper`, `${s}Clav`]);
-            cap(f, h, 0.038, [`${s}Fore`]);
-            cap(h.clone().setY(h.y - 0.03), h.clone().setY(h.y - 0.08), 0.035, [`${s}Hand`]);
-            cap(t.clone().setY(t.y - 0.03), k, 0.072, [`${s}Thigh`, `${s}Hip`]);
-            cap(k, k.clone().setY(0.08), 0.052, [`${s}Shin`]);
+            cap(...trim(u, f, 0.03, 0.06), 0.036, [`${s}Upper`, `${s}Clav`]);
+            cap(...trim(f, h, 0.05, 0.03), 0.028, [`${s}Fore`]);
+            cap(h.clone().setY(h.y - 0.03), h.clone().setY(h.y - 0.08), 0.03, [`${s}Hand`]);
+            cap(...trim(t, k, 0.05, 0.08), 0.058, [`${s}Thigh`, `${s}Hip`]);
+            cap(...trim(k, k.clone().setY(0.08), 0.07, 0.02), 0.042, [`${s}Shin`]);
         }
         const P = this.pos, N = this.nor, ao = new Float32Array(this.n), c = new THREE.Vector3(), p = new THREE.Vector3(), nrm = new THREE.Vector3(), ab = new THREE.Vector3();
         for (let i = 0; i < this.n; i++) {
@@ -195,12 +202,12 @@ class Builder {
                 const t = Math.max(0, Math.min(1, c.subVectors(p, q.a).dot(ab) / Math.max(1e-6, ab.lengthSq())));
                 c.copy(q.a).addScaledVector(ab, t).sub(p);
                 const d = c.length();
-                if (d < q.r * 0.98) { occ += 0.6; continue; }
+                if (d < q.r * 0.98) { occ += 0.3; continue; }
                 const cos = c.dot(nrm) / d;
                 if (cos > 0) occ += Math.min(0.6, (q.r * q.r) / (d * d)) * cos;
             }
             if (p.y < 0.28) occ += Math.pow(1 - p.y / 0.28, 2) * 0.45 * (0.5 - nrm.y * 0.5);
-            ao[i] = 1 - Math.min(0.62, occ * 0.85);
+            ao[i] = 1 - Math.min(0.5, occ * 0.6);
         }
         return ao;
     }
@@ -523,7 +530,7 @@ vec4 pc = palette[si];
 vec3 base = pc.rgb;
 if (si == ${S.skin}) {
     // Flushed cheeks, nose and ears; a faint shadow under the eyes; pores and freckle-scale variation.
-    vec3 h = vObj - vec3(0.0, 1.687, 0.0);
+    vec3 h = vObj - vec3(0.0, 1.67, 0.0); // the head joint in bind pose: hips 0.95 + spine 0.12 + head 0.6
     float cheeks = exp(-pow((abs(h.x) - 0.043) / 0.022, 2.0) - pow((h.y + 0.02) / 0.026, 2.0)) * step(0.043, h.z);
     float nose = exp(-dot(h - vec3(0.0, -0.032, 0.095), h - vec3(0.0, -0.032, 0.095)) / 0.0004);
     float ears = exp(-pow((abs(h.x) - 0.085) / 0.012, 2.0) - pow(h.y / 0.035, 2.0));
@@ -536,7 +543,7 @@ if (si == ${S.skin}) {
 } else if (si == ${S.hair} || si == ${S.brow}) {
     base *= 0.82 + 0.3 * pnoise(vec3(vObj.x * 60.0, vObj.y * 900.0, vObj.z * 60.0));
 }
-vec4 diffuseColor = vec4( base * mix(1.0, vAo, 0.9), opacity );`)
+vec4 diffuseColor = vec4( base * mix(1.0, vAo, 0.8), opacity );`)
             .replace("#include <roughnessmap_fragment>", "float roughnessFactor = pc.a;")
             .replace("#include <metalnessmap_fragment>", `float metalnessFactor = si == ${S.metal} ? 0.85 : 0.0;`)
             .replace("vec3 totalEmissiveRadiance = emissive;", `vec3 totalEmissiveRadiance = emissive + (si == ${S.accent} ? pc.rgb * glow : vec3(0.0));
@@ -677,10 +684,11 @@ export function createHuman(spec = {}) {
 
     const scale = spec.scale || 1;
     root.scale.setScalar(scale);
+    // Broader or slighter frames: the torso widens and the shoulders move out, while the clavicles undo the
+    // spine's scale so arms (which never rotate their clavicles) keep their length in every pose.
     const build = spec.build ?? (female ? 0.94 + seed * 0.1 : 0.94 + seed * 0.16);
     b.spine.scale.set(build, 1, build);
-    b.head.scale.set(1 / build, 1, 1 / build);
-    for (const hip of [b.lHip, b.rHip]) hip.scale.set(0.96 + (build - 1) * 0.6, 1, 0.96 + (build - 1) * 0.6);
+    for (const c of [b.head, b.lClav, b.rClav]) c.scale.set(1 / build, 1, 1 / build);
     root.userData.joints = { hips: b.hips, spine: b.spine, head: b.head, lUpper: b.lUpper, rUpper: b.rUpper, lFore: b.lFore, rFore: b.rFore, lThigh: b.lThigh, rThigh: b.rThigh, lShin: b.lShin, rShin: b.rShin, lHand: b.lHand, rHand: b.rHand };
     root.userData.eyelids = [b.eyeL, b.eyeR];
     root.userData.body = mesh;

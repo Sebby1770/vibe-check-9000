@@ -92,9 +92,9 @@ export function buildClub(scene, env) {
     addBox(world, unitBox, emissiveLime, 0, 3.18, -16.48, 3.0, 0.08, 0.08);
 
     const exitSign = new THREE.Mesh(new THREE.PlaneGeometry(1.4, 0.35), new THREE.MeshBasicMaterial({ map: neonCanvas("EXIT", "#39FF14", 512, 128, "#051005") }));
-    // Lightbox on the back wall beside the LED wall (the wall covers the door head), under the rear mezzanine.
-    addBox(world, unitBox, metal, -5.4, 3.55, -16.385, 1.56, 0.5, 0.05);
-    exitSign.position.set(-5.4, 3.55, -16.348);
+    // Lightbox on the back wall, clear of the proscenium curtains beside the LED wall, under the rear mezzanine.
+    addBox(world, unitBox, metal, -7.4, 3.55, -16.385, 1.56, 0.5, 0.05);
+    exitSign.position.set(-7.4, 3.55, -16.348);
     scene.add(exitSign);
 
     // Pilasters, the coffered ceiling and the halo rig come from decorateClub (club-deco.js).

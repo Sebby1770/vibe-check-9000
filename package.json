@@ -1,6 +1,6 @@
 {
   "name": "vibe-check-9000",
-  "version": "32.0.0",
+  "version": "33.0.0",
   "private": true,
   "type": "module",
   "description": "First-person 1954 Midtown open world: The 12:04 story, drivable 1950s cars, SQLite saves, a visor from later.",

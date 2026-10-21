@@ -223,6 +223,9 @@ Delivered in v32.0.0: the interior architecture pass (tin ceilings, wainscot, mo
 warehouse interior), the minimap and full city map (M), subway fast travel between five stops, versioned Pages builds
 and the retirement of v10's service worker.
 
+Delivered in v33.0.0: the Art Deco club and lounge, doors on every entrance (and front doors across the open
+city), the queue and Bruno at Velvet Tuesday, the IRT platform, and the people realism pass.
+
 Not done yet (next steps):
 
 - The facade kit for the original 47th Street buildings.
