@@ -873,6 +873,19 @@ export function animateHuman(obj, t, ctx = {}) {
         j.rUpper.quaternion.copy(obj.userData.saxPose[1][0]); j.rFore.quaternion.copy(obj.userData.saxPose[1][1]);
         j.lThigh.rotation.set(0, 0, .03); j.rThigh.rotation.set(0, 0, -.03);
         j.lShin.rotation.set(.03, 0, 0); j.rShin.rotation.set(.03, 0, 0);
+    } else if (mode === "hail") {
+        // Standing at the kerb with an arm up for a cab, the hand giving a little wave.
+        const breath = Math.sin(t * 1.35 + ph) * 0.01;
+        j.hips.position.y = 0.95 + breath * 0.4;
+        j.hips.rotation.set(0, 0, 0.02);
+        j.spine.rotation.set(-0.04, 0.12, -0.03);
+        j.head.rotation.set(-0.06, 0.25 + Math.sin(t * 0.7 + ph) * 0.12, 0);
+        j.rUpper.rotation.set(-2.55, 0, -0.32 + Math.sin(t * 5 + ph) * 0.1);
+        j.rFore.rotation.set(-0.35 - Math.sin(t * 5 + ph) * 0.12, 0, 0);
+        j.lUpper.rotation.set(0.05, 0, 0.12);
+        j.lFore.rotation.set(-0.15, 0, 0);
+        j.lThigh.rotation.set(0.02, 0, 0.04); j.rThigh.rotation.set(-0.03, 0, -0.04);
+        j.lShin.rotation.set(0.04, 0, 0); j.rShin.rotation.set(0.1, 0, 0);
     } else if (mode === "lean") {
         const breath = Math.sin(t * 1.25 + ph) * 0.008;
         j.hips.position.y = 0.95 + breath;

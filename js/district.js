@@ -1,3 +1,4 @@
+import { registerLamp } from './render/street-lights.js';
 import { brickTex, windowPaneTex } from './textures.js';
 import { buildEastInterior } from './east-interiors.js';
 import * as THREE from 'three';
@@ -99,6 +100,7 @@ export function buildDistrict(scene) {
   for(let x=62;x<174;x+=14)for(const z of [17.2,29.4]){lamps.push([x,2.05,z,.1,4.1,.1]);bulbs.push([x,4.2,z,.38,.48,.38]);}
   for(let z=-20;z<75;z+=15)for(const x of [101,117]){lamps.push([x,2.05,z,.1,4.1,.1]);bulbs.push([x,4.2,z,.38,.48,.38]);}
   for(let x=125;x<174;x+=15)for(const z of [50,62]){lamps.push([x,2.05,z,.1,4.1,.1]);bulbs.push([x,4.2,z,.38,.48,.38]);}
+  for(const [x,y,z] of bulbs)registerLamp(x,y,z);
   batch(unitBox,trunk,stems);batch(new THREE.IcosahedronGeometry(1,1),leaf,trees);
   const streetGlow=mat(0xffd69b,{emissive:0xffb856,emissiveIntensity:1.5});
   batch(unitBox,iron,lamps);batch(unitBox,streetGlow,bulbs);

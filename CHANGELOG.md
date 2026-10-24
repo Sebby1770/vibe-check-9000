@@ -4,6 +4,19 @@ All notable changes to VIBE CHECK 9000™ are documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
+## [35.0.0] - 2026-10-25
+
+### Night streets, taxi fares and the sound of traffic
+
+- **Street lighting** (`js/render/street-lights.js`): every lamp post in the city (47th Street, the east district and the open city) registers itself. Each gets a soft pool of warm light on the pavement after dark, all in one instanced additive draw, and a fixed pool of six point lights (two on Low) follows you from lamp to lamp, fading in where it lands, so the pavement and passers-by near you are lit by the lamps above them. The light count never changes, so no shader recompiles. 47th Street's four fixed lamp lights are gone.
+- **Headlights** (`js/vehicles/night-lights.js`): every moving car (47th Street and the avenues) throws a warm beam on the road ahead, a bright spill at the bumper and a faint red glow behind, one merged mesh per car on one shared material that fades in with the lamps. The car you drive wears the same lights instead of the old cone beams.
+- **Taxi fares** (`js/taxi/taxi.js`). In any Checker press **T** for the roof light, and a fare hails from the kerb with an arm up (349 kerbs, every 30 m on both sides of every street, clear of junctions). Stop beside them and they get in and name one of 21 destinations (landmarks, subway stops, the club, Dottie's, the Astoria, the shops); the route marker and map lead there and the HUD shows the distance and the meter. Stop at the kerb there to be paid: a $3 flag-drop and about 40 cents a block, plus up to half again for a quick ride, into your wallet. The next fare hails at once. Leave one waiting two minutes and they give up; switch the light off or get out mid-ride and your passenger leaves unpaid.
+- **Traffic sound** (`js/vehicles/traffic-sound.js`, `js/audio.js`): the nearest four cars, yours always first, each get an engine voice placed where the car is (detuned oscillators through a resonant low-pass, with tyre noise), whose note climbs through a three-speed column shift with a touch of Doppler as cars pass. A car stopped dead behind you in the road leans on the horn after a moment; somebody down the block honks every half minute or so. Horns are two notes a third apart, voiced per kind (the bus is low, the police car high). Traffic is muffled through the walls indoors and follows Mute. Your own horn (**H**) uses the same two-tone horn.
+- **Fix: walking past the shops stalled the game.** The shop and hotel lamps were hidden beyond 24 m, so the number of lights changed as you walked along 47th Street, and three.js recompiled every lit material in view each time (19 shaders and up to two seconds the first time you looked east from the club). They now share a fixed pool of five lights (`js/render/light-pool.js`, the same pool the street lamps use), and the scene holds 24 point lights wherever you are. The game also compiles about a third fewer shaders.
+- Every one of 47th Street's 13 lamps throws a streak of light across the wet road (the four lamps that used to have real lights were the only ones that did).
+- Tests: `tests/light-pool.test.js` (a fixed light count, the nearest lamps, fading, steady assignment); the district walk now waits for smooth frames before walking.
+- Tests: `tests/taxi.test.js` (kerbs on the pavement, destinations, pay, a whole fare, patience, light off), `tests/taxi-browser.test.js` (`npm run test:taxi`: board, ride, paid into the wallet, light off when you get out) and `tests/traffic-sound.test.js` (gears, voice slots, your car first, held-up honks, city honks, the sim's held flag).
+
 ## [34.0.0] - 2026-10-22
 
 ### A living city

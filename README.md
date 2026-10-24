@@ -18,6 +18,13 @@ The parks have four usable benches. The club plays original jazz-house, while a 
 
 No install. Click **ENTER THE NIGHT**.
 
+## New in v35: night streets, taxi fares and the sound of traffic
+
+- **Real street lighting.** After dark every lamp throws a warm pool of light on the pavement, and the lamps near you really light the street and the people walking under them.
+- **Headlights.** Every car on the road lights the street ahead of it, with a faint red glow behind. So does yours.
+- **Drive a cab.** Get into any Checker and press **T** to switch on the roof light. A fare waves from the kerb; stop beside them, take them where they ask (the map and the route marker show the way, the meter runs), and stop at the kerb there to get paid. Quick rides tip.
+- **The sound of the street.** Engines idle at the lights and climb through the gears as cars pull away and pass you, horns sound down the block, and anybody you keep waiting in the road will let you know.
+
 ## New in v34: a living city
 
 - **Traffic everywhere.** Cars, Checker cabs, vans and crosstown buses now drive every street and avenue, not just 47th Street. They follow each other, stop at signals that take turns at every junction, wait for you if you step into the road (and knock you over if you don't look), and pull up behind the car you're driving.
@@ -44,7 +51,7 @@ No install. Click **ENTER THE NIGHT**.
 
 - **A story.** You came through the DJ booth from 2026. *The 12:04* runs from REXA's booth to the last uptown local at 12:04 AM, with a prologue, five chapters and two endings. Follow the tracker (top right); hold **V** once the visor is tuned to see echoes of what happened here.
 - **An open city.** Walk or drive crosstown to Broadway and Times Square, uptown to Belmont Park and the Belmont Plaza, out to the Pier 47 waterfront on the North River, or downtown under the El into the Garment District.
-- **Drive.** Press **F** at any parked car. **W/S** drive and brake, **A/D** steer, **Space** handbrake, **Q** changes the view, **H** horn, **F** to get out.
+- **Drive.** Press **F** at any parked car. **W/S** drive and brake, **A/D** steer, **Space** handbrake, **Q** changes the view, **H** horn, **F** to get out. In a Checker, **T** switches the roof light on for taxi fares.
 - **New look.** Physical sky, shadows, reflections, PBR brick and wet asphalt, people with faces and tailoring, and 1950s cars. Choose Low–Ultra in Settings, or add `?quality=low` to the address.
 - **Saves.** Progress autosaves instantly to a SQLite database in your browser (OPFS), with restore points in **SAVE & BACKUP**. The `.json` backups still work.
 

@@ -1,8 +1,9 @@
 /* Driving: get into any parked car (F), arcade handling with speed-sensitive steering, collisions against the
-   city's colliders and traffic, a chase camera (Q swaps to the driver's seat), horn (H), headlight beams after
+   city's colliders and traffic, a chase camera (Q swaps to the driver's seat), horn (H), headlights after
    dark, and you step out (F) on the kerb side that's clear. */
 import * as THREE from "three";
 import { buildVehicle, animateVehicle } from "./models.js";
+import { addNightLights } from "./night-lights.js";
 
 const _fwd = new THREE.Vector3(), _cam = new THREE.Vector3(), _look = new THREE.Vector3();
 
@@ -32,20 +33,8 @@ export function createDriving({ scene, camera, colliders, city, audio, hud, aven
         placeCollider(car, spec);
     }
 
-    const beamMat = new THREE.MeshBasicMaterial({ color: 0xfff2c8, transparent: true, opacity: 0, blending: THREE.AdditiveBlending, depthWrite: false, side: THREE.DoubleSide });
-    const beams = new THREE.Group();
-    for (const z of [-0.62, 0.62]) {
-        const cone = new THREE.Mesh(new THREE.ConeGeometry(2.2, 14, 16, 1, true), beamMat);
-        cone.rotation.z = Math.PI / 2;
-        cone.position.set(9.4, 0.8, z);
-        cone.userData.noShadow = true;
-        beams.add(cone);
-    }
-    const pool = new THREE.Mesh(new THREE.CircleGeometry(4, 24), beamMat);
-    pool.rotation.x = -Math.PI / 2;
-    pool.scale.set(2.2, 1, 1);
-    pool.position.set(9, 0.06, 0);
-    beams.add(pool);
+    // Your car's headlights are the same soft beams the traffic wears (vehicles/night-lights.js), lit only while
+    // you drive it.
 
     let car = null, lastCar = null, speed = 0, steer = 0, firstPerson = false, hornCool = 0;
     const keys = {};
@@ -106,7 +95,8 @@ export function createDriving({ scene, camera, colliders, city, audio, hud, aven
             steer = 0;
             const box = c.userData.collider;
             if (box) { box.minY = -5; box.maxY = -4; } // out of the way while it's moving
-            car.add(beams);
+            if (!c.userData.nightLights) c.userData.nightLights = addNightLights(c);
+            c.userData.nightLights.visible = true;
             camPos.copy(camera.position);
             hud.toast(`${(c.userData.kind || "car").toUpperCase()} · W/S DRIVE · A/D STEER · SPACE BRAKE · Q VIEW · H HORN · F GET OUT`, "#f2a541");
             document.body.classList.add("driving");
@@ -122,7 +112,7 @@ export function createDriving({ scene, camera, colliders, city, audio, hud, aven
                 if (!colliders.boxes.some((b) => b.minY < 1.7 && b.maxY > 1.7 && x > b.minX - 0.3 && x < b.maxX + 0.3 && z > b.minZ - 0.3 && z < b.maxZ + 0.3)) { spot = { x, z }; break; }
             }
             spot ||= { x: c.position.x, z: c.position.z + 3 };
-            c.remove(beams);
+            if (c.userData.nightLights) c.userData.nightLights.visible = false;
             placeCollider(c);
             lastCar = c;
             animateVehicle(c, 0, { braking: false });
@@ -153,8 +143,6 @@ export function createDriving({ scene, camera, colliders, city, audio, hud, aven
             else if (!blocked(car.position.x, car.position.z, yaw, spec)) { car.rotation.y = yaw; speed *= -0.25; }
             else { speed *= -0.3; if (Math.abs(speed) > 4) audio.horn?.(); }
             animateVehicle(car, speed * dt, { steer: steer * 1.4, braking: throttle < 0 && speed > 0.5 || handbrake });
-            beamMat.opacity = night * 0.16;
-            beams.visible = night > 0.1;
             // Cameras.
             _fwd.set(Math.cos(car.rotation.y), 0, -Math.sin(car.rotation.y));
             if (firstPerson) {

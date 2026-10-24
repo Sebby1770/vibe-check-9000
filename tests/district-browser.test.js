@@ -7,10 +7,10 @@ const cli=(...args)=>execFileSync('npx',['--yes','agent-browser@0.37.1','--sessi
 const ev=s=>JSON.parse(cli('eval',s).trim()),state=()=>ev('window.__vibeInspect.snapshot()');
 const reports=[];const check=(name,fn)=>{fn();reports.push(name);console.log('ok  '+name);};
 try{
- cli('open',url+'/?inspect=1');cli('wait','--fn','!!window.__vibeInspect');cli('find','role','button','click','--name','ENTER THE NIGHT');
- ev(`window.districtTest={frames:()=>new Promise(r=>requestAnimationFrame(()=>requestAnimationFrame(r))),key(k,down){window.dispatchEvent(new KeyboardEvent(down?'keydown':'keyup',{key:k}));},async place(x,z,lx,lz){window.__vibeInspect.place(x,z,lx,lz);await this.frames();}};true`);
+ cli('open',url+'/?inspect=1');cli('wait','--fn','!!window.__vibeInspect');cli('find','role','button','click','--name','ENTER THE NIGHT');cli('wait','--fn',"document.body.dataset.phase==='explore'");
+ ev(`window.districtTest={frames:()=>new Promise(r=>requestAnimationFrame(()=>requestAnimationFrame(r))),key(k,down){window.dispatchEvent(new KeyboardEvent(down?'keydown':'keyup',{key:k}));},async place(x,z,lx,lz){window.__vibeInspect.place(x,z,lx,lz);await this.frames();},async settle(){let t=performance.now(),calm=0;const end=t+8000;while(calm<4&&performance.now()<end){await new Promise(r=>requestAnimationFrame(r));const n=performance.now();calm=n-t<60?calm+1:0;t=n;}return calm;}};true`);
  check('walk past the old east boundary using movement controls',()=>{
-  ev('districtTest.place(51,23,80,23)');ev("districtTest.key('w',true);true");cli('wait','1600');ev("districtTest.key('w',false);true");assert.ok(state().position.x>54);
+  ev('districtTest.place(51,23,80,23)');ev('districtTest.settle()');ev("districtTest.key('w',true);true");cli('wait','1600');ev("districtTest.key('w',false);true");assert.ok(state().position.x>54);
  });
  check('both parks have usable seats and a jazz soundtrack',()=>{
   for(const [x,z,id] of [[69,7,'mercer'],[132,7,'hawthorne']]){

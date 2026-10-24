@@ -1,4 +1,5 @@
 import { grooveStep, swungEighthDuration, playPiano, musicMix } from './music.js';
+import { engineNote } from './vehicles/traffic-sound.js';
 /* Original jazz-house in the club, a swung electric-piano quartet outside. */
 
 const A_MIN_BASS = [55.0, 55.0, 65.41, 52.0, 43.65, 43.65, 49.0, 41.2];
@@ -375,18 +376,115 @@ export function createAudio() {
         src.stop(t + 0.32);
     }
 
-    function horn() {
-        if (!ctx || muted) return;
+    // Street traffic: an engine voice for each of the nearest few cars (traffic-sound.js picks them) and their
+    // horns, each placed where the car is. Its own bus, straight to the speakers, so it never pumps the club's
+    // beat detection; muffled through the walls when you're indoors.
+    let trafficBus = null, trafficLp = null, trafficOutside = null;
+    const voiceSlots = [];
+    const HORNS = { sedan: [349, 440], checker: [392, 494], police: [415, 523], limo: [330, 415], van: [311, 392], bus: [196, 247] };
+    function place(node, x, y, z) {
+        if (node.positionX) {
+            node.positionX.setTargetAtTime(x, ctx.currentTime, 0.03);
+            node.positionY.setTargetAtTime(y, ctx.currentTime, 0.03);
+            node.positionZ.setTargetAtTime(z, ctx.currentTime, 0.03);
+        } else node.setPosition(x, y, z);
+    }
+    function streetPanner() {
+        const p = ctx.createPanner();
+        p.panningModel = "equalpower";
+        p.distanceModel = "inverse";
+        p.refDistance = 4;
+        p.rolloffFactor = 1.3;
+        p.maxDistance = 120;
+        return p;
+    }
+    function trafficGraph() {
+        if (trafficBus || !ctx) return;
+        trafficLp = ctx.createBiquadFilter();
+        trafficLp.type = "lowpass";
+        trafficLp.frequency.value = 12000;
+        trafficBus = ctx.createGain();
+        trafficBus.gain.value = 0;
+        trafficLp.connect(trafficBus);
+        trafficBus.connect(ctx.destination);
+        for (let i = 0; i < 4; i++) {
+            const pan = streetPanner(), g = ctx.createGain(), lp = ctx.createBiquadFilter(), hiss = ctx.createGain();
+            g.gain.value = 0;
+            hiss.gain.value = 0;
+            lp.type = "lowpass";
+            lp.frequency.value = 200;
+            lp.Q.value = 2.4;
+            // Two detuned oscillators an octave apart beat against each other: the uneven burble of an idling V8.
+            const a = ctx.createOscillator(), b = ctx.createOscillator(), bg = ctx.createGain();
+            a.type = "sawtooth";
+            b.type = "square";
+            bg.gain.value = 0.45;
+            a.connect(lp);
+            b.connect(bg);
+            bg.connect(lp);
+            lp.connect(g);
+            g.connect(pan);
+            // Tyres on asphalt.
+            const tyre = ctx.createBufferSource(), bp = ctx.createBiquadFilter();
+            tyre.buffer = noiseBuf;
+            tyre.loop = true;
+            bp.type = "bandpass";
+            bp.frequency.value = 850;
+            bp.Q.value = 0.7;
+            tyre.connect(bp);
+            bp.connect(hiss);
+            hiss.connect(pan);
+            pan.connect(trafficLp);
+            a.start();
+            b.start();
+            tyre.start(0, i * 0.27);
+            voiceSlots.push({ pan, g, lp, a, b, hiss });
+        }
+    }
+    function trafficLevel() {
+        if (!trafficBus) return;
         const t = ctx.currentTime;
-        const osc = ctx.createOscillator();
-        osc.type = "square";
-        osc.frequency.setValueAtTime(320, t);
-        osc.frequency.exponentialRampToValueAtTime(220, t + 0.35);
-        const g = envGain(t, 0.12, 0.4);
-        osc.connect(g);
-        g.connect(master);
-        osc.start(t);
-        osc.stop(t + 0.42);
+        const out = trafficOutside !== false;
+        trafficBus.gain.setTargetAtTime(muted ? 0 : out ? 1 : 0.3, t, 0.15);
+        trafficLp.frequency.setTargetAtTime(out ? 12000 : 420, t, 0.15);
+    }
+    /** A horn: two notes a third apart, like the dual horns of the day. at = {x, z}, or null for your own car. */
+    function playHorn(kind = "sedan", at = null, { long = false, double = false } = {}) {
+        if (!ctx || muted) return;
+        trafficGraph();
+        const [f1, f2] = HORNS[kind] || HORNS.sedan, t0 = ctx.currentTime + 0.01;
+        const out = at ? streetPanner() : ctx.createGain();
+        if (at) place(out, at.x, 1, at.z);
+        out.connect(trafficLp);
+        const bp = ctx.createBiquadFilter();
+        bp.type = "bandpass";
+        bp.frequency.value = kind === "bus" ? 700 : 1300;
+        bp.Q.value = 0.9;
+        bp.connect(out);
+        const blasts = double ? [[0, 0.17], [0.27, long ? 0.6 : 0.2]] : [[0, long ? 0.75 : 0.3]];
+        const end = t0 + blasts[blasts.length - 1][0] + blasts[blasts.length - 1][1] + 0.1;
+        for (const f of [f1, f2]) {
+            const o = ctx.createOscillator(), g = ctx.createGain();
+            o.type = kind === "bus" ? "sawtooth" : "square";
+            o.frequency.value = f;
+            g.gain.value = 0;
+            for (const [s, d] of blasts) {
+                g.gain.setValueAtTime(0, t0 + s);
+                g.gain.linearRampToValueAtTime(at ? 0.16 : 0.07, t0 + s + 0.015);
+                g.gain.setValueAtTime(at ? 0.16 : 0.07, t0 + s + d - 0.03);
+                g.gain.linearRampToValueAtTime(0, t0 + s + d);
+            }
+            o.connect(g);
+            g.connect(bp);
+            o.start(t0);
+            o.stop(end);
+            o.onended = () => { o.disconnect(); g.disconnect(); };
+        }
+        setTimeout(() => { bp.disconnect(); out.disconnect(); }, (end - ctx.currentTime) * 1000 + 200);
+    }
+    function horn() {
+        trafficLevel();
+        playHorn("sedan", null);
     }
 
     return {
@@ -426,6 +524,7 @@ export function createAudio() {
         setMuted(v) {
             muted = !!v;
             if (muteGain) muteGain.gain.setTargetAtTime(muted ? 0 : 1, ctx.currentTime, 0.04);
+            trafficLevel();
         },
         toggleMute() {
             this.setMuted(!muted);
@@ -588,6 +687,33 @@ export function createAudio() {
         },
         cheer,
         horn,
+        trafficState() { return trafficBus ? { bus: trafficBus.gain.value, voices: voiceSlots.map((s) => +s.g.gain.value.toFixed(3)), outside: trafficOutside } : null; },
+        /** Each frame: {voices, honks} from traffic-sound.js stepTrafficSound, and whether you're out in the street. */
+        setTraffic({ voices = [], honks = [] } = {}, { outside = true } = {}) {
+            if (!ctx || ctx.state !== "running") return;
+            trafficGraph();
+            if (outside !== trafficOutside) { trafficOutside = outside; trafficLevel(); }
+            const t = ctx.currentTime;
+            voiceSlots.forEach((slot, i) => {
+                const v = voices[i];
+                if (!v) {
+                    slot.g.gain.setTargetAtTime(0, t, 0.25);
+                    slot.hiss.gain.setTargetAtTime(0, t, 0.25);
+                    return;
+                }
+                const speed = Math.abs(v.v), big = v.kind === "bus" ? 0.7 : v.kind === "van" ? 0.85 : 1;
+                // A touch of Doppler: up as it closes on you, down as it pulls away.
+                const f = engineNote(speed) * big * (343 / (343 - v.approach));
+                slot.a.frequency.setTargetAtTime(f, t, 0.06);
+                slot.b.frequency.setTargetAtTime(f * 0.503, t, 0.06);
+                slot.lp.frequency.setTargetAtTime(150 + speed * 26 + (v.own ? 140 : 0), t, 0.08);
+                const level = (v.own ? 0.1 : 0.055) * (0.55 + Math.min(1, speed / 14) * 0.6) * (v.kind === "bus" ? 1.5 : 1);
+                slot.g.gain.setTargetAtTime(level, t, 0.12);
+                slot.hiss.gain.setTargetAtTime(Math.min(1, speed / 14) * (v.own ? 0.03 : 0.04), t, 0.12);
+                place(slot.pan, v.x, 0.6, v.z);
+            });
+            for (const h of honks) playHorn(h.kind, h, h);
+        },
         boostJazz() {
             if (!ctx) return;
             jazzGain.gain.setTargetAtTime(1.1, ctx.currentTime, 0.2);

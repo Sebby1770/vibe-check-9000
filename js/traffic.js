@@ -54,12 +54,12 @@ export function stepTraffic(cars, dt, { stops = [], span = [-96, 184] } = {}) {
       if (d > 0 && d < aheadD) { aheadD = d; aheadCar = other; }
     }
     const half = lenOf(car) / 2, v0 = car.v ?? SPEED;
-    let clear = aheadCar ? aheadD - half - lenOf(aheadCar) / 2 - GAP : Infinity, emergency = false, hard = false;
+    let clear = aheadCar ? aheadD - half - lenOf(aheadCar) / 2 - GAP : Infinity, emergency = false, hard = false, held = false;
     for (const stop of stops) {
       if (stop.dir !== car.dir) continue;
       const d = (stop.x - car.x) * car.dir, toLine = d - half - 0.15;
       if (stop.hard) {
-        if (d > -half) { clear = Math.min(clear, toLine); if (toLine < 0.3) emergency = true; }
+        if (d > -half) { clear = Math.min(clear, toLine); if (toLine < 0.3) emergency = true; if (toLine < 4) held = true; }
         continue;
       }
       if (d < 0.5) continue;
@@ -86,6 +86,8 @@ export function stepTraffic(cars, dt, { stops = [], span = [-96, 184] } = {}) {
     const v = emergency ? 0 : v0 + Math.max((hard ? -32 : -14) * dt, Math.min(4.5 * dt, want - v0));
     car.braking = v < v0 - 0.02 || (v < 0.3 && want < 0.3);
     car.v = Math.max(0, v);
+    // Stopped right behind you (or a car left in the road): the driver may lean on the horn.
+    car.held = held && car.v < 0.6;
     car.x += car.v * car.dir * dt;
     if (car.dir > 0 && car.x > span[1]) car.x -= span[1] - span[0];
     if (car.dir < 0 && car.x < span[0]) car.x += span[1] - span[0];
