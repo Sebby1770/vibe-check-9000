@@ -235,6 +235,10 @@ headlights on every moving car, taxi fares in any Checker, and positional engine
 Not done yet (next steps):
 
 - Instanced far-LOD crowds (`createCrowd`).
+- The first time the camera looks down a part of the city the GPU hasn't drawn yet (the east district, seen from
+  the club), it can stall for a second or two while buffers upload and draw state is built; the shader side of
+  that was fixed in v35 (a fixed light count), the rest predates v35. A warm-up draw of each district during the
+  title card would hide it.
 - Touch driving was wired through the on-screen stick but not tried on a phone; the full story was verified by unit
   test and in-browser beats, not by one continuous human play-through.
 - `npm run test:browser` fails at Frank's ice on `main` too (pre-existing; the suite predates later changes).
