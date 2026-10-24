@@ -229,9 +229,12 @@ city), the queue and Bruno at Velvet Tuesday, the IRT platform, and the people r
 Delivered in v34.0.0: traffic on every street with signals at every junction, the facade kit for the original 47th
 Street towers, and far busier pavements in the open city.
 
+Delivered in v35.0.0: street lighting (light pools under every lamp and a fixed point-light pool that follows you),
+headlights on every moving car, taxi fares in any Checker, and positional engine and horn sound from the traffic.
+
 Not done yet (next steps):
 
-- Instanced far-LOD crowds (`createCrowd`) and a fixed point-light pool.
+- Instanced far-LOD crowds (`createCrowd`).
 - Touch driving was wired through the on-screen stick but not tried on a phone; the full story was verified by unit
   test and in-browser beats, not by one continuous human play-through.
 - `npm run test:browser` fails at Frank's ice on `main` too (pre-existing; the suite predates later changes).

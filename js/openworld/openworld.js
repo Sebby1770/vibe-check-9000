@@ -6,6 +6,7 @@ import { asphaltTex, sidewalkTex, stoneTex, woodTex, withPbr } from "../textures
 import { randomPedestrian, animateHuman } from "../human.js";
 import { OW_ROADS, SITES, FENCE, WATER_X, WORLD_BOUNDS, SIDEWALK, buildings, streetFace } from "./layout.js";
 import { meridianInterior } from "../interiors/architecture.js";
+import { registerLamp } from "../render/street-lights.js";
 
 const CHUNK = 128;
 const unit = new THREE.BoxGeometry(1, 1, 1);
@@ -227,6 +228,7 @@ export function buildOpenWorld(scene) {
             gbox(M.iron, lx, 2.1, lz, 0.14, 4.2, 0.14);
             gbox(M.iron, lx, 4.25, lz, 0.5, 0.12, 0.5);
             gbox(M.glow, lx, 3.98, lz, 0.32, 0.38, 0.32);
+            registerLamp(lx, 3.98, lz);
         }
     }
 

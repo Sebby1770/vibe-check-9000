@@ -23,6 +23,9 @@ import { createStoryUI } from "./story/story-ui.js";
 import { createStoryWorld } from "./story/story-world.js";
 import { createDriving } from "./vehicles/drive.js";
 import { createMapUI } from "./map/map-ui.js";
+import { createTaxi, toggleTaxi, stepTaxi, taxiTarget } from "./taxi/taxi.js";
+import { createTrafficSound, stepTrafficSound } from "./vehicles/traffic-sound.js";
+import { randomPedestrian, animateHuman } from "./human.js";
 import { SUBWAY_STATIONS, boardingPoint } from "./openworld/stations.js";
 import { saveTier, QUALITY_KEY } from "./quality.js";
 import { daylightAt } from "./daylight.js";
@@ -30,7 +33,7 @@ import { createAudio } from "./audio.js";
 import { createControls } from "./controls.js";
 import { createHud } from "./hud.js";
 import { onDanceFloor, applyChoice, NPCS, PROPS, SIT_SPOTS } from "./people.js";
-import { getZone, zoneLabel } from "./zones.js";
+import { getZone, zoneLabel, isOutside } from "./zones.js";
 import { createClock, dayKey, dayHash, tonightBill, PHASE_COPY, dareComplete } from "./night.js";
 import { setSaveSink, loadProgress, saveProgress, evaluateUnlocks, stampNight, setLook, getLook, touchVisit, buildRecap } from "./progress.js";
 
@@ -647,6 +650,64 @@ async function boot() {
         }, 1500);
     }
     window.addEventListener("keydown", (e) => { if (e.key.toLowerCase() === "m" && !e.repeat && hud.phase === "explore") { e.preventDefault(); openMap("map"); } });
+
+    // --- taxi fares: T in any Checker switches the roof light on, and fares hail from the kerb
+    let taxi = createTaxi();
+    const trafficSound = createTrafficSound(), soundCars = [];
+    let lastStreetSound = null, honksHeard = 0;
+    const fareNpc = randomPedestrian(0.37, { outfit: "lady", anim: "idle" });
+    fareNpc.visible = false;
+    world.scene.add(fareNpc);
+    const inCab = () => driving.active && driving.car?.userData.kind === "checker";
+    function taxiEvents(events) {
+        for (const ev of events) {
+            if (ev.type === "hail") {
+                // A different face each time, standing at the kerb with an arm up, facing the road.
+                const next = randomPedestrian(Math.random(), { anim: "idle", umbrella: Math.random() < 0.3 });
+                fareNpc.clear(); for (const c of [...next.children]) fareNpc.add(c);
+                fareNpc.userData = next.userData;
+                fareNpc.scale.copy(next.scale);
+                fareNpc.position.set(ev.pickup.x, 0, ev.pickup.z);
+                fareNpc.rotation.y = Math.atan2(ev.pickup.cabX - ev.pickup.x, ev.pickup.cabZ - ev.pickup.z);
+                fareNpc.visible = true;
+            } else if (ev.type === "board") {
+                fareNpc.visible = false;
+                audio.playShopSound("ticket");
+                hud.toast(`"${ev.line}"`, "#f5c518");
+            } else if (ev.type === "drop") {
+                commerce.life = credit(commerce.life, ev.pay, `Taxi fare · ${ev.dest.name}`);
+                persistCommerce();
+                showWallet();
+                audio.playShopSound("bell");
+                hud.toast(`+$${ev.pay} · fare to ${ev.dest.name}`, "#bdd3b2");
+            } else if (ev.type === "gave-up") {
+                hud.toast("Your fare gave up and caught another cab.", "#e0b25a");
+            } else if (ev.type === "off") {
+                fareNpc.visible = false;
+                if (destination?.id?.startsWith("taxi-")) destination = null;
+                if (ev.hadPassenger) hud.toast("Your fare climbs out, unpaid.", "#e0b25a");
+            }
+        }
+    }
+    window.addEventListener("keydown", (e) => {
+        if (e.key.toLowerCase() !== "t" || e.repeat || hud.phase !== "explore" || !inCab()) return;
+        e.preventDefault();
+        const r = toggleTaxi(taxi, driving.car.position);
+        taxi = r.state;
+        taxiEvents(r.events);
+        hud.toast(taxi.on ? "ROOF LIGHT ON · FARES ARE HAILING" : "ROOF LIGHT OFF", "#f5c518");
+    });
+    function taxiFrame(dt, t) {
+        if (taxi.on && !inCab()) { const r = toggleTaxi(taxi, world.camera.position); taxi = r.state; taxiEvents(r.events); }
+        if (!taxi.on) return "";
+        const r = stepTaxi(taxi, { pos: driving.car.position, speed: Math.abs(driving.speed), dt });
+        taxi = r.state;
+        taxiEvents(r.events);
+        if (fareNpc.visible) animateHuman(fareNpc, t, { mode: "hail" });
+        const target = taxiTarget(taxi, driving.car.position);
+        if (target) destination = target;
+        return target?.hud || "";
+    }
     document.getElementById("hudMap").addEventListener("click", () => { if (hud.phase === "explore") openMap("map"); });
     function applyExpansion(result){
         if(result.state){commerce={...commerce,expansion:result.state};persistCommerce();note(result.events||{});}
@@ -948,6 +1009,7 @@ async function boot() {
             look(x,y,z){world.camera.lookAt(x,y,z);},
             get world(){return world;},
             traffic(){return world.city.traffic.map((c)=>({x:c.position.x,z:c.position.z,dir:c.userData.moving}));},
+            streetSound(){return {voices:(lastStreetSound?.voices||[]).map((v)=>v&&{id:v.id,d:Math.round(v.d),v:v.v,own:v.own}),honks:honksHeard,audio:audio.trafficState?.()};},
             airborne(){return !!controls.airborne;},
             actors(){return [...world.city.peds,...world.district.peds,world.streetLife.musician].map(person=>{
                 const u=person.userData.umbrella,j=person.userData.joints;
@@ -965,6 +1027,8 @@ async function boot() {
             closeMap(){mapUI.close(true);return mapUI.debug();},
             mapPick(x,y){const hit=mapUI.pick(x,y);return hit?{type:hit.type,name:hit.item.name,id:hit.item.id}:null;},
             ride(id){rideSubway(id);},
+            moveCar(x,z){if(driving.car){driving.car.position.set(x,0,z);}return !!driving.car;},
+            taxi(){return {on:taxi.on,stage:taxi.stage,fares:taxi.fares,earned:taxi.earned,fare:taxi.fare?{pickup:taxi.fare.pickup,dest:taxi.fare.dest?.name,kerb:taxi.fare.dest?.kerb}:null,npc:fareNpc.visible};},
             get destination(){return destination;},
             storyEvent(ev){storyEvent(ev);return story;},
             storySet(data){applyStory({changed:true,state:normalizeStory(data),effects:[]});return story;},
@@ -1097,6 +1161,15 @@ async function boot() {
                 ...(!driving.active && driving.lastCar ? [{ x: driving.lastCar.position.x, z: driving.lastCar.position.z, r: 3.4, w: 1.1 }] : []),
             ],
         });
+        // The street: engines of the nearest cars, yours included, and the odd horn.
+        soundCars.length = 0;
+        if (driving.active) soundCars.push({ id: "you", x: driving.car.position.x, z: driving.car.position.z, v: driving.speed, kind: driving.car.userData.kind, own: true });
+        world.city.traffic.forEach((c, i) => { const sim = c.userData.sim; soundCars.push({ id: "47-" + i, x: c.position.x, z: c.position.z, v: sim.v, kind: c.userData.kind, held: sim.held }); });
+        for (const sim of world.avenues.fleet.cars) if (sim.mesh) soundCars.push({ id: "av-" + sim.id, x: sim.mesh.position.x, z: sim.mesh.position.z, v: sim.v, kind: sim.kind, held: sim.held });
+        const outdoors = isOutside(p.x, p.z, p.y);
+        lastStreetSound = stepTrafficSound(trafficSound, soundCars, p, dt, { outside: outdoors });
+        if (lastStreetSound.honks.length) honksHeard += lastStreetSound.honks.length;
+        audio.setTraffic(lastStreetSound, { outside: outdoors });
         if (hud.phase === "explore") {
             const seen = world.city?.ads?.lastSeen || [];
             for (const id of seen) {
@@ -1114,8 +1187,11 @@ async function boot() {
             clock: clock.clock,
         });
 
+        if (!driving.active && taxi.on) taxiFrame(dt, t); // out of the cab: the roof light goes off
         if (hud.phase === "explore" && driving.active) {
-            hud.setInteract(`${Math.round(Math.abs(driving.speed) * 2.237)} MPH  ·  [F] GET OUT  ·  [Q] VIEW`, true);
+            const fare = taxiFrame(dt, t);
+            const cab = inCab() ? (taxi.on ? `  ·  ${fare}  ·  [T] LIGHT OFF` : "  ·  [T] TAXI LIGHT") : "";
+            hud.setInteract(`${Math.round(Math.abs(driving.speed) * 2.237)} MPH  ·  [F] GET OUT  ·  [Q] VIEW${cab}`, true);
         } else if (hud.phase === "explore" && !ride) {
             if (controls.sitting) hud.setInteract("[E] STAND UP  ·  WASD TO GET UP", true);
             else {

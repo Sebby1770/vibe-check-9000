@@ -13,6 +13,9 @@ import { buildVehicle, animateVehicle } from "./vehicles/models.js";
 import { stepTraffic, ROAD } from "./traffic.js";
 import { junctionStops47th } from "./openworld/avenue-sim.js";
 import { dressFacades } from "./facade-kit.js";
+import { registerLamp } from "./render/street-lights.js";
+import { createLightPool } from "./render/light-pool.js";
+import { addNightLights } from "./vehicles/night-lights.js";
 
 const RAIN_N = 420;
 const STEAM_N = 48;
@@ -26,6 +29,14 @@ function sedan(scene, { x, z, yaw = 0, taxi = false, color = 0x2a2a32, moving = 
     car.userData.moving = moving;
     scene.add(car);
     return car;
+}
+
+/* The shop and hotel lamps (interiors/index.js lamp()) share five real lights among the rooms near you. They used
+   to be hidden beyond 24 m, but every light shown or hidden recompiled every lit material in view. */
+function shopLampPool(scene, lights) {
+    const sources = lights.map((l) => ({ x: l.position.x, y: l.position.y, z: l.position.z, color: l.color.getHex(), intensity: l.intensity, distance: l.distance, decay: l.decay }));
+    for (const l of lights) scene.remove(l);
+    return createLightPool(scene, sources, { size: 5, range: 24 });
 }
 
 export function buildCity(scene, adConfig = mergeAdConfig()) {
@@ -429,20 +440,14 @@ export function buildCity(scene, adConfig = mergeAdConfig()) {
     alleyLight.position.set(0, 3.7, -22);
     scene.add(alleyLight);
 
-    // Street lamps — poles everywhere, real lights only on a few so the GPU stays alive
-    const lampLights = [];
-    function lampPost(x, z, lit) {
+    // Street lamps: every post registers with render/street-lights.js, whose light pool follows you.
+    function lampPost(x, z) {
         addBox(root, unitBox, black, x, 2.2, z, 0.12, 4.4, 0.12);
         addBox(root, unitBox, neonAmber, x, 4.35, z + (z < 20 ? -0.9 : 0.5), 0.35, 0.22, 0.35);
-        if (!lit) return;
-        const pl = new THREE.PointLight(0xffc078, 16, 12, 2);
-        pl.position.set(x, 4.2, z + (z < 20 ? -0.9 : 0.5));
-        pl.userData.base = 16;
-        scene.add(pl);
-        lampLights.push(pl);
+        registerLamp(x, 4.2, z + (z < 20 ? -0.9 : 0.5));
     }
-    for (const x of [-48, -32, -16, 0, 16, 32, 48]) lampPost(x, 17.85, x === -16 || x === 16);
-    for (const x of [-40, -24, -8, 8, 24, 40]) lampPost(x, 27.9, x === -8 || x === 24);
+    for (const x of [-48, -32, -16, 0, 16, 32, 48]) lampPost(x, 17.85);
+    for (const x of [-40, -24, -8, 8, 24, 40]) lampPost(x, 27.9);
     const dinerGlow = new THREE.Mesh(
         new THREE.PlaneGeometry(8.8, 1.8),
         new THREE.MeshBasicMaterial({ color: 0xff3355, transparent: true, opacity: 0.16, blending: THREE.AdditiveBlending, depthWrite: false }),
@@ -563,6 +568,7 @@ export function buildCity(scene, adConfig = mergeAdConfig()) {
     const traffic = fleet.map(([x, dir, kind, color], i) => {
         const car = sedan(scene, { x, z: dir > 0 ? 21.35 : 24.55, yaw: dir > 0 ? 0 : Math.PI, kind, color, moving: dir, seed: i });
         car.userData.sim = { x, dir, v: 8.2, braking: false, len: car.userData.spec?.length || 4.9 };
+        addNightLights(car);
         return car;
     });
     const rideCab = sedan(scene, { x: 0, z: 21.35, kind: "checker", driver: true });
@@ -643,13 +649,12 @@ export function buildCity(scene, adConfig = mergeAdConfig()) {
         titlePlane,
         titles,
         alleyLight,
-        lampLights,
         dinerLight,
         hotelLight,
         marquee,
         shopCrowd: shops.crowds,
         shopDetails: shops.details,
-        shopLights: shops.lights,
+        shopLamps: shopLampPool(scene, shops.lights),
         playFilm(id) { shops.film.userData.play(id); },
         setShopState(state) { if (state.film && this.currentFilm !== state.film.id) {this.currentFilm=state.film.id; shops.film.userData.play(state.film.id);} },
         barberPole: shops.pole,
@@ -758,9 +763,6 @@ export function updateCity(city, dt, t, { outside, reduced, lampMul = 1, zone, p
     }
 
     const mul = Number.isFinite(lampMul) ? lampMul : 1;
-    for (const l of city.lampLights || []) {
-        l.intensity = (l.userData.base || 16) * mul * (reduced ? 1 : 0.92 + Math.sin(t * 1.7 + l.position.x) * 0.08);
-    }
     if (city.winOn) {
         const pulse = (reduced?.9:.9+Math.sin(t*.55)*.035)*Math.max(.38,Math.min(1,mul));
         city.winOn.color.setRGB(1 * pulse, 0.89 * pulse, 0.66 * pulse);
@@ -781,11 +783,7 @@ export function updateCity(city, dt, t, { outside, reduced, lampMul = 1, zone, p
         person.position.z=home.z+(reduced?0:Math.sin(cycle/18*Math.PI*2)*.27);
         person.userData.mode=cycle<5?"lean":"idle";
     }
-    for(const light of city.shopLights || []) {
-        light.userData.base ??= light.intensity;
-        const near=!position||Math.hypot(position.x-light.position.x,position.z-light.position.z)<24;
-        light.visible=near;light.intensity=light.userData.base*(zone==="rivoli"?.7:1);
-    }
+    if (position) city.shopLamps?.update(dt, position, (s) => s.intensity * (zone === "rivoli" ? 0.7 : 1));
     if (city.signal?.userData.lamps) {
         const phase = Math.floor(t / 3.2) % 3;
         const L = city.signal.userData.lamps;

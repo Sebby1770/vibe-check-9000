@@ -2,6 +2,7 @@
    period cars is drawn, each lent to one of the cars nearest you. A pool car keeps its sim car until that
    car goes out of range, so nothing changes shape in front of you. */
 import { buildVehicle, animateVehicle } from "../vehicles/models.js";
+import { addNightLights } from "../vehicles/night-lights.js";
 import { createAvenueTraffic, stepAvenues, carPose, carShown, hitAvenueCar, avenueBlocks } from "./avenue-sim.js";
 
 const POOL = 26;
@@ -17,6 +18,7 @@ export function buildAvenues(scene) {
     const car = buildVehicle(kind, { color: COLORS[i % COLORS.length], driver: true, seed: 100 + i });
     car.visible = false;
     car.userData.sim = null;
+    addNightLights(car);
     scene.add(car);
     pool.push(car);
   }

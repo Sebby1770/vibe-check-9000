@@ -1,6 +1,7 @@
 /* One pass over the finished world: PBR maps at real-world scale, physically sensible wet surfaces, painted
    lane lines, and light from signs and lamps smeared across the wet road. */
 import * as THREE from "three";
+import { lamps } from "./street-lights.js";
 
 const _c = new THREE.Color();
 
@@ -131,14 +132,20 @@ export function addStreetReflections(scene, city) {
     // Street lamps and shop-front lights along 47th.
     scene.updateMatrixWorld(true);
     const v = new THREE.Vector3();
+    const glowAt = (x, y, z, color, strength) => {
+        if (y < 1.5 || y > 9 || z < 12 || z > 34 || x < -60 || x > 60) return;
+        const toward = z < 22.8 ? 1 : -1;
+        const edge = z < 22.8 ? Math.max(z, 18.6) : Math.min(z, 27);
+        add(x, edge, edge + toward * 5.5, color, 1.1, strength);
+    };
     scene.traverse((o) => {
         if (!o.isPointLight) return;
         o.getWorldPosition(v);
-        if (v.y < 1.5 || v.y > 9 || v.z < 12 || v.z > 34 || v.x < -60 || v.x > 60) return;
-        const toward = v.z < 22.8 ? 1 : -1;
-        const edge = v.z < 22.8 ? Math.max(v.z, 18.6) : Math.min(v.z, 27);
-        add(v.x, edge, edge + toward * 5.5, _c.copy(o.color).getHex(), 1.1, 0.55);
+        glowAt(v.x, v.y, v.z, _c.copy(o.color).getHex(), 0.55);
     });
+    // The lamps light the street through a moving pool of lights (render/street-lights.js), so their streaks
+    // come from where the lamps stand, every one of them, not from whichever lights happen to be near.
+    for (const l of lamps()) glowAt(l.x, l.y, l.z, 0xffc078, 0.45);
     // Lit signs facing the street: sample each sign's average colour once.
     const probe = document.createElement("canvas");
     probe.width = probe.height = 1;
