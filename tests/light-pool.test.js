@@ -3,7 +3,9 @@ import { register } from "node:module";
 
 // The browser maps "three" with an importmap; here, a resolve hook points it at the vendored build.
 const three = new URL("../vendor/three/build/three.module.js", import.meta.url).href;
-register(`data:text/javascript,export async function resolve(s,c,n){return s==="three"?{url:${JSON.stringify(three)},shortCircuit:true}:n(s,c)}`);
+// Encoded, or Node 20 reads the "?" as the start of a query and drops the rest of the hook.
+const hook = `export async function resolve(s, c, n) { return s === "three" ? { url: ${JSON.stringify(three)}, shortCircuit: true } : n(s, c); }`;
+register("data:text/javascript," + encodeURIComponent(hook));
 const THREE = await import("three");
 const { createLightPool } = await import("../js/render/light-pool.js");
 
