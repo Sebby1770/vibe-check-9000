@@ -261,7 +261,32 @@ export function createWorld(canvas, adConfig) {
     }
     window.addEventListener("resize", resize);
     // Warm every shader while the title card is up, so the first steps outside don't stall.
-    renderer.compileAsync?.(scene, camera).catch(() => {});
+    let warm = "compiling";
+    Promise.resolve(renderer.compileAsync?.(scene, camera)).catch(() => {}).then(() => { warm = "ready"; });
+    /** Once, under the title card, after the shaders compile: one frame of the whole city from high above, with
+        every hidden chunk and object shown, so the GPU has every buffer, texture and draw state before you go
+        anywhere (otherwise the first look down a new street stalls for a second or two while they upload).
+        main.js draws the real frame straight after, in the same task, so this one is never seen. */
+    function warmUp() {
+        if (warm !== "ready") return false;
+        warm = "done";
+        const shown = [];
+        scene.traverse((o) => { if (!o.visible && !o.isLight) { o.visible = true; shown.push(o); } });
+        const pos = camera.position.clone(), quat = camera.quaternion.clone(), { fov, near, far } = camera;
+        camera.position.set(55, 900, 50);
+        camera.lookAt(55, 0, 49.9);
+        Object.assign(camera, { fov: 80, near: 1, far: 3000 });
+        camera.updateProjectionMatrix();
+        try { composer.render(); }
+        finally {
+            for (const o of shown) o.visible = false;
+            camera.position.copy(pos);
+            camera.quaternion.copy(quat);
+            Object.assign(camera, { fov, near, far });
+            camera.updateProjectionMatrix();
+        }
+        return true;
+    }
 
     return {
         renderer,
@@ -594,6 +619,7 @@ export function createWorld(canvas, adConfig) {
         },
 
         resize,
+        warmUp,
         dispose() { renderer.dispose(); },
         getFloorY,
         getZone,

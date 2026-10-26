@@ -525,6 +525,7 @@ export function buildOpenWorld(scene) {
         root,
         walkers,
         groups,
+        train,
         update(dt, t, { position, lampMul = 1, drawDistance = 360, reduced = false }) {
             const k = Math.min(1.2, lampMul);
             for (const m of allFacades) m.emissiveIntensity = 0.05 + k * 0.75;

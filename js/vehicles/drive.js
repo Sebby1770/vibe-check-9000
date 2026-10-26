@@ -98,7 +98,7 @@ export function createDriving({ scene, camera, colliders, city, audio, hud, aven
             if (!c.userData.nightLights) c.userData.nightLights = addNightLights(c);
             c.userData.nightLights.visible = true;
             camPos.copy(camera.position);
-            hud.toast(`${(c.userData.kind || "car").toUpperCase()} · W/S DRIVE · A/D STEER · SPACE BRAKE · Q VIEW · H HORN · F GET OUT`, "#f2a541");
+            hud.toast(`${(c.userData.kind || "car").toUpperCase()} · W/S DRIVE · A/D STEER · SPACE BRAKE · Q VIEW · H HORN · R RADIO · F GET OUT`, "#f2a541");
             document.body.classList.add("driving");
         },
         /** Steps out on whichever kerb side is clear. Returns {x, z, lookX, lookZ}. */

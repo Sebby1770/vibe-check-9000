@@ -71,3 +71,28 @@ assert.equal(events[0].hadPassenger, true);
 assert.equal(taxiTarget(s, pos), null);
 
 console.log(`taxi: ${K.length} kerbs, ${D.length} destinations, pick-up, ride, pay, tips, patience`);
+
+// Ride chatter: small talk every 20 s or so (never the same line twice in a ride), a word when passing a landmark,
+// and directions near the end.
+{
+  const { rideChatter } = await import("../js/taxi/taxi.js");
+  let st = createTaxi();
+  ({ state: st } = toggleTaxi(st, { x: 0, z: 22.8 }, rand));
+  const pk = st.fare.pickup;
+  ({ state: st } = stepTaxi(st, { pos: { x: pk.cabX, z: pk.cabZ }, speed: 0, dt: 0.1, rand }));
+  assert.equal(st.stage, "ride");
+  const far = { x: 99999, z: 99999 }, lines = [];
+  for (let i = 0; i < 60 * 120; i++) { const l = rideChatter(st, { pos: far, dt: 1 / 60, rand }); if (l) lines.push(l); }
+  assert.ok(lines.length >= 3 && lines.length <= 7, `${lines.length} lines in two minutes`);
+  assert.equal(new Set(lines).size, lines.length, "no repeats");
+  // Passing a landmark that isn't where they're going.
+  const other = destinations().find((d) => d !== st.fare.dest && Math.hypot(d.x - st.fare.dest.kerb.x, d.z - st.fare.dest.kerb.z) > 200);
+  st.fare.chat.wait = 0;
+  const passing = rideChatter(st, { pos: { x: other.x, z: other.z }, dt: 0.1, rand });
+  assert.ok(passing.includes(other.name), passing);
+  // Getting close.
+  const nearLine = rideChatter(st, { pos: { x: st.fare.dest.kerb.x + 60, z: st.fare.dest.kerb.z }, dt: 0.1, rand });
+  assert.ok(nearLine && !nearLine.includes(other.name), nearLine);
+  assert.equal(rideChatter(createTaxi(), { pos: far, dt: 60, rand }), null, "no talk without a passenger");
+  console.log("taxi: ride chatter, landmarks, directions near the end");
+}

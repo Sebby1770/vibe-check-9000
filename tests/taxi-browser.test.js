@@ -27,17 +27,20 @@ try{
  ev(`__vibeInspect.moveCar(${p.cabX},${p.cabZ})`);frames(8);
  tx=ev('__vibeInspect.taxi()');
  assert.equal(tx.stage,'ride');assert.equal(tx.npc,false);assert.ok(tx.fare.dest);
+ assert.equal(tx.riderInCab,true,'the fare rides in the back of the cab');
  assert.equal(ev('__vibeInspect.destination?.id'),'taxi-dropoff');
  assert.match(ev("document.getElementById('interact').textContent"),/TO .+ · \d+ M · METER \$\d+/);
  cli('screenshot',out+'/ride.png');
  console.log('ok  stopping beside the fare boards them and marks their destination: '+tx.fare.dest);
 
  const wallet=state().commerce.life.wallet;
- ev(`__vibeInspect.moveCar(${tx.fare.kerb.cabX},${tx.fare.kerb.cabZ})`);frames(8);
- const after=ev('__vibeInspect.taxi()');
+ // Pull up at their kerb; read everything in the same breath, before the toast or the kerb moment moves on.
+ const {after,toasts}=ev(`(async()=>{const seen=[],el=document.getElementById('toast'),mo=new MutationObserver(()=>seen.push(el.textContent));mo.observe(el,{childList:true,characterData:true,subtree:true});__vibeInspect.moveCar(${tx.fare.kerb.cabX},${tx.fare.kerb.cabZ});for(let i=0;i<8;i++)await new Promise(r=>requestAnimationFrame(r));mo.disconnect();return {after:__vibeInspect.taxi(),toasts:seen};})()`);
  assert.equal(after.fares,1);assert.ok(after.earned>=3);
  assert.equal(state().commerce.life.wallet,wallet+after.earned);
  assert.equal(after.stage,'pickup','the next fare is already hailing');
+ assert.equal(after.rider,false);assert.equal(after.alighted,1,'they step out at the kerb');assert.equal(after.npc,true,'and the next one waves');
+ assert.ok(toasts.some((t)=>/tonight 1 fare, \$\d+/.test(t)),JSON.stringify(toasts));
  console.log(`ok  the drop-off pays $${after.earned} into the wallet and the next fare hails`);
 
  ev("testKey('f');testKey('f',false);true");frames(6);
