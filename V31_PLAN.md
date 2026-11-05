@@ -232,13 +232,14 @@ Street towers, and far busier pavements in the open city.
 Delivered in v35.0.0: street lighting (light pools under every lamp and a fixed point-light pool that follows you),
 headlights on every moving car, taxi fares in any Checker, and positional engine and horn sound from the traffic.
 
+Delivered in v36.0.0: a warm-up draw of the whole city under the title card (no more first-sight stalls), the car
+radio, footsteps, the El and river horns, and taxi fares riding in the cab with ride chatter.
+
 Not done yet (next steps):
 
 - Instanced far-LOD crowds (`createCrowd`).
-- The first time the camera looks down a part of the city the GPU hasn't drawn yet (the east district, seen from
-  the club), it can stall for a second or two while buffers upload and draw state is built; the shader side of
-  that was fixed in v35 (a fixed light count), the rest predates v35. A warm-up draw of each district during the
-  title card would hide it.
+- The warm-up draw under the title card (v36) can make the title stutter for a few seconds on a cold GPU; it could be
+  spread over several title frames, one district at a time.
 - Touch driving was wired through the on-screen stick but not tried on a phone; the full story was verified by unit
   test and in-browser beats, not by one continuous human play-through.
 - `npm run test:browser` fails at Frank's ice on `main` too (pre-existing; the suite predates later changes).

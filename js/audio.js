@@ -63,6 +63,14 @@ export function createAudio() {
     let shopGain = null, shopFilter = null, previewGain = null;
     let previewNodes = [];
     let previewing = false;
+    let musicBus = null, amDry = null, amWet = null;
+    // The car radio: null when you're not in a car, else the station you're tuned to.
+    let radio = null;
+    const STATIONS = {
+        swing: { name: "WSWG 1240 · SWING", long: "WSWG 1240 · SIDEWALK SWING, ALL NIGHT", mix: [0, 1] },
+        club: { name: "WVTU 880 · VELVET LIVE", long: "WVTU 880 · LIVE FROM VELVET TUESDAY", mix: [0.9, 0] },
+        off: { name: "RADIO OFF", long: "RADIO OFF · JUST THE STREET", mix: [0, 0] },
+    };
 
     const state = {
         bpm: 120,
@@ -157,8 +165,24 @@ export function createAudio() {
         bassGain.connect(clubGain);
         bassOsc.start();
 
-        clubGain.connect(master);
-        jazzGain.connect(master);
+        // The two scores share a bus that the car radio can switch through an AM band (thin, boxy, warm).
+        musicBus = ctx.createGain();
+        amDry = ctx.createGain();
+        amWet = ctx.createGain();
+        amWet.gain.value = 0;
+        const amHp = ctx.createBiquadFilter(), amLp = ctx.createBiquadFilter(), amPeak = ctx.createBiquadFilter();
+        amHp.type = "highpass"; amHp.frequency.value = 380; amHp.Q.value = 0.8;
+        amLp.type = "lowpass"; amLp.frequency.value = 2900; amLp.Q.value = 0.9;
+        amPeak.type = "peaking"; amPeak.frequency.value = 1300; amPeak.gain.value = 5; amPeak.Q.value = 0.9;
+        clubGain.connect(musicBus);
+        jazzGain.connect(musicBus);
+        musicBus.connect(amDry);
+        amDry.connect(master);
+        musicBus.connect(amHp);
+        amHp.connect(amLp);
+        amLp.connect(amPeak);
+        amPeak.connect(amWet);
+        amWet.connect(master);
         rainGain.connect(master);
         rumbleGain.connect(master);
 
@@ -447,7 +471,64 @@ export function createAudio() {
         const out = trafficOutside !== false;
         trafficBus.gain.setTargetAtTime(muted ? 0 : out ? 1 : 0.3, t, 0.15);
         trafficLp.frequency.setTargetAtTime(out ? 12000 : 420, t, 0.15);
+        foleyBus?.gain.setTargetAtTime(muted ? 0 : 1, t, 0.05);
     }
+
+    // The city's own sound, on the street bus (so it's muffled indoors): a low hum of a million rooms, the El's
+    // rumble from wherever the train is, and ships on the river. Your footsteps have their own bus.
+    let foleyBus = null, cityBed = null, elVoice = null;
+    function cityGraph() {
+        if (cityBed || !ctx) return;
+        trafficGraph();
+        foleyBus = ctx.createGain();
+        foleyBus.gain.value = muted ? 0 : 1;
+        foleyBus.connect(ctx.destination);
+        const bed = ctx.createBufferSource(), bedLp = ctx.createBiquadFilter();
+        bed.buffer = rainBuf;
+        bed.loop = true;
+        bed.playbackRate.value = 0.35;
+        bedLp.type = "lowpass";
+        bedLp.frequency.value = 260;
+        cityBed = ctx.createGain();
+        cityBed.gain.value = 0;
+        bed.connect(bedLp); bedLp.connect(cityBed); cityBed.connect(trafficLp);
+        bed.start(0, 0.7);
+        // The El: a deep roll and the clatter of wheels over rail joints, gated by a slow pulse.
+        const pan = streetPanner();
+        pan.refDistance = 14;
+        pan.rolloffFactor = 1.1;
+        const roll = ctx.createBufferSource(), rollLp = ctx.createBiquadFilter(), g = ctx.createGain();
+        roll.buffer = noiseBuf;
+        roll.loop = true;
+        rollLp.type = "lowpass";
+        rollLp.frequency.value = 170;
+        g.gain.value = 0;
+        const clat = ctx.createBufferSource(), clatBp = ctx.createBiquadFilter(), clatG = ctx.createGain(), lfo = ctx.createOscillator(), lfoG = ctx.createGain();
+        clat.buffer = noiseBuf;
+        clat.loop = true;
+        clatBp.type = "bandpass";
+        clatBp.frequency.value = 1100;
+        clatBp.Q.value = 1.4;
+        clatG.gain.value = 0;
+        lfo.type = "square";
+        lfo.frequency.value = 3.1;
+        lfoG.gain.value = 0.5;
+        lfo.connect(lfoG); lfoG.connect(clatG.gain);
+        roll.connect(rollLp); rollLp.connect(g);
+        clat.connect(clatBp); clatBp.connect(clatG); clatG.connect(g);
+        g.connect(pan); pan.connect(trafficLp);
+        roll.start(0, 0.2); clat.start(0, 0.5); lfo.start();
+        elVoice = { pan, g, clatG };
+    }
+    const STEPS = {
+        pavement: { f: 1000, q: 1.0, dur: 0.085, thump: 0.5, level: 0.05, wet: true },
+        gravel: { f: 2100, q: 0.5, dur: 0.15, thump: 0.25, level: 0.04 },
+        terrazzo: { f: 1900, q: 1.8, dur: 0.06, thump: 0.6, level: 0.05 },
+        glass: { f: 2600, q: 2.4, dur: 0.05, thump: 0.45, level: 0.045 },
+        tile: { f: 2400, q: 2.0, dur: 0.055, thump: 0.4, level: 0.045 },
+        carpet: { f: 420, q: 0.7, dur: 0.07, thump: 0.5, level: 0.022 },
+        wood: { f: 560, q: 1.5, dur: 0.1, thump: 0.95, level: 0.05 },
+    };
     /** A horn: two notes a third apart, like the dual horns of the day. at = {x, z}, or null for your own car. */
     function playHorn(kind = "sedan", at = null, { long = false, double = false } = {}) {
         if (!ctx || muted) return;
@@ -486,10 +567,33 @@ export function createAudio() {
         trafficLevel();
         playHorn("sedan", null);
     }
+    /** The crackle and whistle of the dial between stations. */
+    function tuneCrackle() {
+        if (!ctx || muted) return;
+        const t = ctx.currentTime, src = ctx.createBufferSource(), bp = ctx.createBiquadFilter(), g = ctx.createGain();
+        src.buffer = noiseBuf;
+        bp.type = "bandpass";
+        bp.frequency.setValueAtTime(900, t);
+        bp.frequency.exponentialRampToValueAtTime(2600, t + 0.32);
+        bp.Q.value = 0.7;
+        g.gain.setValueAtTime(0.0001, t);
+        g.gain.exponentialRampToValueAtTime(0.09, t + 0.03);
+        g.gain.exponentialRampToValueAtTime(0.0001, t + 0.42);
+        const whistle = ctx.createOscillator(), wg = ctx.createGain();
+        whistle.frequency.setValueAtTime(2400, t);
+        whistle.frequency.exponentialRampToValueAtTime(700, t + 0.35);
+        wg.gain.setValueAtTime(0.012, t);
+        wg.gain.exponentialRampToValueAtTime(0.0001, t + 0.38);
+        src.connect(bp); bp.connect(g); g.connect(muteGain);
+        whistle.connect(wg); wg.connect(muteGain);
+        src.start(t, Math.random() * 0.6); src.stop(t + 0.45);
+        whistle.start(t); whistle.stop(t + 0.4);
+        src.onended = () => { src.disconnect(); bp.disconnect(); g.disconnect(); whistle.disconnect(); wg.disconnect(); };
+    }
 
     return {
         get previewing() { return previewing; },
-        get bpm() { return musicMix(zone)[1] > 0 ? state.jazzBpm : state.bpm; },
+        get bpm() { return radio ? (radio === "club" ? state.bpm : state.jazzBpm) : musicMix(zone)[1] > 0 ? state.jazzBpm : state.bpm; },
         get context() { return ctx; },
         get started() { return started; },
         get muted() { return muted; },
@@ -545,8 +649,9 @@ export function createAudio() {
                 close: [0.32, 0.65, 1.45],
             }[nightPhase] || [1, 1, 1];
             const duck = previewing ? 0.18 : 1;
-            clubGain.gain.setTargetAtTime(mix[0] * night[0] * duck, t, 0.4);
-            jazzGain.gain.setTargetAtTime(mix[1] * night[1] * duck, t, 0.4);
+            const st = radio && STATIONS[radio];
+            clubGain.gain.setTargetAtTime(st ? st.mix[0] : mix[0] * night[0] * duck, t, st ? 0.08 : 0.4);
+            jazzGain.gain.setTargetAtTime(st ? st.mix[1] : mix[1] * night[1] * duck, t, st ? 0.08 : 0.4);
             rainGain.gain.setTargetAtTime(mix[2] * night[2], t, 0.45);
             if (rumbleGain) rumbleGain.gain.setTargetAtTime(zone === "subway" ? 0.025 : 0, t, 0.35);
             const room = { records:[.012,1800], pharmacy:[.015,3100], florist:[.006,650], rivoli:[.016,340], liquor:[.005,800], barber:[.012,1600], diner:[.014,2400] }[zone];
@@ -594,9 +699,37 @@ export function createAudio() {
                 l.setPosition(x, y, z);
                 l.setOrientation(fx, fy, fz, 0, 1, 0);
             }
+            if (radio && panner.positionX) {
+                panner.positionX.setTargetAtTime(x + fx * 0.7, t, 0.02);
+                panner.positionY.setTargetAtTime(y - 0.35, t, 0.02);
+                panner.positionZ.setTargetAtTime(z + fz * 0.7, t, 0.02);
+            }
         },
         get usingDeck() { return usingDeck; },
+        get radio() { return radio; },
+        /** The car radio: a station id (swing, club, off) while you drive, null when you get out. Tuning crackles. */
+        setRadio(id) {
+            const next = id && STATIONS[id] ? id : null;
+            if (next === radio) return;
+            const was = radio;
+            radio = next;
+            if (!ctx) return;
+            const t = ctx.currentTime, on = !!radio;
+            amDry.gain.setTargetAtTime(on ? 0 : 1, t, 0.03);
+            amWet.gain.setTargetAtTime(on ? 1.7 : 0, t, 0.03);
+            if (!on && panner.positionX) {
+                panner.positionX.setTargetAtTime(0, t, 0.05);
+                panner.positionY.setTargetAtTime(2.2, t, 0.05);
+                panner.positionZ.setTargetAtTime(-12, t, 0.05);
+            }
+            // Crackle when you turn the dial, or get in with a station playing.
+            if (on && (was !== null || radio !== "off")) tuneCrackle();
+            this.setZone(zone);
+        },
+        stations: Object.keys(STATIONS),
+        stationName(id) { return STATIONS[id]?.long || ""; },
         get trackName() {
+            if (radio) return STATIONS[radio].name;
             if (usingDeck && trackIndex >= 0 && playlist[trackIndex]) return playlist[trackIndex].name;
             if (zone === "lounge") return "VELMA'S TRIO";
             if (["street","mercer","hawthorne","eastavenue","48th","northloop","southloop","westavenue","riverside"].includes(zone)) return "SIDEWALK SWING · JAZZ QUARTET";
@@ -688,6 +821,86 @@ export function createAudio() {
         cheer,
         horn,
         trafficState() { return trafficBus ? { bus: trafficBus.gain.value, voices: voiceSlots.map((s) => +s.g.gain.value.toFixed(3)), outside: trafficOutside } : null; },
+        /** A footstep on `surface` (foley.js surfaceFor); side ±1 alternates feet; run lands harder. */
+        footstep(surface = "pavement", { side = 1, run = false } = {}) {
+            if (!ctx || ctx.state !== "running" || muted) return;
+            cityGraph();
+            const s = STEPS[surface] || STEPS.pavement, t = ctx.currentTime, k = run ? 1.35 : 1;
+            const src = ctx.createBufferSource(), bp = ctx.createBiquadFilter(), g = ctx.createGain();
+            src.buffer = noiseBuf;
+            src.playbackRate.value = 1 + side * 0.04;
+            bp.type = "bandpass";
+            bp.frequency.value = s.f * (1 + side * 0.05);
+            bp.Q.value = s.q;
+            g.gain.setValueAtTime(0.0001, t);
+            g.gain.exponentialRampToValueAtTime(s.level * k, t + 0.006);
+            g.gain.exponentialRampToValueAtTime(0.0001, t + s.dur);
+            src.connect(bp); bp.connect(g); g.connect(foleyBus);
+            src.start(t, Math.random() * 0.8); src.stop(t + s.dur + 0.02);
+            // The heel: a soft low knock.
+            const o = ctx.createOscillator(), og = ctx.createGain();
+            o.frequency.setValueAtTime(110, t);
+            o.frequency.exponentialRampToValueAtTime(55, t + 0.05);
+            og.gain.setValueAtTime(0.0001, t);
+            og.gain.exponentialRampToValueAtTime(s.level * s.thump * k * 1.4, t + 0.004);
+            og.gain.exponentialRampToValueAtTime(0.0001, t + 0.07);
+            o.connect(og); og.connect(foleyBus);
+            o.start(t); o.stop(t + 0.08);
+            const nodes = [src, bp, g, o, og];
+            // Wet pavement: a small splash on top.
+            if (s.wet) {
+                const w = ctx.createBufferSource(), whp = ctx.createBiquadFilter(), wg = ctx.createGain();
+                w.buffer = noiseBuf;
+                whp.type = "highpass";
+                whp.frequency.value = 3800;
+                wg.gain.setValueAtTime(0.0001, t + 0.01);
+                wg.gain.exponentialRampToValueAtTime(s.level * 0.5 * k, t + 0.02);
+                wg.gain.exponentialRampToValueAtTime(0.0001, t + 0.09);
+                w.connect(whp); whp.connect(wg); wg.connect(foleyBus);
+                w.start(t, Math.random() * 0.8); w.stop(t + 0.1);
+                nodes.push(w, whp, wg);
+            }
+            o.onended = () => { for (const n of nodes) n.disconnect(); };
+        },
+        /** Each frame: the city around you. el = foley.js elRumble(), horn = riverHorn() or null. */
+        setCity({ outside = true, el = null, horn = null, night = 1 } = {}) {
+            if (!ctx || ctx.state !== "running") return;
+            cityGraph();
+            const t = ctx.currentTime;
+            cityBed.gain.setTargetAtTime(outside ? 0.05 + 0.03 * night : 0.04, t, 0.4);
+            if (el) {
+                place(elVoice.pan, el.x, el.y, el.z);
+                elVoice.g.gain.setTargetAtTime(el.level * 0.5, t, 0.3);
+                elVoice.clatG.gain.setTargetAtTime(el.level * 0.5, t, 0.3);
+            }
+            if (horn && !muted) {
+                // A ship's horn: two low notes, slow to swell, carrying across the whole city.
+                const pan = streetPanner();
+                pan.refDistance = 80;
+                pan.rolloffFactor = 0.7;
+                pan.maxDistance = 2000;
+                place(pan, horn.x, 6, horn.z);
+                pan.connect(trafficLp);
+                const lp = ctx.createBiquadFilter();
+                lp.type = "lowpass";
+                lp.frequency.value = 650;
+                lp.connect(pan);
+                const len = horn.long ? 3.2 : 1.8, end = t + len + 1.2;
+                for (const f of [98, 123.5]) {
+                    const o = ctx.createOscillator(), g = ctx.createGain();
+                    o.type = "sawtooth";
+                    o.frequency.value = f;
+                    g.gain.setValueAtTime(0.0001, t);
+                    g.gain.exponentialRampToValueAtTime(0.11, t + 0.45);
+                    g.gain.setValueAtTime(0.11, t + len);
+                    g.gain.exponentialRampToValueAtTime(0.0001, end);
+                    o.connect(g); g.connect(lp);
+                    o.start(t); o.stop(end + 0.05);
+                    o.onended = () => { o.disconnect(); g.disconnect(); };
+                }
+                setTimeout(() => { lp.disconnect(); pan.disconnect(); }, (len + 1.6) * 1000);
+            }
+        },
         /** Each frame: {voices, honks} from traffic-sound.js stepTrafficSound, and whether you're out in the street. */
         setTraffic({ voices = [], honks = [] } = {}, { outside = true } = {}) {
             if (!ctx || ctx.state !== "running") return;

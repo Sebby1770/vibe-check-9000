@@ -18,6 +18,14 @@ The parks have four usable benches. The club plays original jazz-house, while a 
 
 No install. Click **ENTER THE NIGHT**.
 
+## New in v36: the radio, your footsteps, and no more stalls
+
+- **Car radio.** Every car has one. Press **R** to turn the dial between the sidewalk swing station, a live broadcast from Velvet Tuesday, or nothing but the street. It sounds like a 1954 AM set.
+- **Footsteps.** Hear yourself walk: wet pavement, gravel paths, the club's terrazzo and glass dance floor, carpet, tile and floorboards all sound different.
+- **The city further off.** The El rumbles past over Third Avenue, ships sound their horns on the river, and the whole city hums.
+- **Fares in the back seat.** Your taxi passengers ride along, make conversation, and step out where you drop them.
+- **Smoother.** The first look down a new part of the city no longer freezes the game for a second or two.
+
 ## New in v35: night streets, taxi fares and the sound of traffic
 
 - **Real street lighting.** After dark every lamp throws a warm pool of light on the pavement, and the lamps near you really light the street and the people walking under them.
@@ -51,7 +59,7 @@ No install. Click **ENTER THE NIGHT**.
 
 - **A story.** You came through the DJ booth from 2026. *The 12:04* runs from REXA's booth to the last uptown local at 12:04 AM, with a prologue, five chapters and two endings. Follow the tracker (top right); hold **V** once the visor is tuned to see echoes of what happened here.
 - **An open city.** Walk or drive crosstown to Broadway and Times Square, uptown to Belmont Park and the Belmont Plaza, out to the Pier 47 waterfront on the North River, or downtown under the El into the Garment District.
-- **Drive.** Press **F** at any parked car. **W/S** drive and brake, **A/D** steer, **Space** handbrake, **Q** changes the view, **H** horn, **F** to get out. In a Checker, **T** switches the roof light on for taxi fares.
+- **Drive.** Press **F** at any parked car. **W/S** drive and brake, **A/D** steer, **Space** handbrake, **Q** changes the view, **H** horn, **F** to get out. **R** turns the radio dial. In a Checker, **T** switches the roof light on for taxi fares.
 - **New look.** Physical sky, shadows, reflections, PBR brick and wet asphalt, people with faces and tailoring, and 1950s cars. Choose Low–Ultra in Settings, or add `?quality=low` to the address.
 - **Saves.** Progress autosaves instantly to a SQLite database in your browser (OPFS), with restore points in **SAVE & BACKUP**. The `.json` backups still work.
 
@@ -163,9 +171,11 @@ Earned, not bought. The visor keeps them.
 ## Run locally
 
 ```bash
-python3 -m http.server 8000
+npm start        # python3 tools/serve.py 8000
 npm test
 ```
+
+Use `tools/serve.py` rather than `python3 -m http.server`: the game requests about a hundred modules at once, and the stock server's five-connection queue occasionally leaves one unanswered, so the page never gets past a blank title.
 
 SQLite runs from `vendor/sqlite/` (the official WebAssembly build). Serving over plain HTTP is enough: the OPFS SAH-pool VFS needs no cross-origin isolation headers.
 

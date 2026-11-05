@@ -4,6 +4,19 @@ All notable changes to VIBE CHECK 9000™ are documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
+## [36.0.0] - 2026-10-26
+
+### The radio, your footsteps, and a city that never stalls
+
+- **No more stall the first time you look down a new street.** Under the title card, once the shaders have compiled, the game draws the whole city once from high above with every hidden chunk and object shown (`warmUp()` in `js/world.js`), so the GPU has every buffer, texture and draw state before you go anywhere. The real frame is drawn straight after in the same task, so the warm-up frame is never seen. Looking east from the club in a fresh browser used to stall for one to two seconds about a third of the time; now no frame takes longer than 19 ms. The cost moves to the title card, which may stutter for a few seconds on a cold GPU.
+- **Car radio.** Get into any car and the radio comes on; **R** turns the dial: *WSWG 1240*, the sidewalk swing quartet; *WVTU 880*, live from Velvet Tuesday; or off, leaving just the street. The music goes through an AM band (thin, boxy and warm) and plays from the dashboard; the dial crackles and whistles between stations. The station you leave it on is remembered.
+- **Footsteps** (`js/foley.js`, `js/audio.js`): about three steps a second on foot, alternating feet, sounding different on wet pavement (with a little splash), park gravel, the club's terrazzo and its glass dance floor, carpet, tile and wooden floors.
+- **The city further off.** A low hum outdoors, the Third Avenue El rumbling and clattering from wherever its train is, and ships sounding their horns on the North River every minute and a half or so, heard across the city. All of it is muffled indoors and follows Mute.
+- **Fares ride in your cab.** The fare sits in the back, kerb side, chats on the way (small talk every 20 seconds or so, a word as you pass a landmark they know, directions as you get close, never the same line twice), and steps out at the kerb when you drop them off, then walks off along the pavement. Switch the light off at a standstill and they climb out on the clear side away from you. The drop-off shows your night's tally. The six fares are built once instead of a new figure for every hail.
+- The driving HUD lists the view, the radio and the taxi light, or only the fare while the roof light is on, so it fits on one line.
+- **Fix: the game sometimes never loaded locally.** `npm start` (`python3 -m http.server`) queues only five pending connections; with about a hundred modules requested at once, one could go unanswered and the page sat on a blank title (about one load in four on a busy machine, in the browser tests too). `tools/serve.py` is the same server with a deep queue, and `npm start` uses it.
+- Tests: `tests/foley.test.js` (surfaces, stride timing, setting off, teleports, the El, river horns); `tests/taxi.test.js` covers ride chatter; `tests/taxi-browser.test.js` checks the fare rides in the cab, steps out at the kerb and the tally appears.
+
 ## [35.0.0] - 2026-10-25
 
 ### Night streets, taxi fares and the sound of traffic
