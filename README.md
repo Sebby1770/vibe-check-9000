@@ -171,9 +171,11 @@ Earned, not bought. The visor keeps them.
 ## Run locally
 
 ```bash
-python3 -m http.server 8000
+npm start        # python3 tools/serve.py 8000
 npm test
 ```
+
+Use `tools/serve.py` rather than `python3 -m http.server`: the game requests about a hundred modules at once, and the stock server's five-connection queue occasionally leaves one unanswered, so the page never gets past a blank title.
 
 SQLite runs from `vendor/sqlite/` (the official WebAssembly build). Serving over plain HTTP is enough: the OPFS SAH-pool VFS needs no cross-origin isolation headers.
 
