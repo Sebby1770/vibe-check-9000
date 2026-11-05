@@ -686,15 +686,35 @@ async function boot() {
         return fig;
     });
     let nextFare = 0, waiting = null, rider = null;
-    const alighted = new Map(); // figure → seconds left standing at the kerb
+    const alighted = new Map(); // figure → {t, dx, dz}: a moment at the kerb, then a walk along the pavement
     const inCab = () => driving.active && driving.car?.userData.kind === "checker";
     const free = () => { for (let i = 0; i < fares.length; i++) { const f = fares[(nextFare + i) % fares.length]; if (f !== rider && !alighted.has(f)) { nextFare = (fares.indexOf(f) + 1) % fares.length; return f; } } return fares[0]; };
-    function stepOut(fig, x, z, faceX, faceZ) {
+    /** Out at (x, z): a moment facing (faceX, faceZ), then off along the pavement (dx, dz) until out of sight. */
+    function stepOut(fig, x, z, faceX, faceZ, dx, dz) {
         world.scene.attach(fig);
         fig.position.set(x, 0, z);
         fig.rotation.set(0, Math.atan2(faceX - x, faceZ - z), 0);
         if (fig.userData.umbrella) fig.userData.umbrella.visible = true;
-        alighted.set(fig, 6);
+        alighted.set(fig, { t: 0, dx, dz });
+    }
+    const solidAt = (x, z) => world.colliders.boxes.some((b) => b.minY < 1.7 && b.maxY > 0.3 && x > b.minX - 0.35 && x < b.maxX + 0.35 && z > b.minZ - 0.35 && z < b.maxZ + 0.35);
+    function faresFrame(dt, t) {
+        if (waiting?.visible) animateHuman(waiting, t, { mode: "hail" });
+        if (rider) animateHuman(rider, t, { mode: "sit" });
+        const cam = world.camera.position;
+        for (const [fig, a] of alighted) {
+            a.t += dt;
+            if (a.t > 1.4) {
+                // Walk on, and leave once out of sight (behind you or far off), or after a minute regardless.
+                const nx = fig.position.x + a.dx * 1.3 * dt, nz = fig.position.z + a.dz * 1.3 * dt;
+                if (!solidAt(nx, nz)) fig.position.set(nx, 0, nz);
+                fig.rotation.y = Math.atan2(a.dx, a.dz);
+                world.camera.getWorldDirection(_dir);
+                const ox = fig.position.x - cam.x, oz = fig.position.z - cam.z, far = Math.hypot(ox, oz) > 35, behind = ox * _dir.x + oz * _dir.z < 0;
+                if (far || behind || a.t > 60) { alighted.delete(fig); fig.visible = false; continue; }
+            }
+            animateHuman(fig, t, { mode: a.t > 1.4 ? "walk" : "idle" });
+        }
     }
     function taxiEvents(events) {
         for (const ev of events) {
@@ -707,15 +727,21 @@ async function boot() {
                 // Into the back seat, kerb side, behind where the cabbie would sit.
                 rider = waiting;
                 waiting = null;
-                const car = driving.car, spec = car.userData.spec || {};
+                // In the back, kerb side (the model's own rear-passenger place; the driver sits at -z).
+                const car = driving.car, seat = car.userData.spec?.passengerSeat;
                 car.add(rider);
-                rider.position.set((spec.cab ? spec.cab[3] - 0.95 : 0.2) - 1.05, 0.12, 0.38);
+                rider.position.set(seat ? seat.x + 0.05 : -0.85, 0.02, 0.4);
                 rider.rotation.set(0, Math.PI / 2, 0);
                 if (rider.userData.umbrella) rider.userData.umbrella.visible = false;
                 audio.playShopSound("ticket");
                 hud.toast(`"${ev.line}"`, "#f5c518");
             } else if (ev.type === "drop") {
-                if (rider) { stepOut(rider, ev.dest.kerb.x, ev.dest.kerb.z, ev.dest.x, ev.dest.z); rider = null; }
+                if (rider) {
+                    // Across the road is cab → kerb; they walk off along the pavement, either way.
+                    const k = ev.dest.kerb, ax = k.x - k.cabX, az = k.z - k.cabZ, n = Math.hypot(ax, az) || 1, way = Math.random() < 0.5 ? 1 : -1;
+                    stepOut(rider, k.x, k.z, k.x + ax, k.z + az, (-az / n) * way, (ax / n) * way);
+                    rider = null;
+                }
                 commerce.life = credit(commerce.life, ev.pay, `Taxi fare · ${ev.dest.name}`);
                 persistCommerce();
                 showWallet();
@@ -729,8 +755,14 @@ async function boot() {
                 if (waiting) waiting.visible = false;
                 waiting = null;
                 if (rider) {
-                    const car = rider.parent, side = new Vector3(0, 0, 1.6).applyQuaternion(car.quaternion);
-                    stepOut(rider, car.position.x + side.x, car.position.z + side.z, car.position.x + side.x * 2, car.position.z + side.z * 2);
+                    // Climbing out of a stopped cab: on whichever side is clear and further from you. Out of a
+                    // moving one they're simply gone at the next corner.
+                    const car = rider.parent, cam = world.camera.position;
+                    const spots = [1, -1].map((s) => new Vector3(0, 0, 1.7 * s).applyQuaternion(car.quaternion).add(car.position))
+                        .filter((v) => !solidAt(v.x, v.z)).sort((a, b) => b.distanceTo(cam) - a.distanceTo(cam));
+                    const fwd = new Vector3(1, 0, 0).applyQuaternion(car.quaternion);
+                    if (Math.abs(driving.speed) < 2 && spots.length) stepOut(rider, spots[0].x, spots[0].z, spots[0].x * 2 - car.position.x, spots[0].z * 2 - car.position.z, fwd.x, fwd.z);
+                    else { world.scene.attach(rider); rider.visible = false; }
                     rider = null;
                 }
                 if (destination?.id?.startsWith("taxi-")) destination = null;
@@ -1248,13 +1280,6 @@ async function boot() {
 
         radioFrame();
         if (!driving.active && taxi.on) taxiFrame(dt, t); // out of the cab: the roof light goes off
-        if (waiting?.visible) animateHuman(waiting, t, { mode: "hail" });
-        if (rider) animateHuman(rider, t, { mode: "sit" });
-        for (const [fig, left] of alighted) {
-            if (left - dt <= 0) { alighted.delete(fig); fig.visible = false; continue; }
-            alighted.set(fig, left - dt);
-            animateHuman(fig, t, { mode: "idle" });
-        }
         if (hud.phase === "explore" && driving.active) {
             const fare = taxiFrame(dt, t), mph = `${Math.round(Math.abs(driving.speed) * 2.237)} MPH  ·  [F] GET OUT`;
             // On a fare the line is about the fare; otherwise it lists what else the car can do.
@@ -1276,6 +1301,7 @@ async function boot() {
             }
         }
 
+        faresFrame(dt, t); // after taxiFrame, so a fare who just boarded or got out is drawn in their new pose
         if(hud.phase!=="explore")hud.setInteract("",false);
         const marker=document.getElementById("wayfinder");
         marker.hidden=!destination||hud.phase!=="explore";

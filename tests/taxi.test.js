@@ -87,9 +87,34 @@ console.log(`taxi: ${K.length} kerbs, ${D.length} destinations, pick-up, ride, p
   assert.equal(new Set(lines).size, lines.length, "no repeats");
   // Passing a landmark that isn't where they're going.
   const other = destinations().find((d) => d !== st.fare.dest && Math.hypot(d.x - st.fare.dest.kerb.x, d.z - st.fare.dest.kerb.z) > 200);
-  st.fare.chat.wait = 0;
-  const passing = rideChatter(st, { pos: { x: other.x, z: other.z }, dt: 0.1, rand });
+  const passing = rideChatter(st, { pos: { x: other.x, z: other.z }, dt: 6, rand });
   assert.ok(passing.includes(other.name), passing);
+  // Driving straight past a landmark at 15 m/s draws a remark whatever the small-talk timer says, and no
+  // remark is made the same way twice in a ride.
+  const lm = destinations().filter((d) => d !== st.fare.dest);
+  for (let trial = 0; trial < 20; trial++) {
+    let ride = createTaxi();
+    ({ state: ride } = toggleTaxi(ride, { x: 0, z: 22.8 }, rand));
+    const p0 = ride.fare.pickup;
+    ({ state: ride } = stepTaxi(ride, { pos: { x: p0.cabX, z: p0.cabZ }, speed: 0, dt: 0.1, rand }));
+    const gap = (d) => Math.min(...destinations().filter((o) => o !== d).map((o) => Math.hypot(o.x - d.x, o.z - d.z)));
+    const target = lm.filter((d) => d !== ride.fare.dest && Math.hypot(d.x - ride.fare.dest.kerb.x, d.z - ride.fare.dest.kerb.z) > 200).sort((a, b) => gap(b) - gap(a))[0];
+    for (let i = 0; i < 60 * (2 + trial); i++) rideChatter(ride, { pos: far, dt: 1 / 60, rand }); // a random timer phase
+    const heard = [];
+    for (let s = -60; s <= 60; s += 15 / 60) { const l = rideChatter(ride, { pos: { x: target.x + s, z: target.z + 15 }, dt: 1 / 60, rand }); if (l) heard.push(l); }
+    assert.ok(heard.some((l) => l.includes(target.name)), `trial ${trial}: ${JSON.stringify(heard)}`);
+  }
+  const forms = [];
+  let tour = createTaxi();
+  ({ state: tour } = toggleTaxi(tour, { x: 0, z: 22.8 }, rand));
+  ({ state: tour } = stepTaxi(tour, { pos: { x: tour.fare.pickup.cabX, z: tour.fare.pickup.cabZ }, speed: 0, dt: 0.1, rand }));
+  for (const d of destinations()) {
+    if (d === tour.fare.dest) continue;
+    const l = rideChatter(tour, { pos: { x: d.x, z: d.z }, dt: 6, rand });
+    if (l && l.includes(d.name)) forms.push(l.replace(d.name, "@"));
+  }
+  assert.ok(forms.length >= 2 && forms.length <= 3, `${forms.length} landmark remarks`);
+  assert.equal(new Set(forms).size, forms.length, "each remark made a different way");
   // Getting close.
   const nearLine = rideChatter(st, { pos: { x: st.fare.dest.kerb.x + 60, z: st.fare.dest.kerb.z }, dt: 0.1, rand });
   assert.ok(nearLine && !nearLine.includes(other.name), nearLine);

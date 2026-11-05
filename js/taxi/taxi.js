@@ -84,25 +84,33 @@ const NEAR = ["This'll do fine, just up here.", "Right up here on the left. Or t
 /** Mid-ride: returns a line for the fare to say this frame, or null. */
 export function rideChatter(state, { pos, dt = 0, rand = Math.random }) {
   if (state.stage !== "ride" || !state.fare?.dest) return null;
-  const f = state.fare, chat = (f.chat ||= { wait: 6 + rand() * 6, said: [], passed: [], near: false });
+  // `chat` lives on the fare object, which stepTaxi carries from frame to frame.
+  const f = state.fare, chat = (f.chat ||= { wait: 6 + rand() * 6, quiet: 0, said: [], passed: [], forms: [], near: false });
+  chat.wait -= dt;
+  chat.quiet -= dt;
   const toDest = Math.hypot(pos.x - f.dest.kerb.x, pos.z - f.dest.kerb.z);
+  const spoke = (line) => { chat.quiet = 5; chat.wait = Math.max(chat.wait, 8); return line; };
   if (!chat.near && toDest < 120 && f.distance > 200) {
     chat.near = true;
-    return NEAR[Math.floor(rand() * NEAR.length)];
+    return spoke(NEAR[Math.floor(rand() * NEAR.length)]);
   }
-  chat.wait -= dt;
-  if (chat.wait > 0) return null;
-  chat.wait = 18 + rand() * 12;
-  const landmark = destinations().find((d) => d !== f.dest && !chat.passed.includes(d.name) && Math.hypot(pos.x - d.x, pos.z - d.z) < 45);
+  if (chat.quiet > 0) return null;
+  // A place they know, as you pass it (not every one: they run out of stories).
+  const forms = PASSING.map((_, i) => i).filter((i) => !chat.forms.includes(i));
+  const landmark = forms.length && destinations().find((d) => d !== f.dest && !chat.passed.includes(d.name) && Math.hypot(pos.x - d.x, pos.z - d.z) < 45);
   if (landmark) {
     chat.passed.push(landmark.name);
-    return PASSING[Math.floor(rand() * PASSING.length)](landmark.name);
+    const form = forms[Math.floor(rand() * forms.length)];
+    chat.forms.push(form);
+    return spoke(PASSING[form](landmark.name));
   }
+  if (chat.wait > 0) return null;
+  chat.wait = 18 + rand() * 12;
   const fresh = TALK.filter((l) => !chat.said.includes(l));
   if (!fresh.length) return null;
   const line = fresh[Math.floor(rand() * fresh.length)];
   chat.said.push(line);
-  return line;
+  return spoke(line);
 }
 
 export function createTaxi() {

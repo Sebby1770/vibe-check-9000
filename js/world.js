@@ -271,7 +271,9 @@ export function createWorld(canvas, adConfig) {
         if (warm !== "ready") return false;
         warm = "done";
         const shown = [];
-        scene.traverse((o) => { if (!o.visible && !o.isLight) { o.visible = true; shown.push(o); } });
+        // Never anything holding a light: a light coming into view would change the light count, and every lit
+        // material would recompile (twice) for a frame nobody sees.
+        scene.traverse((o) => { if (!o.visible && !o.isLight && !o.getObjectByProperty("isLight", true)) { o.visible = true; shown.push(o); } });
         const pos = camera.position.clone(), quat = camera.quaternion.clone(), { fov, near, far } = camera;
         camera.position.set(55, 900, 50);
         camera.lookAt(55, 0, 49.9);
