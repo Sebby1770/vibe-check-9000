@@ -11,6 +11,7 @@ export function buildDistrict(scene) {
   const root=new THREE.Group();root.name='East district';scene.add(root);
   const mat=(color,extra={})=>new THREE.MeshStandardMaterial({color,roughness:.86,...extra});
   const stone=mat(0xaca18e),road=mat(0x333e43),grass=mat(0x4c684c),iron=mat(0x2c4240),wood=mat(0x775039),cream=mat(0xd4bfa0),leaf=mat(0x43684d),trunk=mat(0x58463b);
+  road.userData.wet='asphalt'; // shines in the rain (render/weather.js)
   const box=(m,x,y,z,w,h,d)=>addBox(root,unitBox,m,x,y,z,w,h,d);
   function sign(lines,x,y,z,w,h,rotation=0) {
     const texture=printedCard(lines,{ink:'#efe2bf',paper:'#274b49',width:768,height:256});

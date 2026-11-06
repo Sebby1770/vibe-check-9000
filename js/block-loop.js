@@ -10,6 +10,7 @@ export function buildBlockLoop(scene) {
   const root=new THREE.Group();root.name='Connected city block';scene.add(root);
   const material=(color,extra={})=>new THREE.MeshStandardMaterial({color,roughness:.85,...extra});
   const paving=material(0x827e76),asphalt=material(0x30353d),stone=material(0xb5a58a),iron=material(0x263b3c),green=material(0x47634b);
+  asphalt.userData.wet='asphalt';paving.userData.wet='pavement'; // wet or dry with the weather (render/weather.js)
   const batches=new Map();
   const box=(m,x,y,z,w,h,d)=>{if(!batches.has(m))batches.set(m,[]);batches.get(m).push([x,y,z,w,h,d]);};
   const board=(text,x,z,rotation=0)=>{

@@ -175,6 +175,9 @@ export function buildOpenWorld(scene) {
         awning: new THREE.MeshStandardMaterial({ color: 0x23402e, roughness: 0.8 }),
         rollup: new THREE.MeshStandardMaterial({ color: 0x5e5448, roughness: 0.6, metalness: 0.45 }),
     };
+    // Streets shine in the rain and dull when it's dry (render/weather.js).
+    M.asphalt.userData.wet = "asphalt";
+    M.walk.userData.wet = "pavement";
     const facades = {};
     for (const style of Object.keys(FACADES)) for (const v of [0, 1]) facades[`${style}${v}`] = facadeMaterial(style, v);
     const allFacades = [...Object.values(facades), M.storefront];

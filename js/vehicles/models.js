@@ -302,7 +302,7 @@ export function buildVehicle(kind = "sedan", { color = 0x2a2a32, driver = true, 
     g.userData.tail = tail;
     g.userData.kind = kind;
     g.userData.spec = {
-        length: s.len, width: s.wid, wheelbase: s.wheels[0] - s.wheels[1], wheelRadius: s.wheelR,
+        length: s.len, width: s.wid, wheelbase: s.wheels[0] - s.wheels[1], wheelRadius: s.wheelR, rearAxle: s.wheels[1], track: s.wid / 2 - 0.2,
         driverSeat: new THREE.Vector3(s.cab[3] - 1.0, (kind === "bus" ? 1.15 : 0.62) + 0.8, -0.38),
         passengerSeat: new THREE.Vector3(s.cab[1] + 0.25, 1.22, 0.4),
         chase: new THREE.Vector3(-s.len * 1.25, s.roof + 1.4, 0),

@@ -925,7 +925,7 @@ export function animateHuman(obj, t, ctx = {}) {
             j.spine.rotation.x = 0.06;
         }
     }
-    if (obj.userData.umbrella && mode !== "sit") {
+    if (obj.userData.umbrella?.visible && mode !== "sit") {
         j.lUpper.rotation.set(-0.32, 0, 0.1);
         j.lFore.rotation.set(-1.22, 0, 0);
         // Counter the arm hierarchy: the shaft passes through the grip and stays upright.

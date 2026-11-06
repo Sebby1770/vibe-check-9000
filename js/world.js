@@ -5,6 +5,7 @@ import { buildDoors } from "./doors.js";
 import { buildClubQueue } from "./club-queue.js";
 import { buildAvenues } from "./openworld/avenues.js";
 import { buildStreetLights } from "./render/street-lights.js";
+import { buildWeather } from "./render/weather.js";
 import { setNightLights } from "./vehicles/night-lights.js";
 import { buildBlockLoop } from './block-loop.js';
 import { buildDistrict } from './district.js';
@@ -129,6 +130,7 @@ export function createWorld(canvas, adConfig) {
     const clubQueue = buildClubQueue(scene);
     const avenues = buildAvenues(scene);
     const streetLights = buildStreetLights(scene, { low: quality.low });
+    const weather = buildWeather(scene, { low: quality.low });
     // The facade kit is fine detail: the Low tier goes without it.
     if (quality.low) for (const m of city.facadeKit?.meshes || []) m.visible = false;
     const colliders = buildColliders(interiorColliders());
@@ -138,6 +140,7 @@ export function createWorld(canvas, adConfig) {
     const sceneColor=new THREE.Color(clubScene.color),sceneAccent=new THREE.Color(clubScene.accent);
     const activities = createShopActivities(scene,camera);
     upgradeMaterials(scene);
+    weather.prepare(); // after the upgrade (it sets the asphalt's roughness maps), before shaders compile
     addRoadMarkings(scene);
     const reflections = addStreetReflections(scene, city);
     markShadows(scene);
@@ -261,19 +264,39 @@ export function createWorld(canvas, adConfig) {
     }
     window.addEventListener("resize", resize);
     // Warm every shader while the title card is up, so the first steps outside don't stall.
-    let warm = "compiling";
+    let warm = "compiling", warmBatches = null;
     Promise.resolve(renderer.compileAsync?.(scene, camera)).catch(() => {}).then(() => { warm = "ready"; });
-    /** Once, under the title card, after the shaders compile: one frame of the whole city from high above, with
-        every hidden chunk and object shown, so the GPU has every buffer, texture and draw state before you go
-        anywhere (otherwise the first look down a new street stalls for a second or two while they upload).
-        main.js draws the real frame straight after, in the same task, so this one is never seen. */
+    const WARM_FRAMES = 4;
+    /** Under the title card, after the shaders compile, over a few frames: the whole city drawn from high above
+        with a share of the hidden chunks and objects shown each frame, so the GPU has every buffer, texture and
+        draw state before you go anywhere (otherwise the first look down a new street stalls for a second or two
+        while they upload), without one long hitch on the title. main.js draws the real frame straight after, in
+        the same task, so these frames are never seen. */
     function warmUp() {
         if (warm !== "ready") return false;
-        warm = "done";
-        const shown = [];
-        // Never anything holding a light: a light coming into view would change the light count, and every lit
-        // material would recompile (twice) for a frame nobody sees.
-        scene.traverse((o) => { if (!o.visible && !o.isLight && !o.getObjectByProperty("isLight", true)) { o.visible = true; shown.push(o); } });
+        if (!warmBatches) {
+            // Never anything holding a light: a light coming into view would change the light count, and every lit
+            // material would recompile (twice) for a frame nobody sees.
+            // Each hidden branch goes up whole (with everything hidden inside it), so nothing is left unseen
+            // because its parent was down that frame; branches are dealt out across the frames in turn.
+            const branches = [];
+            (function walk(o) {
+                for (const c of o.children) {
+                    if (c.visible || c.isLight) { walk(c); continue; }
+                    if (c.getObjectByProperty("isLight", true)) continue;
+                    const group = [];
+                    c.traverse((d) => { if (!d.visible) group.push(d); });
+                    branches.push(group);
+                }
+            })(scene);
+            warmBatches = Array.from({ length: WARM_FRAMES }, () => []);
+            branches.forEach((g, i) => warmBatches[i % WARM_FRAMES].push(...g));
+        }
+        const batch = warmBatches.shift();
+        if (!warmBatches.length) warm = "done";
+        // Each object goes back exactly as it is now (the game may have shown it since the list was made).
+        const was = batch.map((o) => o.visible);
+        for (const o of batch) o.visible = true;
         const pos = camera.position.clone(), quat = camera.quaternion.clone(), { fov, near, far } = camera;
         camera.position.set(55, 900, 50);
         camera.lookAt(55, 0, 49.9);
@@ -281,7 +304,7 @@ export function createWorld(canvas, adConfig) {
         camera.updateProjectionMatrix();
         try { composer.render(); }
         finally {
-            for (const o of shown) o.visible = false;
+            batch.forEach((o, i) => { o.visible = was[i]; });
             camera.position.copy(pos);
             camera.quaternion.copy(quat);
             Object.assign(camera, { fov, near, far });
@@ -305,6 +328,7 @@ export function createWorld(canvas, adConfig) {
         clubQueue,
         avenues,
         streetLights,
+        weather,
         streetLife,
         district,
         lifeWorld,
@@ -463,6 +487,11 @@ export function createWorld(canvas, adConfig) {
                 scene.fog.density *= 1.45;
                 renderer.toneMappingExposure += 0.16;
             }
+            // The weather (render/weather.js): rain thickens the haze out in the street, and lightning lights the
+            // whole city for an instant (dimly through the windows when you're indoors).
+            const wx = weather.update(dt, t, { position: p, outside, floorY: p.y - 1.7, seconds: ctx.seconds ?? 22 * 3600, seed: ctx.weatherSeed ?? 0, reduced });
+            if (outside) scene.fog.density *= 1 + wx.rain * 0.55;
+            if (wx.flash) hemi.intensity += wx.flash * (outside ? 2.4 : 0.5);
 
             const nightMul = look.clubMul;
             club.lights.spot.intensity = (380 + bass * 160) * nightMul;
@@ -611,7 +640,7 @@ export function createWorld(canvas, adConfig) {
             streetLights.update(dt, t, { position: p, lampMul: look.lamp, outside, reduced });
             setNightLights(look.lamp);
             openWorld.update(dt, t, { position: p, lampMul: look.lamp, drawDistance: quality.drawDistance, reduced });
-            reflections.update(look.daylight, outside);
+            reflections.update(look.daylight, outside, weather.state.wet);
             grade.uniforms.uTime.value = t;
             grade.setLook({ zone, outside, daylight: look.daylight, reduced, grain: quality.grain });
             if (gtao) gtao.enabled = !reduced;

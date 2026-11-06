@@ -166,8 +166,9 @@ export function addStreetReflections(scene, city) {
     });
     return {
         streaks,
-        update(daylight, outside) {
-            const k = (1 - Math.min(1, daylight * 1.4)) * (outside ? 1 : 0.4);
+        update(daylight, outside, wet = 1) {
+            // Lights only streak across a wet road; on a dry one there's barely a glint.
+            const k = (1 - Math.min(1, daylight * 1.4)) * (outside ? 1 : 0.4) * (0.06 + 0.94 * wet);
             for (const s of streaks) { s.mesh.material.opacity = s.strength * k; s.mesh.visible = k > 0.02; }
         },
     };
