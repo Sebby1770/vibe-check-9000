@@ -17,7 +17,6 @@ import { registerLamp } from "./render/street-lights.js";
 import { createLightPool } from "./render/light-pool.js";
 import { addNightLights } from "./vehicles/night-lights.js";
 
-const RAIN_N = 420;
 const STEAM_N = 48;
 const _dummy = new THREE.Object3D();
 
@@ -48,6 +47,9 @@ export function buildCity(scene, adConfig = mergeAdConfig()) {
     const brickBrown = new THREE.MeshStandardMaterial({ map: brickTex("#241814", "#5a3a28"), roughness: 0.9, color: 0x6a4a38 });
     const asphalt = new THREE.MeshStandardMaterial({ map: asphaltTex(), roughness: 0.28, metalness: 0.55, color: 0x1c222c });
     const walk = new THREE.MeshStandardMaterial({ map: sidewalkTex(), roughness: 0.8, metalness: 0.05, color: 0x4a4a50 });
+    // How wet these look follows the weather (render/weather.js).
+    asphalt.userData.wet = "asphalt";
+    walk.userData.wet = "pavement";
     const plaster = new THREE.MeshStandardMaterial({ map: plasterTex(), roughness: 0.85 });
     const rusticated = new THREE.MeshStandardMaterial({ map: stoneTex(), roughness: 0.78, color: 0xc8b89a });
     const wood = new THREE.MeshStandardMaterial({ map: woodTex(), roughness: 0.75, color: 0x6a4a32 });
@@ -94,6 +96,7 @@ export function buildCity(scene, adConfig = mergeAdConfig()) {
     const puddleG = new THREE.CircleGeometry(1.4, 16);
     for (const [x, z, s] of [[-6, 16.2, 1.2], [2.5, 17.4, 0.8], [12, 15.9, 1], [-18, 16.8, 0.9], [0, -20.5, 1.1], [-10, -22, 0.7]]) {
         const p = new THREE.Mesh(puddleG, puddleM);
+        p.userData.puddle = true;
         p.rotation.x = -Math.PI / 2;
         p.position.set(x, 0.02, z);
         p.scale.set(s, s * 0.6, 1);
@@ -528,28 +531,6 @@ export function buildCity(scene, adConfig = mergeAdConfig()) {
     }));
     scene.add(steam);
 
-    // Rain streaks
-    const rainPos = new Float32Array(RAIN_N * 6);
-    function seedRain(i) {
-        const x = (Math.random() - 0.5) * 96;
-        const y = Math.random() * 18;
-        const z = (Math.random() - 0.5) * 84;
-        const len = 0.55 + Math.random() * 0.5;
-        rainPos[i * 6] = x;
-        rainPos[i * 6 + 1] = y;
-        rainPos[i * 6 + 2] = z;
-        rainPos[i * 6 + 3] = x + 0.1;
-        rainPos[i * 6 + 4] = y - len;
-        rainPos[i * 6 + 5] = z;
-    }
-    for (let i = 0; i < RAIN_N; i++) seedRain(i);
-    const rainGeo = new THREE.BufferGeometry();
-    rainGeo.setAttribute("position", new THREE.BufferAttribute(rainPos, 3));
-    const rain = new THREE.LineSegments(rainGeo, new THREE.LineBasicMaterial({
-        color: 0xc5d4de, transparent: true, opacity: 0.32, depthWrite: false,
-    }));
-    scene.add(rain);
-
     // Cars
     const parked = [
         sedan(scene, { x: -20.1, z: 18.85, yaw: 0, color: 0x5a1a1e }),
@@ -579,6 +560,7 @@ export function buildCity(scene, adConfig = mergeAdConfig()) {
     });
     for (const [x, z, s] of [[-8, 16.4, 1.8], [6.5, 17.1, 1.3], [-22, 22.8, 2.1], [18, 16.6, 1.5], [0.4, -20.5, 1.2]]) {
         const puddle = new THREE.Mesh(new THREE.CircleGeometry(s, 14), puddleMat);
+        puddle.userData.puddle = true;
         puddle.rotation.x = -Math.PI / 2;
         puddle.position.set(x, 0.025, z);
         root.add(puddle);
@@ -635,9 +617,6 @@ export function buildCity(scene, adConfig = mergeAdConfig()) {
         ads,
         winOn,
         winWarm,
-        rain,
-        rainGeo,
-        rainN: RAIN_N,
         steam,
         steamGeo,
         steamOrigins,
@@ -679,30 +658,6 @@ export function buildCity(scene, adConfig = mergeAdConfig()) {
 }
 
 export function updateCity(city, dt, t, { outside, reduced, lampMul = 1, zone, position, camera }) {
-    const rainArr = city.rainGeo.attributes.position.array;
-    const n = city.rainN || RAIN_N;
-    city.rain.visible = !!outside && !reduced;
-    if (city.rain.visible && !reduced) {
-        for (let i = 0; i < n; i++) {
-            rainArr[i * 6 + 1] -= dt * 16;
-            rainArr[i * 6 + 4] -= dt * 16;
-            rainArr[i * 6] += dt * 1.35;
-            rainArr[i * 6 + 3] += dt * 1.35;
-            if (rainArr[i * 6 + 4] < 0) {
-                const x = (Math.random() - 0.5) * 96;
-                const y = 12 + Math.random() * 6;
-                const z = (Math.random() - 0.5) * 84;
-                const len = 0.55 + Math.random() * 0.5;
-                rainArr[i * 6] = x;
-                rainArr[i * 6 + 1] = y;
-                rainArr[i * 6 + 2] = z;
-                rainArr[i * 6 + 3] = x + 0.1;
-                rainArr[i * 6 + 4] = y - len;
-                rainArr[i * 6 + 5] = z;
-            }
-        }
-        city.rainGeo.attributes.position.needsUpdate = true;
-    }
     city.ads?.update?.(dt, t, { camera, reduced, outside });
 
     const st = city.steamGeo.attributes.position.array;

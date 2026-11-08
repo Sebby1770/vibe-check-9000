@@ -4,6 +4,8 @@
 import * as THREE from "three";
 import { buildVehicle, animateVehicle } from "./models.js";
 import { addNightLights } from "./night-lights.js";
+import { slide, brakeGrip } from "./grip.js";
+import { createSkids } from "./skids.js";
 
 const _fwd = new THREE.Vector3(), _cam = new THREE.Vector3(), _look = new THREE.Vector3();
 
@@ -36,7 +38,8 @@ export function createDriving({ scene, camera, colliders, city, audio, hud, aven
     // Your car's headlights are the same soft beams the traffic wears (vehicles/night-lights.js), lit only while
     // you drive it.
 
-    let car = null, lastCar = null, speed = 0, steer = 0, firstPerson = false, hornCool = 0;
+    let car = null, lastCar = null, speed = 0, steer = 0, firstPerson = false, hornCool = 0, skid = 0, crashCool = 0;
+    const skids = createSkids(scene);
     const keys = {};
     const camPos = new THREE.Vector3();
     window.addEventListener("keydown", (e) => {
@@ -79,6 +82,9 @@ export function createDriving({ scene, camera, colliders, city, audio, hud, aven
         /** The car you last got out of, wherever you left it (traffic treats it as solid). */
         get lastCar() { return lastCar; },
         get speed() { return speed; },
+        /** How hard the tyres are sliding (0–1), and the marks they've left. */
+        get skid() { return skid; },
+        skids,
         /** The nearest parked car within reach of a pedestrian, if any. */
         nearest(p, reach = 3.4) {
             let best = null, bd = reach;
@@ -104,6 +110,8 @@ export function createDriving({ scene, camera, colliders, city, audio, hud, aven
         /** Steps out on whichever kerb side is clear. Returns {x, z, lookX, lookZ}. */
         exit() {
             if (!car) return null;
+            skid = 0;
+            audio.setSkid?.(0);
             const c = car, spec = c.userData.spec;
             const right = new THREE.Vector3(0, 0, 1).applyAxisAngle(new THREE.Vector3(0, 1, 0), c.rotation.y);
             let spot = null;
@@ -120,28 +128,38 @@ export function createDriving({ scene, camera, colliders, city, audio, hud, aven
             document.body.classList.remove("driving");
             return { ...spot, lookX: c.position.x, lookZ: c.position.z };
         },
-        update(dt, { stick = { x: 0, y: 0 }, night = 0 } = {}) {
+        update(dt, { stick = { x: 0, y: 0 }, night = 0, wet = 0 } = {}) {
             if (!car) return;
             hornCool -= dt;
+            crashCool -= dt;
             const spec = car.userData.spec;
             const throttle = (keys.w || keys.arrowup ? 1 : 0) - (keys.s || keys.arrowdown ? 1 : 0) - stick.y;
             const turn = (keys.a || keys.arrowleft ? 1 : 0) - (keys.d || keys.arrowright ? 1 : 0) - stick.x;
             const handbrake = !!keys[" "];
             // Engine, brakes, rolling resistance and drag.
             if (throttle > 0) speed += (speed < 0 ? 16 : 7.5 * (1 - speed / 26)) * throttle * dt;
-            else if (throttle < 0) speed += (speed > 0 ? -16 : -5 * (1 + speed / 7)) * -throttle * dt;
+            else if (throttle < 0) speed += (speed > 0 ? -16 * brakeGrip(wet) : -5 * (1 + speed / 7)) * -throttle * dt;
             else speed -= Math.sign(speed) * Math.min(Math.abs(speed), (2 + Math.abs(speed) * 0.08) * dt);
-            if (handbrake) speed -= Math.sign(speed) * Math.min(Math.abs(speed), 20 * dt);
+            if (handbrake) speed -= Math.sign(speed) * Math.min(Math.abs(speed), 20 * brakeGrip(wet) * dt);
             speed = Math.max(-7, Math.min(26, speed));
             const lock = 0.55 / (1 + Math.abs(speed) * 0.06);
             steer += (turn * lock - steer) * Math.min(1, dt * 7);
             const yawRate = (speed / spec.wheelbase) * Math.tan(steer) * (handbrake ? 1.35 : 1);
-            const yaw = car.rotation.y + yawRate * dt;
+            // Past the tyres' grip the car runs wide (more so on a wet street), and they squeal and leave rubber.
+            const grip = slide({ speed, yawRate, handbrake, braking: throttle < 0 && speed > 0.5, wet });
+            skid += (grip.skid - skid) * Math.min(1, dt * 10);
+            const yaw = car.rotation.y + yawRate * grip.yawScale * dt;
             _fwd.set(Math.cos(yaw), 0, -Math.sin(yaw));
             const nx = car.position.x + _fwd.x * speed * dt, nz = car.position.z + _fwd.z * speed * dt;
+            const impact = Math.abs(speed);
             if (!blocked(nx, nz, yaw, spec)) { car.position.x = nx; car.position.z = nz; car.rotation.y = yaw; }
-            else if (!blocked(car.position.x, car.position.z, yaw, spec)) { car.rotation.y = yaw; speed *= -0.25; }
-            else { speed *= -0.3; if (Math.abs(speed) > 4) audio.horn?.(); }
+            else {
+                if (!blocked(car.position.x, car.position.z, yaw, spec)) { car.rotation.y = yaw; speed *= -0.25; }
+                else speed *= -0.3;
+                if (impact > 2.5 && crashCool <= 0) { audio.crash?.(impact); crashCool = 0.45; }
+            }
+            audio.setSkid?.(skid, { wet });
+            skids.mark(car, skid, wet);
             animateVehicle(car, speed * dt, { steer: steer * 1.4, braking: throttle < 0 && speed > 0.5 || handbrake });
             // Cameras.
             _fwd.set(Math.cos(car.rotation.y), 0, -Math.sin(car.rotation.y));

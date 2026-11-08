@@ -527,12 +527,12 @@ export function createHud(hooks) {
                 fillDare($("pauseDare"));
             }
         },
-        setNight({ clock, phase, copy, daylight }) {
+        setNight({ clock, phase, copy, daylight, weather }) {
             run.clock = clock;
             run.phaseNight = phase;
             document.body.dataset.night = phase || "doors";
             if ($("hudClock")) $("hudClock").textContent = clock;
-            const status = daylight && daylight !== "NIGHT" ? daylight : (copy && copy.status) || phase;
+            const status = (daylight && daylight !== "NIGHT" ? daylight : (copy && copy.status) || phase) + (weather ? `  ·  ${weather}` : "");
             if ($("hudPhase")) $("hudPhase").textContent = status;
             if ($("pauseClock")) $("pauseClock").textContent = `${clock}  ·  ${status}`;
             if ($("pauseBill") && run.bill?.set) {

@@ -18,6 +18,12 @@ The parks have four usable benches. The club plays original jazz-house, while a 
 
 No install. Click **ENTER THE NIGHT**.
 
+## New in v37: weather and the drive
+
+- **Weather that changes through the night.** Every night has its own sky: drizzle, rain, dry spells and the odd downpour with lightning and thunder. It always rains when the night begins.
+- **Rain wherever you go,** with rings spreading on the pavement, umbrellas that open and close with it, and streets that shine when wet and dull as they dry.
+- **The car feels the road.** Take a corner too fast and it runs wide; tyres squeal and leave skid marks on a dry street and hiss on a wet one, where the car also brakes and corners less well. Hit something and you'll hear it.
+
 ## New in v36: the radio, your footsteps, and no more stalls
 
 - **Car radio.** Every car has one. Press **R** to turn the dial between the sidewalk swing station, a live broadcast from Velvet Tuesday, or nothing but the street. It sounds like a 1954 AM set.

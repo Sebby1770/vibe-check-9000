@@ -64,6 +64,7 @@ export function createAudio() {
     let previewNodes = [];
     let previewing = false;
     let musicBus = null, amDry = null, amWet = null;
+    let weatherRain = 0.6; // how hard it's raining (weather.js), for the rain bed
     // The car radio: null when you're not in a car, else the station you're tuned to.
     let radio = null;
     const STATIONS = {
@@ -520,6 +521,37 @@ export function createAudio() {
         roll.start(0, 0.2); clat.start(0, 0.5); lfo.start();
         elVoice = { pan, g, clatG };
     }
+    // Your tyres: a squeal past the limit on a dry street, a hiss of spray on a wet one. Built on first slide.
+    let skidVoice = null;
+    function skidGraph() {
+        if (skidVoice || !ctx) return;
+        cityGraph();
+        const src = ctx.createBufferSource(), bp = ctx.createBiquadFilter(), squeal = ctx.createGain();
+        src.buffer = noiseBuf;
+        src.loop = true;
+        bp.type = "bandpass";
+        bp.frequency.value = 1700;
+        bp.Q.value = 5;
+        squeal.gain.value = 0;
+        // A wavering tone over the rubber noise is what makes it a squeal rather than a hiss.
+        const tone = ctx.createOscillator(), toneG = ctx.createGain(), vib = ctx.createOscillator(), vibG = ctx.createGain();
+        tone.type = "triangle";
+        tone.frequency.value = 1180;
+        toneG.gain.value = 0.3;
+        vib.frequency.value = 23;
+        vibG.gain.value = 45;
+        vib.connect(vibG); vibG.connect(tone.frequency);
+        const hp = ctx.createBiquadFilter(), hiss = ctx.createGain();
+        hp.type = "highpass";
+        hp.frequency.value = 2600;
+        hiss.gain.value = 0;
+        src.connect(bp); bp.connect(squeal);
+        tone.connect(toneG); toneG.connect(squeal);
+        src.connect(hp); hp.connect(hiss);
+        squeal.connect(foleyBus); hiss.connect(foleyBus);
+        src.start(); tone.start(); vib.start();
+        skidVoice = { squeal, hiss, bp };
+    }
     const STEPS = {
         pavement: { f: 1000, q: 1.0, dur: 0.085, thump: 0.5, level: 0.05, wet: true },
         gravel: { f: 2100, q: 0.5, dur: 0.15, thump: 0.25, level: 0.04 },
@@ -652,7 +684,8 @@ export function createAudio() {
             const st = radio && STATIONS[radio];
             clubGain.gain.setTargetAtTime(st ? st.mix[0] : mix[0] * night[0] * duck, t, st ? 0.08 : 0.4);
             jazzGain.gain.setTargetAtTime(st ? st.mix[1] : mix[1] * night[1] * duck, t, st ? 0.08 : 0.4);
-            rainGain.gain.setTargetAtTime(mix[2] * night[2], t, 0.45);
+            // Gutters drip even when it's dry; a downpour roars.
+            rainGain.gain.setTargetAtTime(mix[2] * night[2] * (0.08 + 1.9 * weatherRain), t, 0.45);
             if (rumbleGain) rumbleGain.gain.setTargetAtTime(zone === "subway" ? 0.025 : 0, t, 0.35);
             const room = { records:[.012,1800], pharmacy:[.015,3100], florist:[.006,650], rivoli:[.016,340], liquor:[.005,800], barber:[.012,1600], diner:[.014,2400] }[zone];
             shopGain?.gain.setTargetAtTime(0,t,.4);
@@ -822,7 +855,7 @@ export function createAudio() {
         horn,
         trafficState() { return trafficBus ? { bus: trafficBus.gain.value, voices: voiceSlots.map((s) => +s.g.gain.value.toFixed(3)), outside: trafficOutside } : null; },
         /** A footstep on `surface` (foley.js surfaceFor); side ±1 alternates feet; run lands harder. */
-        footstep(surface = "pavement", { side = 1, run = false } = {}) {
+        footstep(surface = "pavement", { side = 1, run = false, wet = 1 } = {}) {
             if (!ctx || ctx.state !== "running" || muted) return;
             cityGraph();
             const s = STEPS[surface] || STEPS.pavement, t = ctx.currentTime, k = run ? 1.35 : 1;
@@ -848,7 +881,7 @@ export function createAudio() {
             o.start(t); o.stop(t + 0.08);
             const nodes = [src, bp, g, o, og];
             // Wet pavement: a small splash on top.
-            if (s.wet) {
+            if (s.wet && wet > 0.3) {
                 const w = ctx.createBufferSource(), whp = ctx.createBiquadFilter(), wg = ctx.createGain();
                 w.buffer = noiseBuf;
                 whp.type = "highpass";
@@ -861,6 +894,87 @@ export function createAudio() {
                 nodes.push(w, whp, wg);
             }
             o.onended = () => { for (const n of nodes) n.disconnect(); };
+        },
+        /** Each frame while you drive: how hard the tyres slide (0–1, grip.js) and how wet the street is. */
+        setSkid(amount, { wet = 0 } = {}) {
+            if (!ctx || ctx.state !== "running" || (!(amount > 0) && !skidVoice)) return;
+            skidGraph();
+            const t = ctx.currentTime, a = Math.max(0, Math.min(1, amount || 0)), w = Math.max(0, Math.min(1, wet));
+            skidVoice.squeal.gain.setTargetAtTime(a * (1 - w) * 0.11, t, 0.04);
+            skidVoice.hiss.gain.setTargetAtTime(a * w * 0.06, t, 0.06);
+            skidVoice.bp.frequency.setTargetAtTime(1500 + a * 600, t, 0.05);
+        },
+        /** You hit something: impact in m/s. A thump of sheet metal, the crunch, and a rattle of chrome. */
+        crash(impact = 6) {
+            if (!ctx || ctx.state !== "running" || muted) return;
+            cityGraph();
+            const t = ctx.currentTime, k = Math.max(0.2, Math.min(1, impact / 12)), nodes = [];
+            const burst = (type, freq, q, peak, dur, offset = 0) => {
+                const s = ctx.createBufferSource(), f = ctx.createBiquadFilter(), g = ctx.createGain();
+                s.buffer = noiseBuf;
+                f.type = type; f.frequency.value = freq; f.Q.value = q;
+                g.gain.setValueAtTime(0.0001, t + offset);
+                g.gain.exponentialRampToValueAtTime(peak, t + offset + 0.005);
+                g.gain.exponentialRampToValueAtTime(0.0001, t + offset + dur);
+                s.connect(f); f.connect(g); g.connect(foleyBus);
+                s.start(t + offset, Math.random() * 0.5); s.stop(t + offset + dur + 0.05);
+                nodes.push(s, f, g);
+                return s;
+            };
+            burst("lowpass", 650, 0.7, 0.32 * k, 0.45);
+            burst("bandpass", 2400, 2.5, 0.12 * k, 0.12, 0.02);
+            const last = burst("bandpass", 4200, 4, 0.05 * k, 0.5, 0.08); // chrome settling
+            const o = ctx.createOscillator(), og = ctx.createGain();
+            o.frequency.setValueAtTime(70, t);
+            o.frequency.exponentialRampToValueAtTime(38, t + 0.25);
+            og.gain.setValueAtTime(0.0001, t);
+            og.gain.exponentialRampToValueAtTime(0.4 * k, t + 0.006);
+            og.gain.exponentialRampToValueAtTime(0.0001, t + 0.3);
+            o.connect(og); og.connect(foleyBus);
+            o.start(t); o.stop(t + 0.32);
+            nodes.push(o, og);
+            last.onended = () => { for (const n of nodes) n.disconnect(); };
+        },
+        /** How hard it's raining (0–1, weather.js): the rain bed follows it. */
+        setWeather(rain) {
+            if (Math.abs(rain - weatherRain) < 0.01) return;
+            weatherRain = rain;
+            if (ctx) this.setZone(zone);
+        },
+        /** Thunder after a lightning strike: delay is how far off it was; close ones crack before they roll. */
+        thunder({ strength = 1, delay = 2 } = {}) {
+            if (!ctx || ctx.state !== "running" || muted) return;
+            cityGraph();
+            const t = ctx.currentTime + delay, len = 3 + strength * 2.5;
+            const roll = ctx.createBufferSource(), lp = ctx.createBiquadFilter(), g = ctx.createGain();
+            roll.buffer = rainBuf;
+            roll.loop = true;
+            roll.playbackRate.value = 0.45;
+            lp.type = "lowpass";
+            lp.frequency.value = 140 + strength * 220;
+            const peak = 0.12 + strength * 0.3, attack = 0.08 + (1 - strength) * 0.4;
+            g.gain.setValueAtTime(0.0001, t);
+            g.gain.exponentialRampToValueAtTime(peak, t + attack);
+            g.gain.exponentialRampToValueAtTime(peak * 0.45, t + attack + len * 0.25);
+            g.gain.exponentialRampToValueAtTime(peak * 0.7, t + attack + len * 0.4); // the second roll
+            g.gain.exponentialRampToValueAtTime(0.0001, t + attack + len);
+            roll.connect(lp); lp.connect(g); g.connect(trafficLp);
+            roll.start(t, Math.random() * 1.5);
+            roll.stop(t + attack + len + 0.1);
+            const nodes = [roll, lp, g];
+            if (strength > 0.8) {
+                const crack = ctx.createBufferSource(), hp = ctx.createBiquadFilter(), cg = ctx.createGain();
+                crack.buffer = noiseBuf;
+                hp.type = "highpass";
+                hp.frequency.value = 900;
+                cg.gain.setValueAtTime(0.0001, t);
+                cg.gain.exponentialRampToValueAtTime(0.22 * strength, t + 0.01);
+                cg.gain.exponentialRampToValueAtTime(0.0001, t + 0.35);
+                crack.connect(hp); hp.connect(cg); cg.connect(trafficLp);
+                crack.start(t); crack.stop(t + 0.4);
+                nodes.push(crack, hp, cg);
+            }
+            roll.onended = () => { for (const n of nodes) n.disconnect(); };
         },
         /** Each frame: the city around you. el = foley.js elRumble(), horn = riverHorn() or null. */
         setCity({ outside = true, el = null, horn = null, night = 1 } = {}) {

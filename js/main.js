@@ -675,7 +675,7 @@ async function boot() {
     let taxi = createTaxi();
     const trafficSound = createTrafficSound(), soundCars = [];
     const stepper = createStepper(), hornClock = {}, lastFoot = new Vector3();
-    let lastStreetSound = null, honksHeard = 0, stepsHeard = 0;
+    let lastStreetSound = null, honksHeard = 0, stepsHeard = 0, thunderHeard = 0;
     // Six fares, built once and taken in turn: one waits at the kerb with an arm up while another rides in the
     // back of your cab, then stands at the kerb where you left them for a moment before going on their way.
     const fares = Array.from({ length: 6 }, (_, i) => {
@@ -694,7 +694,8 @@ async function boot() {
         world.scene.attach(fig);
         fig.position.set(x, 0, z);
         fig.rotation.set(0, Math.atan2(faceX - x, faceZ - z), 0);
-        if (fig.userData.umbrella) fig.userData.umbrella.visible = true;
+        fig.userData.seated = false;
+        if (fig.userData.umbrella) fig.userData.umbrella.visible = world.weather.state.umbrellasOpen;
         alighted.set(fig, { t: 0, dx, dz });
     }
     const solidAt = (x, z) => world.colliders.boxes.some((b) => b.minY < 1.7 && b.maxY > 0.3 && x > b.minX - 0.35 && x < b.maxX + 0.35 && z > b.minZ - 0.35 && z < b.maxZ + 0.35);
@@ -730,6 +731,7 @@ async function boot() {
                 // In the back, kerb side (the model's own rear-passenger place; the driver sits at -z).
                 const car = driving.car, seat = car.userData.spec?.passengerSeat;
                 car.add(rider);
+                rider.userData.seated = true;
                 rider.position.set(seat ? seat.x + 0.05 : -0.85, 0.02, 0.4);
                 rider.rotation.set(0, Math.PI / 2, 0);
                 if (rider.userData.umbrella) rider.userData.umbrella.visible = false;
@@ -1092,6 +1094,7 @@ async function boot() {
             get world(){return world;},
             traffic(){return world.city.traffic.map((c)=>({x:c.position.x,z:c.position.z,dir:c.userData.moving}));},
             steps(){return stepsHeard;},
+            weather(){const s=world.weather.state;return {rain:s.rain,wet:s.wet,storm:s.storm,label:s.label,flash:s.flash,umbrellas:s.umbrellasOpen,thunder:thunderHeard,rainVisible:world.weather.rain.visible,drops:world.weather.rain.geometry.drawRange.count/2,rings:world.weather.ripples.count};},
             streetSound(){return {voices:(lastStreetSound?.voices||[]).map((v)=>v&&{id:v.id,d:Math.round(v.d),v:v.v,own:v.own}),honks:honksHeard,audio:audio.trafficState?.()};},
             airborne(){return !!controls.airborne;},
             actors(){return [...world.city.peds,...world.district.peds,world.streetLife.musician].map(person=>{
@@ -1110,8 +1113,9 @@ async function boot() {
             closeMap(){mapUI.close(true);return mapUI.debug();},
             mapPick(x,y){const hit=mapUI.pick(x,y);return hit?{type:hit.type,name:hit.item.name,id:hit.item.id}:null;},
             ride(id){rideSubway(id);},
-            moveCar(x,z){if(driving.car){driving.car.position.set(x,0,z);}return !!driving.car;},
+            moveCar(x,z,yaw){if(driving.car){driving.car.position.set(x,0,z);if(yaw!=null)driving.car.rotation.y=yaw;}return !!driving.car;},
             radio(){return {station:audio.radio,track:audio.trackName,bpm:audio.bpm};},
+            skid(){return {skid:driving.skid,marks:driving.skids.count,speed:driving.speed};},
             taxi(){return {on:taxi.on,stage:taxi.stage,fares:taxi.fares,earned:taxi.earned,fare:taxi.fare?{pickup:taxi.fare.pickup,dest:taxi.fare.dest?.name,kerb:taxi.fare.dest?.kerb}:null,npc:!!waiting?.visible,rider:!!rider,riderInCab:!!rider&&rider.parent===driving.car,alighted:alighted.size};},
             get destination(){return destination;},
             storyEvent(ev){storyEvent(ev);return story;},
@@ -1175,7 +1179,7 @@ async function boot() {
         world.setHandsVisible(!attract && !driving.active);
         let move;
         if (attract) move = { dancing: false };
-        else if (driving.active) { if (hud.phase === "explore") driving.update(dt, { stick: controls.stickInput, night: 1 - world.daylight.daylight }); move = { dancing: false }; }
+        else if (driving.active) { if (hud.phase === "explore") driving.update(dt, { stick: controls.stickInput, night: 1 - world.daylight.daylight, wet: world.weather.state.wet }); move = { dancing: false }; }
         else move = controls.update(dt, audio.bpm, xr);
         const p = world.camera.position;
         if (!ride && !driving.active && hud.phase === "explore" && !controls.airborne && !controls.sitting) {
@@ -1220,7 +1224,7 @@ async function boot() {
         const zone = attract ? lastZone : getZone(p.x, p.z, fy);
         audio.setZone(zone);
         hud.setZone(zone, zoneLabel(zone));
-        hud.setNight({ clock: clock.clock, phase, copy: PHASE_COPY[phase], daylight: daylightAt(clock.seconds).label });
+        hud.setNight({ clock: clock.clock, phase, copy: PHASE_COPY[phase], daylight: daylightAt(clock.seconds).label, weather: world.weather.state.label });
         if (zone !== lastZone) {
             lastZone = zone;
             if (SHOPS_CATALOG.some(s=>s.id===zone))audio.playShopSound();
@@ -1236,6 +1240,8 @@ async function boot() {
             talkId: hud.talkNpc && (hud.talkNpc.faceId || hud.talkNpc.id),
             clock: clock.clock,
             seconds: attract ? TITLE_SECONDS : clock.seconds,
+            weatherSeed: dayHash(today),
+            floorY: driving.active ? 0 : fy,
             phase,
             dancing: move.dancing && onFloor,
             // Avenue cars stop for you on foot, or for the car you're driving.
@@ -1259,8 +1265,10 @@ async function boot() {
         const moved = onFoot ? Math.hypot(p.x - lastFoot.x, p.z - lastFoot.z) : 0;
         lastFoot.copy(p);
         const foot = stepFoot(stepper, moved, { sprint: moved / Math.max(dt, 1e-3) > 4.7 });
-        if (foot) { audio.footstep(surfaceFor(zone, outdoors, { danceFloor: onDanceFloor(p.x, p.z, fy) }), { side: foot.side, run: moved / Math.max(dt, 1e-3) > 4.7 }); stepsHeard++; }
+        if (foot) { audio.footstep(surfaceFor(zone, outdoors, { danceFloor: onDanceFloor(p.x, p.z, fy) }), { side: foot.side, run: moved / Math.max(dt, 1e-3) > 4.7, wet: world.weather.state.wet }); stepsHeard++; }
         audio.setCity({ outside: outdoors, el: elRumble(world.openWorld.train.position.z, p), horn: riverHorn(hornClock, dt, p, { outside: outdoors }), night: 1 - world.daylight.daylight });
+        audio.setWeather(world.weather.state.rain);
+        for (const strike of world.weather.state.strikes) { audio.thunder(strike); thunderHeard++; }
         if (hud.phase === "explore") {
             const seen = world.city?.ads?.lastSeen || [];
             for (const id of seen) {

@@ -9,7 +9,8 @@ const cli = (...args) =>
   execFileSync(
     "npx",
     ["--yes", "agent-browser@0.37.1", "--session", session, ...args],
-    { encoding: "utf8", timeout: 60000 },
+    // The postcard comes back as one PNG data URL; a rainy frame compresses poorly and can pass 1 MB.
+    { encoding: "utf8", timeout: 60000, maxBuffer: 64 * 1024 * 1024 },
   );
 const ev = (s) => JSON.parse(cli("eval", s).trim());
 const shot = (n) => cli("screenshot", `${output}/${n}.png`);
