@@ -1241,6 +1241,7 @@ async function boot() {
             clock: clock.clock,
             seconds: attract ? TITLE_SECONDS : clock.seconds,
             weatherSeed: dayHash(today),
+            floorY: driving.active ? 0 : fy,
             phase,
             dancing: move.dancing && onFloor,
             // Avenue cars stop for you on foot, or for the car you're driving.

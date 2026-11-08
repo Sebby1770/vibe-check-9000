@@ -489,9 +489,10 @@ export function createWorld(canvas, adConfig) {
             }
             // The weather (render/weather.js): rain thickens the haze out in the street, and lightning lights the
             // whole city for an instant (dimly through the windows when you're indoors).
-            const wx = weather.update(dt, t, { position: p, outside, floorY: p.y - 1.7, seconds: ctx.seconds ?? 22 * 3600, seed: ctx.weatherSeed ?? 0, reduced });
+            // floorY is where your feet are (the road when you drive: the chase camera sits well above it).
+            const wx = weather.update(dt, t, { position: p, outside, floorY: ctx.floorY ?? p.y - 1.7, seconds: ctx.seconds ?? 22 * 3600, seed: ctx.weatherSeed ?? 0, reduced });
             if (outside) scene.fog.density *= 1 + wx.rain * 0.55;
-            if (wx.flash) hemi.intensity += wx.flash * (outside ? 2.4 : 0.5);
+            if (wx.flash) hemi.intensity += wx.flash * (outside ? 2.4 : zone === "subway" ? 0 : 0.5);
 
             const nightMul = look.clubMul;
             club.lights.spot.intensity = (380 + bass * 160) * nightMul;
