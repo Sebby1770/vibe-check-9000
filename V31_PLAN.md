@@ -235,11 +235,16 @@ headlights on every moving car, taxi fares in any Checker, and positional engine
 Delivered in v36.0.0: a warm-up draw of the whole city under the title card (no more first-sight stalls), the car
 radio, footsteps, the El and river horns, and taxi fares riding in the cab with ride chatter.
 
+Delivered in v37.0.0: weather through the night (rain that follows you, ripples, wet and dry streets, lightning and
+thunder, umbrellas), tyre grip with skids, squeal and crash sounds, the warm-up dealt across four title frames, and
+muted browser tests.
+
 Not done yet (next steps):
 
 - Instanced far-LOD crowds (`createCrowd`).
-- The warm-up draw under the title card (v36) can make the title stutter for a few seconds on a cold GPU; it could be
-  spread over several title frames, one district at a time.
+- The warm-up draw under the title card can make the title stutter for a few seconds on a cold GPU. Dealing it
+  across four frames (v37) did not change the headless timings, which wait on the GPU process; untested on a real
+  display.
 - Touch driving was wired through the on-screen stick but not tried on a phone; the full story was verified by unit
   test and in-browser beats, not by one continuous human play-through.
 - `npm run test:browser` fails at Frank's ice on `main` too (pre-existing; the suite predates later changes).

@@ -4,6 +4,20 @@ All notable changes to VIBE CHECK 9000™ are documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
+## [37.0.0] - 2026-11-08
+
+### Weather and the drive
+
+- **Weather through the night** (`js/weather.js`, `js/render/weather.js`). Each night has its own sky, seeded by the date: spells of dry, drizzle, rain and the odd downpour, each holding for about a game hour (under four real minutes) and drifting into the next. It always rains when the night begins. Over many nights: clear 9%, wet streets 14%, drizzle 31%, rain 35%, downpour 11%. The HUD shows it beside the time ("DOORS OPEN · RAIN").
+- **Rain wherever you are.** The rain used to fall in a fixed box round the 47th Street block; now up to 1,800 streaks (700 on Low) fall round you anywhere in the city, thicker, faster and more slanted the harder it rains, with rings spreading on the pavement at your feet. Rain thickens the haze outdoors.
+- **Wet and dry streets.** The streets soak while it rains and dry over about six real minutes after it stops. Asphalt goes from an even, dull grey to the dark, puddled mirror it used to be all the time (the roughness map's puddles are scaled by wetness in the shader), pavements darken and take a sheen, the puddles shrink away, and the streaks of lamplight across the road fade on a dry street.
+- **Downpours bring lightning and thunder.** The whole city lights for an instant (two flickers and a fade), and thunder rolls a second or more later depending on how far off it struck, with a crack before the roll for close ones. Lightning is skipped under reduced effects; the thunder still rolls.
+- **Umbrellas** open when it rains and fold away when it stops (anyone walking with one swings their arm when it's down). The rain bed follows the weather, from dripping gutters to a roar, and footsteps only splash on wet pavement.
+- **How the car feels** (`js/vehicles/grip.js`, `js/vehicles/skids.js`). The tyres hold about 9 m/s² in a corner on a dry street and 40% less on a wet one, and braking gives up a third in the wet; past the limit the car runs wide. Sliding squeals and lays rubber on a dry street (up to 1,500 skid marks behind the rear wheels, one instanced draw), and hisses on a wet one, leaving no marks. Hitting something crunches (a thump of sheet metal, the crunch, a rattle of chrome) instead of sounding the horn.
+- **Warm-up over four frames.** The title card's warm-up draw is dealt across four frames, each hidden branch of the city shown whole, and every object goes back exactly as it was. (On a cold headless GPU the title still waits a few seconds on the GPU process; the first look down a new street stays stall-free.)
+- **Browser tests run muted** (`AGENT_BROWSER_ARGS=--mute-audio` in every `npm run test:*` browser script), so they never play the game's music through your speakers.
+- Tests: `tests/weather.test.js` (rain at nightfall, every kind of night, smooth transitions, streets that dry slowly, lightning), `tests/grip.test.js` (wet grip, running wide, handbrake and hard braking). The interiors test expects the weather beside the time of day; the expansion test has room for a rainy postcard.
+
 ## [36.0.0] - 2026-10-26
 
 ### The radio, your footsteps, and a city that never stalls
