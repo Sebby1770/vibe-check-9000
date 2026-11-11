@@ -8,20 +8,21 @@ const GHOST_STEP = 0.2;   // seconds between ghost samples
 export const GHOST_MAX = 3 * 900;
 
 // Cars face +x at yaw 0 and drive along (cos yaw, -sin yaw): yaw -π/2 heads uptown (+z), π heads west.
+// start.half is half the roadway's width there (for the banner's poles).
 export const COURSES = [
   {
     id: "block", name: "The Block", blurb: "Round the club: 47th, East Avenue, 49th, West Avenue and home.",
-    start: { x: -40, z: 22.8, yaw: 0 }, loop: true,
-    gates: [[35, 22.8], [109, 22.8], [109, 70], [109, 96], [30, 96], [-50, 96], [-99, 96], [-99, 50], [-99, 22.8], [-40, 22.8]],
+    start: { x: -44, z: 22.8, yaw: 0, half: 4.1 }, loop: true,
+    gates: [[35, 22.8], [109, 22.8], [109, 70], [109, 96], [30, 96], [-50, 96], [-99, 96], [-99, 50], [-99, 22.8], [-44, 22.8]],
   },
   {
     id: "broadway", name: "Broadway Dash", blurb: "Up Broadway past Times Square, across 50th and back down West Avenue.",
-    start: { x: -120, z: 22.8, yaw: Math.PI }, loop: true,
+    start: { x: -120, z: 22.8, yaw: Math.PI, half: 4.1 }, loop: true,
     gates: [[-180, 22.8], [-225.5, 22.8], [-244, 66], [-262, 108], [-280, 150], [-200, 150], [-120, 150], [-99, 150], [-99, 110], [-99, 50], [-99, 22.8], [-120, 22.8]],
   },
   {
     id: "river", name: "River Run", blurb: "From the Garment District to the end of Pier 47 Road.",
-    start: { x: 60, z: -250, yaw: -Math.PI / 2 }, loop: false,
+    start: { x: 60, z: -246, yaw: -Math.PI / 2, half: 6 }, loop: false,
     gates: [[60, -170], [60, -110], [60, -48], [120, -48], [187, -48], [187, -10], [187, 22.8], [240, 22.8], [296, 22.8], [362, 22.8]],
   },
 ];

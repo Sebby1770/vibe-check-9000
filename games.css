@@ -1,0 +1,126 @@
+/* The night's games: the race clock and countdown, the result cards, and Floor Fever's lanes. Same cream on
+   near-black as the rest of the HUD (hud.css); nothing here takes the pointer except Floor Fever's own lanes. */
+.games-hud {
+    position: fixed;
+    inset: 0;
+    z-index: 12;
+    pointer-events: none;
+    color: var(--paper, #efe3c4);
+    font-family: "Big Shoulders Text", "Oswald", sans-serif;
+}
+
+.run-bar {
+    position: absolute;
+    top: 64px;
+    left: 50%;
+    transform: translateX(-50%);
+    display: flex;
+    align-items: baseline;
+    gap: 14px;
+    padding: 8px 16px 7px;
+    border-left: 3px solid var(--tungsten, #f2a541);
+    border-radius: 2px;
+    background: rgba(10, 9, 12, 0.84);
+    font-weight: 700;
+    font-size: 14px;
+    letter-spacing: 0.07em;
+    white-space: nowrap;
+}
+.run-bar[hidden], .run-count[hidden], .game-card[hidden], .fever[hidden] { display: none; }
+.run-time {
+    min-width: 6.2ch;
+    font: 900 30px/1 "Big Shoulders Display", "Oswald", sans-serif;
+    font-variant-numeric: tabular-nums;
+    letter-spacing: 0.02em;
+}
+.run-gate { color: rgba(239, 227, 196, 0.72); }
+.run-delta { min-width: 5ch; font-variant-numeric: tabular-nums; transition: opacity 0.4s; }
+.run-delta.ahead { color: #a6d99c; }
+.run-delta.behind { color: #ee8a72; }
+.run-delta.gone { opacity: 0; }
+
+.run-count {
+    position: absolute;
+    top: 36%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    font: 900 148px/1 "Big Shoulders Display", "Oswald", sans-serif;
+    letter-spacing: 0.02em;
+    text-shadow: 0 6px 30px rgba(0, 0, 0, 0.65);
+}
+.run-count.go { color: var(--tungsten, #f2a541); }
+.run-count.pop { animation: run-pop 0.9s ease-out both; }
+@keyframes run-pop {
+    0% { transform: translate(-50%, -50%) scale(1.35); opacity: 0; }
+    14% { transform: translate(-50%, -50%) scale(1); opacity: 1; }
+    75% { opacity: 1; }
+    100% { transform: translate(-50%, -50%) scale(0.94); opacity: 0; }
+}
+
+.game-card {
+    position: absolute;
+    top: 22%;
+    left: 50%;
+    transform: translateX(-50%);
+    width: max-content;
+    min-width: 280px;
+    max-width: min(92vw, 460px);
+    padding: 16px 22px 15px;
+    border-left: 4px solid var(--card, var(--tungsten, #f2a541));
+    border-radius: 2px;
+    background: rgba(10, 9, 12, 0.92);
+    box-shadow: 0 16px 44px rgba(0, 0, 0, 0.5);
+    animation: card-in 0.28s ease-out both;
+}
+@keyframes card-in { from { opacity: 0; transform: translateX(-50%) translateY(8px); } to { opacity: 1; transform: translateX(-50%); } }
+.game-card .kicker { color: var(--card, var(--tungsten, #f2a541)); font-weight: 700; font-size: 13px; letter-spacing: 0.16em; }
+.game-card h3 {
+    margin: 2px 0 6px;
+    font: 900 40px/1.02 "Big Shoulders Display", "Oswald", sans-serif;
+    letter-spacing: 0.02em;
+}
+.game-card p { margin: 3px 0 0; font-size: 15px; font-weight: 500; line-height: 1.35; letter-spacing: 0.04em; color: rgba(239, 227, 196, 0.86); }
+.game-card p.strong { color: var(--paper, #efe3c4); font-weight: 700; }
+.game-card p.foot { margin-top: 9px; font-size: 13px; color: rgba(239, 227, 196, 0.6); }
+
+/* Floor Fever */
+.fever {
+    position: fixed;
+    left: 50%;
+    bottom: 22px;
+    z-index: 12;
+    transform: translateX(-50%);
+    width: min(92vw, 372px);
+    pointer-events: none;
+    font-family: "Big Shoulders Text", "Oswald", sans-serif;
+}
+.fever canvas {
+    display: block;
+    width: 100%;
+    height: min(58vh, 470px);
+    border-radius: 3px;
+    pointer-events: auto;
+    touch-action: none;
+}
+.fever p {
+    margin: 6px 0 0;
+    color: rgba(239, 227, 196, 0.7);
+    font-size: 13px;
+    font-weight: 700;
+    letter-spacing: 0.1em;
+    text-align: center;
+}
+
+@media (max-width: 720px) {
+    .run-bar { top: 108px; gap: 10px; padding: 7px 12px 6px; font-size: 12px; }
+    .run-time { font-size: 24px; }
+    .run-count { font-size: 104px; }
+    .game-card { top: 16%; min-width: 0; width: min(92vw, 420px); }
+    .game-card h3 { font-size: 32px; }
+    .fever { bottom: 96px; }
+    .fever canvas { height: min(48vh, 400px); }
+}
+
+@media (prefers-reduced-motion: reduce) {
+    .run-count.pop, .game-card { animation: none; }
+}

@@ -22,7 +22,7 @@ export function createControls(camera, domElement, colliders) {
     let fov = 82;
     let sprint = false;
     let enabled = true;
-    let dance = false;
+    let dance = false, frozen = false;
     let tipsy = false;
     let swayT = 0;
     let baseLook = 1;
@@ -40,6 +40,7 @@ export function createControls(camera, domElement, colliders) {
     function onKey(e, down) {
         if (!enabled) return;
         if (["INPUT", "TEXTAREA"].includes(e.target?.tagName)) return;
+        if (frozen) return; // Floor Fever has the keys
         const k = e.key.toLowerCase();
         if (k === "w" || k === "arrowup") keys.w = down;
         if (k === "s" || k === "arrowdown") keys.s = down;
@@ -158,7 +159,11 @@ export function createControls(camera, domElement, colliders) {
         },
         get fov() { return fov; },
         setDance(v) { dance=!!v && enabled; },
+        /** Floor Fever: feet planted, dancing on the spot; movement and Space are ignored until released. */
+        setFrozen(v) { frozen = !!v; for (const k of Object.keys(keys)) keys[k]=false; stick.x=stick.y=0; sprint=false; dance = frozen && enabled; },
+        get frozen() { return frozen; },
         setStick(x, y) {
+            if (frozen) return;
             stick.x = Math.max(-1, Math.min(1, x));
             stick.y = Math.max(-1, Math.min(1, y));
         },
