@@ -32,12 +32,13 @@ export function buildLost45s(scene) {
   };
   // A four-sided "cylinder" is a square crate (and, not being a box, is left alone by the scene audits).
   const crates = inst(new THREE.CylinderGeometry(0.33, 0.29, 0.34, 4).rotateY(Math.PI / 4), new THREE.MeshStandardMaterial({ color: 0x6a4a32, roughness: 0.82 }), "record crates");
-  const vinyl = inst(new THREE.CylinderGeometry(0.2, 0.2, 0.012, 28).rotateX(Math.PI / 2), new THREE.MeshStandardMaterial({ color: 0x0b0b0e, roughness: 0.32, metalness: 0.1 }), "lost 45s");
-  const labels = inst(new THREE.CylinderGeometry(0.075, 0.075, 0.016, 20).rotateX(Math.PI / 2), new THREE.MeshStandardMaterial({ roughness: 0.7 }), "lost 45 labels");
+  const vinyl = inst(new THREE.CylinderGeometry(0.26, 0.26, 0.014, 28).rotateX(Math.PI / 2), new THREE.MeshStandardMaterial({ color: 0x17171c, roughness: 0.25, metalness: 0.2 }), "lost 45s");
+  // The label keeps its own colour in the dark (unlit), so a record reads as a record down a night street.
+  const labels = inst(new THREE.CylinderGeometry(0.11, 0.11, 0.02, 20).rotateX(Math.PI / 2), new THREE.MeshBasicMaterial({ toneMapped: false }), "lost 45 labels");
   const additive = { transparent: true, blending: THREE.AdditiveBlending, depthWrite: false, toneMapped: false };
   const pools = inst(new THREE.PlaneGeometry(2.6, 2.6).rotateX(-Math.PI / 2), new THREE.MeshBasicMaterial({ color: 0xffc27e, map: glowTexture(), opacity: 0.5, ...additive }), "record glow");
   pools.renderOrder = 2;
-  const beams = inst(new THREE.CylinderGeometry(0.1, 0.16, 7, 8, 1, true), new THREE.MeshBasicMaterial({ color: 0xffc27e, opacity: 0.1, side: THREE.DoubleSide, ...additive }), "record beams");
+  const beams = inst(new THREE.CylinderGeometry(0.05, 0.09, 7, 8, 1, true), new THREE.MeshBasicMaterial({ color: 0xffc27e, opacity: 0.05, ...additive }), "record beams");
 
   const _m = new THREE.Matrix4(), _q = new THREE.Quaternion(), _p = new THREE.Vector3(), _one = new THREE.Vector3(1, 1, 1), _zero = new THREE.Vector3(0, 0, 0), _c = new THREE.Color();
   const UP = new THREE.Vector3(0, 1, 0);
@@ -63,14 +64,14 @@ export function buildLost45s(scene) {
       RECORDS.forEach((r, i) => {
         const gone = found.has(r.id);
         _q.setFromAxisAngle(UP, t * 1.1 + i * 0.9);
-        _p.set(r.x, 0.72 + Math.sin(t * 1.7 + i) * 0.05, r.z);
+        _p.set(r.x, 0.78 + Math.sin(t * 1.7 + i) * 0.05, r.z);
         _m.compose(_p, _q, gone ? _zero : _one);
         vinyl.setMatrixAt(i, _m);
         labels.setMatrixAt(i, _m);
       });
       vinyl.instanceMatrix.needsUpdate = true;
       labels.instanceMatrix.needsUpdate = true;
-      beams.material.opacity = 0.08 + 0.04 * Math.sin(t * 2.1);
+      beams.material.opacity = 0.05 + 0.02 * Math.sin(t * 2.1);
     },
   };
 }

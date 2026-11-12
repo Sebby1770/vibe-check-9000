@@ -26,6 +26,14 @@ import { createMapUI } from "./map/map-ui.js";
 import { createTaxi, toggleTaxi, stepTaxi, taxiTarget, rideChatter } from "./taxi/taxi.js";
 import { createTrafficSound, stepTrafficSound } from "./vehicles/traffic-sound.js";
 import { surfaceFor, createStepper, stepFoot, elRumble, riverHorn } from "./foley.js";
+import { COURSES, courseById, nearStart, createRun, stepRun, medalTimes, clock as raceClock } from "./runs.js";
+import { buildRunsWorld } from "./runs-world.js";
+import * as Fever from "./fever.js";
+import { createFeverUI } from "./fever-ui.js";
+import { RECORDS, pickUp, within, searchZone } from "./lost45s.js";
+import { buildLost45s } from "./lost45s-world.js";
+import { recordRun, recordFever, collectRecord, RECORD_PAY, COLLECTION_PAY } from "./games.js";
+import { createGamesUI } from "./games-ui.js";
 import { randomPedestrian, animateHuman } from "./human.js";
 import { SUBWAY_STATIONS, boardingPoint } from "./openworld/stations.js";
 import { saveTier, QUALITY_KEY } from "./quality.js";
@@ -616,7 +624,7 @@ async function boot() {
         world.camera.getWorldDirection(_dir);
         const now = performance.now();
         if (now - mapObjectiveAt > 250) { mapObjectiveAt = now; mapObjective = story.started && !story.ending ? objectiveTarget(story, storyNpcs()) : null; }
-        return { player: { x: p.x, z: p.z, dx: _dir.x, dz: _dir.z }, destination, objective: mapObjective };
+        return { player: { x: p.x, z: p.z, dx: _dir.x, dz: _dir.z }, destination, objective: mapObjective, pins: gamePins };
     }
     function openMap(mode = "map", from = null) {
         if (subwayRide || (mode === "travel" && driving.active)) return;
@@ -791,6 +799,192 @@ async function boot() {
         const target = taxiTarget(taxi, driving.car.position);
         if (target) destination = target;
         return target?.hud || "";
+    }
+
+    // --- the night's games: Midnight Runs (street races), Floor Fever (the dance floor) and the Lost 45s
+    const gamesUI = createGamesUI();
+    const runsWorld = buildRunsWorld(world.scene);
+    const recordsWorld = buildLost45s(world.scene);
+    recordsWorld.setFound(commerce.games.records);
+    const MEDAL_NAME = ["NO MEDAL", "BRONZE", "SILVER", "GOLD"], MEDAL_COLOR = ["#8d8676", "#c98a52", "#cfd3d6", "#f2c14a"];
+    const pay = (amount, why) => { if (amount > 0) commerce.life = credit(commerce.life, amount, why); };
+    let run = null, fever = null, recordCall = 4, gamePins = [];
+    /** After anything in commerce.games changes: the map's pins and the pause screen's line. */
+    function showGames() {
+        const g = commerce.games;
+        gamePins = [
+            ...COURSES.map((c) => ({ kind: "flag", x: c.start.x, z: c.start.z, name: c.name })),
+            ...RECORDS.map((r) => (g.records.includes(r.id) ? { kind: "record", x: r.x, z: r.z, name: r.title } : { kind: "zone", ...searchZone(r) })),
+        ];
+        const medals = COURSES.map((c) => `${c.name} ${g.runs[c.id] ? `${raceClock(g.runs[c.id].best)} ${MEDAL_NAME[g.runs[c.id].medal].toLowerCase()}` : "—"}`).join("  ·  ");
+        const line = document.getElementById("pauseGames");
+        if (line) line.textContent = `RUNS: ${medals}.  FLOOR FEVER: ${g.fever.grade ? `grade ${g.fever.grade}, ${g.fever.best.toLocaleString("en-US")} points` : "—"}.  LOST 45s: ${g.records.length} of ${RECORDS.length}.`;
+    }
+    showGames();
+
+    // Midnight Runs: stop at a flag in any car and press E.
+    const flagNear = () => (driving.active && !run ? COURSES.find((c) => nearStart(c, driving.car.position, driving.speed)) || null : null);
+    function startRun(course) {
+        if (taxi.on) {
+            if (taxi.stage === "ride") { hud.toast("DROP YOUR FARE FIRST", "#e0b25a"); return; }
+            const r = toggleTaxi(taxi, driving.car.position);
+            taxi = r.state;
+            taxiEvents(r.events);
+        }
+        run = createRun(course, commerce.games.runs[course.id] || null);
+        driving.setHeld(true);
+        gamesUI.closeCard();
+        gamesUI.runStart(course);
+        gamesUI.count(3);
+        audio.chime([440], { dur: 0.22, level: 0.09, type: "triangle" });
+    }
+    function endRun(message) {
+        run = null;
+        driving.setHeld(false);
+        gamesUI.runEnd();
+        if (destination?.id === "run-gate") destination = null;
+        if (message) hud.toast(message, "#e0b25a");
+    }
+    function finishRun(course, ev) {
+        const before = run.best, res = recordRun(commerce.games, course.id, { time: ev.time, splits: run.splits, ghost: run.ghost });
+        commerce = { ...commerce, games: res.games };
+        pay(res.reward, `Midnight Run · ${course.name}`);
+        persistCommerce();
+        showGames();
+        const m = medalTimes(course), next = ev.medal === 2 ? m.gold : ev.medal === 1 ? m.silver : m.bronze;
+        gamesUI.card({
+            kicker: `MIDNIGHT RUN  ·  ${course.name.toUpperCase()}`, title: raceClock(ev.time), color: MEDAL_COLOR[ev.medal], ms: 9000,
+            lines: [
+                { text: `${MEDAL_NAME[ev.medal]}  ·  ${res.best ? (before ? `NEW BEST, ${(before.best - ev.time).toFixed(2)} FASTER` : "YOUR FIRST TIME ON THE BOARD") : `YOUR BEST IS ${raceClock(res.games.runs[course.id].best)}`}`, cls: "strong" },
+                res.reward ? `+$${res.reward} for the medal` : null,
+                ev.medal < 3 ? `${MEDAL_NAME[ev.medal + 1][0]}${MEDAL_NAME[ev.medal + 1].slice(1).toLowerCase()} is ${raceClock(next)}` : null,
+                { text: "Back to the flag to go again. Your best run rides with you as a ghost.", cls: "foot" },
+            ],
+        });
+        audio.chime(ev.medal === 3 ? [523.25, 659.25, 783.99, 1046.5, 1318.5] : ev.medal === 2 ? [523.25, 659.25, 783.99, 1046.5] : ev.medal === 1 ? [523.25, 659.25, 783.99] : [392, 329.63], { gap: 0.1, dur: 0.7, level: 0.09 });
+        endRun();
+    }
+    function runFrame(dt) {
+        if (!run) return;
+        if (!driving.active) { endRun("RUN ABANDONED"); return; }
+        const course = courseById(run.course), car = driving.car;
+        const r = stepRun(run, { pos: { x: car.position.x, z: car.position.z, yaw: car.rotation.y }, dt });
+        run = r.state;
+        for (const ev of r.events) {
+            if (ev.type === "tick") { gamesUI.count(ev.n); audio.chime([440], { dur: 0.22, level: 0.09, type: "triangle" }); }
+            else if (ev.type === "go") { driving.setHeld(false); gamesUI.count("GO"); audio.chime([880], { dur: 0.5, level: 0.1, type: "triangle" }); }
+            else if (ev.type === "gate") { gamesUI.gateDelta(ev.delta); if (ev.index < course.gates.length - 1) audio.chime([987.77, 1318.5], { gap: 0.06, dur: 0.3, level: 0.05 }); }
+            else if (ev.type === "finish") { finishRun(course, ev); return; }
+        }
+        gamesUI.runClock(run.t, run.next, course.gates.length);
+        const [gx, gz] = course.gates[run.next];
+        destination = { id: "run-gate", name: run.next === course.gates.length - 1 ? "FINISH" : `GATE ${run.next + 1}`, x: gx, z: gz, y: 0 };
+        if (run.t > 600) endRun("RUN TIMED OUT");
+    }
+
+    // Floor Fever: G on the dance floor. The arrows (or A S W D) are the four lanes; your feet stay put.
+    const LANE_KEYS = { arrowleft: 0, a: 0, arrowdown: 1, s: 1, arrowup: 2, w: 2, arrowright: 3, d: 3 };
+    const GRADE_COLOR = { S: "#f2c14a", A: "#a6d99c", B: "#5fd6e8", C: "#cfd3d6", D: "#8d8676" };
+    const onTheFloor = () => !driving.active && !ride && !controls.sitting && onDanceFloor(world.camera.position.x, world.camera.position.z, controls.floorY);
+    const feverUI = createFeverUI({ onLane: (lane) => feverTap(lane) });
+    function startFever() {
+        if (fever || hud.phase !== "explore" || !onTheFloor()) return;
+        // On the club's own beat when the house groove is playing; otherwise the game keeps time itself.
+        const bc = audio.beatClock(), beatLen = bc ? bc.beatLen : 60 / (audio.bpm || 120);
+        const now = bc ? () => audio.context.currentTime - bc.latency : () => performance.now() / 1000;
+        const t0 = bc ? bc.nextBar : now() + beatLen;
+        const notes = Fever.schedule(Fever.makeChart((dayHash(today) + commerce.games.fever.rounds * 7919) >>> 0), { t0, beatLen, swing: bc ? bc.swing : 0.54 });
+        fever = { round: Fever.createRound(notes), now, t0, beatLen, first: notes[0].time, last: notes[notes.length - 1].time };
+        controls.setFrozen(true);
+        gamesUI.closeCard();
+        feverUI.show();
+    }
+    function stopFever(message) {
+        fever = null;
+        controls.setFrozen(false);
+        feverUI.hide();
+        if (message) hud.toast(message, "#e0b25a");
+    }
+    function feverTap(lane) {
+        if (!fever) return;
+        const now = fever.now(), h = Fever.hit(fever.round, lane, now);
+        feverUI.tap(lane, h.result, now);
+        if (!h.result) return;
+        fever.round = h.state;
+        audio.feverHit(h.result);
+        world.pulseKick();
+        energy = Math.min(100, energy + 1.2);
+        if (fever.round.combo % 25 === 0) { audio.cheer(); world.flashFloor(); }
+    }
+    function finishFever() {
+        const round = fever.round, g = Fever.grade(round), res = recordFever(commerce.games, { score: round.score, grade: g });
+        commerce = { ...commerce, games: res.games };
+        pay(res.reward, `Floor Fever · grade ${g}`);
+        persistCommerce();
+        showGames();
+        stopFever();
+        gamesUI.card({
+            kicker: "FLOOR FEVER", title: `GRADE ${g}`, color: GRADE_COLOR[g], ms: 9000,
+            lines: [
+                { text: `${Math.round(round.score).toLocaleString("en-US")} POINTS${res.best ? "  ·  NEW BEST" : ""}`, cls: "strong" },
+                `${round.counts.perfect} perfect · ${round.counts.great} great · ${round.counts.good} good · ${round.counts.miss} missed`,
+                `Longest combo ${round.maxCombo}`,
+                res.reward ? `+$${res.reward} from the house` : null,
+                { text: "G to go again", cls: "foot" },
+            ],
+        });
+        audio.chime(g === "S" ? [523.25, 659.25, 783.99, 1046.5, 1318.5] : g === "A" ? [523.25, 659.25, 783.99, 1046.5] : [523.25, 659.25, 783.99], { gap: 0.1, dur: 0.7, level: 0.09 });
+        if (g === "S" || g === "A") { audio.cheer(); world.flashFloor(); }
+    }
+    function feverFrame() {
+        if (!fever) return;
+        if (hud.phase !== "explore" || !onTheFloor()) { stopFever("FLOOR FEVER STOPPED"); return; }
+        const now = fever.now(), sw = Fever.sweep(fever.round, now);
+        if (sw.missed) { fever.round = sw.state; feverUI.miss(now); }
+        feverUI.draw({ now, round: fever.round, t0: fever.t0, beatLen: fever.beatLen, first: fever.first, last: fever.last, reduced: hud.reducedFx });
+        if (Fever.finished(fever.round) && now > fever.last + 0.9) finishFever();
+    }
+    window.addEventListener("keydown", (e) => {
+        const k = e.key.toLowerCase();
+        if (fever) {
+            if (k in LANE_KEYS) { e.preventDefault(); if (!e.repeat) feverTap(LANE_KEYS[k]); }
+            return;
+        }
+        if (k === "g" && !e.repeat && hud.phase === "explore" && onTheFloor()) { e.preventDefault(); startFever(); }
+    });
+    const feverButton = document.getElementById("mobileFever");
+    feverButton?.addEventListener("click", startFever);
+
+    // The Lost 45s: walk (or drive) over one to pick it up; an unfound one nearby plays a few notes of itself.
+    function recordsFrame(dt, t, pos, outdoors, onGround) {
+        recordsWorld.update(dt, t);
+        if (hud.phase !== "explore") return;
+        const rec = onGround ? pickUp(commerce.games.records, pos, { driving: driving.active }) : null;
+        if (rec) {
+            const res = collectRecord(commerce.games, rec.id), n = res.games.records.length;
+            commerce = { ...commerce, games: res.games };
+            pay(res.reward, `Lost 45 · ${rec.title}`);
+            persistCommerce();
+            showGames();
+            recordsWorld.setFound(res.games.records);
+            gamesUI.card({
+                kicker: `LOST 45  ·  ${n} OF ${RECORDS.length}`, title: rec.title, color: "#e9b44c", ms: 8000,
+                lines: [
+                    { text: rec.artist, cls: "strong" },
+                    `Rex pays $${RECORD_PAY} for it${res.complete ? `, and $${COLLECTION_PAY} more for the full set` : ""}`,
+                    res.complete ? "That's all ten. Rex is speechless." : { text: `${RECORDS.length - n} still out there. The map (M) circles where to look.`, cls: "foot" },
+                ],
+            });
+            audio.chime([523.25, 659.25, 783.99, 1046.5], { gap: 0.09, dur: 0.8, level: 0.09 });
+            return;
+        }
+        recordCall -= dt;
+        if (recordCall > 0) return;
+        recordCall = 5 + Math.random() * 3;
+        const near = outdoors ? within(commerce.games.records, pos) : null;
+        if (!near) return;
+        const i = RECORDS.indexOf(near), scale = [523.25, 587.33, 659.25, 783.99, 880];
+        audio.chime([scale[i % 5], scale[(i * 2 + 2) % 5], scale[(i * 3 + 4) % 5]], { gap: 0.17, dur: 0.6, level: 0.06, at: near });
     }
     document.getElementById("hudMap").addEventListener("click", () => { if (hud.phase === "explore") openMap("map"); });
     function applyExpansion(result){
@@ -1028,7 +1222,8 @@ async function boot() {
     }
 
     function tryInteract() {
-        if (hud.phase !== "explore") return;
+        if (hud.phase !== "explore" || fever) return;
+        if (driving.active) { const flag = flagNear(); if (flag) { startRun(flag); return; } }
         if (controls.sitting) {
             controls.stand();
             hud.toast("BACK ON YOUR FEET", "#e0b25a");
@@ -1115,6 +1310,10 @@ async function boot() {
             ride(id){rideSubway(id);},
             moveCar(x,z,yaw){if(driving.car){driving.car.position.set(x,0,z);if(yaw!=null)driving.car.rotation.y=yaw;}return !!driving.car;},
             radio(){return {station:audio.radio,track:audio.trackName,bpm:audio.bpm};},
+            games(){const g=commerce.games;return {run:run&&{course:run.course,countdown:run.countdown,t:run.t,next:run.next,ghostShown:runsWorld.ghost.visible,gateShown:runsWorld.gates[0].visible},
+                fever:fever&&{now:fever.now(),first:fever.first,last:fever.last,score:fever.round.score,combo:fever.round.combo,onBeat:!!audio.beatClock(),notes:fever.round.notes.map(n=>[n.lane,+n.time.toFixed(4),n.result])},
+                saved:{runs:Object.fromEntries(Object.entries(g.runs).map(([k,v])=>[k,{best:v.best,medal:v.medal,splits:v.splits.length,ghost:v.ghost.length/3}])),fever:g.fever,records:g.records},
+                card:gamesUI.cardOpen?gamesUI.root.querySelector(".game-card").textContent:"",frozen:controls.frozen,pins:gamePins.length};},
             skid(){return {skid:driving.skid,marks:driving.skids.count,speed:driving.speed};},
             taxi(){return {on:taxi.on,stage:taxi.stage,fares:taxi.fares,earned:taxi.earned,fare:taxi.fare?{pickup:taxi.fare.pickup,dest:taxi.fare.dest?.name,kerb:taxi.fare.dest?.kerb}:null,npc:!!waiting?.visible,rider:!!rider,riderInCab:!!rider&&rider.parent===driving.car,alighted:alighted.size};},
             get destination(){return destination;},
@@ -1269,6 +1468,11 @@ async function boot() {
         audio.setCity({ outside: outdoors, el: elRumble(world.openWorld.train.position.z, p), horn: riverHorn(hornClock, dt, p, { outside: outdoors }), night: 1 - world.daylight.daylight });
         audio.setWeather(world.weather.state.rain);
         for (const strike of world.weather.state.strikes) { audio.thunder(strike); thunderHeard++; }
+        if (hud.phase === "explore") runFrame(dt);
+        feverFrame();
+        runsWorld.update(dt, t, run);
+        recordsFrame(dt, t, driving.active ? driving.car.position : p, outdoors, driving.active || Math.abs(fy) < 0.6);
+        if (feverButton) feverButton.hidden = !(hud.phase === "explore" && onFloor && !fever);
         if (hud.phase === "explore") {
             const seen = world.city?.ads?.lastSeen || [];
             for (const id of seen) {
@@ -1289,11 +1493,14 @@ async function boot() {
         radioFrame();
         if (!driving.active && taxi.on) taxiFrame(dt, t); // out of the cab: the roof light goes off
         if (hud.phase === "explore" && driving.active) {
-            const fare = taxiFrame(dt, t), mph = `${Math.round(Math.abs(driving.speed) * 2.237)} MPH  ·  [F] GET OUT`;
-            // On a fare the line is about the fare; otherwise it lists what else the car can do.
-            hud.setInteract(taxi.on ? `${mph}  ·  ${fare}  ·  [T] LIGHT OFF` : `${mph}  ·  [Q] VIEW  ·  [R] RADIO${inCab() ? "  ·  [T] TAXI LIGHT" : ""}`, true);
+            const fare = taxiFrame(dt, t), speedText = `${Math.round(Math.abs(driving.speed) * 2.237)} MPH`, mph = `${speedText}  ·  [F] GET OUT`, flag = flagNear();
+            // In a race the line is the race; at a flag, the offer; on a fare, the fare; otherwise what the car can do.
+            hud.setInteract(run ? `${speedText}  ·  ${courseById(run.course).name.toUpperCase()}  ·  [F] GIVE UP`
+                : flag ? `[E] RACE ${flag.name.toUpperCase()}  ·  GOLD ${raceClock(medalTimes(flag).gold)}${commerce.games.runs[flag.id] ? `  ·  YOUR BEST ${raceClock(commerce.games.runs[flag.id].best)}` : ""}`
+                : taxi.on ? `${mph}  ·  ${fare}  ·  [T] LIGHT OFF` : `${mph}  ·  [Q] VIEW  ·  [R] RADIO${inCab() ? "  ·  [T] TAXI LIGHT" : ""}`, true);
         } else if (hud.phase === "explore" && !ride) {
-            if (controls.sitting) hud.setInteract("[E] STAND UP  ·  WASD TO GET UP", true);
+            if (fever) hud.setInteract("", false);
+            else if (controls.sitting) hud.setInteract("[E] STAND UP  ·  WASD TO GET UP", true);
             else {
                 const target=interactionTarget();
                 if(target)hud.setInteract(target.prompt,true);
@@ -1303,8 +1510,11 @@ async function boot() {
                     const nearCar=driving.nearest(p,2.6);
                     if(nearCar) hud.setInteract(`[F] DRIVE THE ${(nearCar.userData.kind==="checker"?"CHECKER":nearCar.userData.kind||"CAR").toUpperCase()}`,true);
                     else if(seen) hud.setInteract(seen.creative.kind==="available"?`[LOOK] TO LET · ${seen.creative.brand}`:`[LOOK] ${seen.creative.brand} — ${seen.creative.line}`,true);
-                    else if (onFloor) hud.setInteract("SPACE TO DANCE", true);
-                    else hud.setInteract("", false);
+                    else if (onFloor) hud.setInteract("SPACE TO DANCE  ·  [G] FLOOR FEVER", true);
+                    else {
+                        const flagHere = fy < 0.6 && fy > -0.6 ? COURSES.find((c) => Math.hypot(p.x - c.start.x, p.z - c.start.z) < 8) : null;
+                        hud.setInteract(flagHere ? `MIDNIGHT RUN  ·  ${flagHere.name.toUpperCase()}  ·  COME BACK IN A CAR` : "", !!flagHere);
+                    }
                 }
             }
         }

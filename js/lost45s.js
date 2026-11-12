@@ -34,3 +34,12 @@ export function within(found, pos, range = 28) {
   }
   return best;
 }
+
+/** Where the map says to look for a record you haven't found: a circle that holds it, off-centre so the middle
+    isn't the answer. The same every time for each record. */
+export function searchZone(record) {
+  let h = 2166136261;
+  for (const ch of record.id) h = Math.imul(h ^ ch.charCodeAt(0), 16777619) >>> 0;
+  const a = (h % 360) * (Math.PI / 180), d = 8 + ((h >>> 9) % 15);
+  return { x: record.x + Math.cos(a) * d, z: record.z + Math.sin(a) * d, r: 36 };
+}

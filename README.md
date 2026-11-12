@@ -18,6 +18,12 @@ The parks have four usable benches. The club plays original jazz-house, while a 
 
 No install. Click **ENTER THE NIGHT**.
 
+## New in v38: three games for the night
+
+- **Midnight Runs.** Three street races through the city. Stop at a chequered banner in any car and press **E**; after a three-count you race through glowing gates against the clock. Gold, silver and bronze pay out, and your best run comes back as a ghost car to beat.
+- **Floor Fever.** Press **G** on the club's dance floor for a rhythm round on the club's own beat: hit the falling arrows with the arrow keys (or A S W D), build a combo, and get graded S to D.
+- **The Lost 45s.** Ten rare records are hidden round the city. Listen for the few notes each one plays, check the circles on the map, and walk over one to pick it up. Rex pays for every one.
+
 ## New in v37: weather and the drive
 
 - **Weather that changes through the night.** Every night has its own sky: drizzle, rain, dry spells and the odd downpour with lightning and thunder. It always rains when the night begins.
@@ -65,7 +71,7 @@ No install. Click **ENTER THE NIGHT**.
 
 - **A story.** You came through the DJ booth from 2026. *The 12:04* runs from REXA's booth to the last uptown local at 12:04 AM, with a prologue, five chapters and two endings. Follow the tracker (top right); hold **V** once the visor is tuned to see echoes of what happened here.
 - **An open city.** Walk or drive crosstown to Broadway and Times Square, uptown to Belmont Park and the Belmont Plaza, out to the Pier 47 waterfront on the North River, or downtown under the El into the Garment District.
-- **Drive.** Press **F** at any parked car. **W/S** drive and brake, **A/D** steer, **Space** handbrake, **Q** changes the view, **H** horn, **F** to get out. **R** turns the radio dial. In a Checker, **T** switches the roof light on for taxi fares.
+- **Drive.** Press **F** at any parked car. **W/S** drive and brake, **A/D** steer, **Space** handbrake, **Q** changes the view, **H** horn, **F** to get out. **R** turns the radio dial, and **E** at a chequered banner starts a Midnight Run. In a Checker, **T** switches the roof light on for taxi fares.
 - **New look.** Physical sky, shadows, reflections, PBR brick and wet asphalt, people with faces and tailoring, and 1950s cars. Choose Low–Ultra in Settings, or add `?quality=low` to the address.
 - **Saves.** Progress autosaves instantly to a SQLite database in your browser (OPFS), with restore points in **SAVE & BACKUP**. The `.json` backups still work.
 

@@ -26,7 +26,7 @@ export function createFeverUI({ onLane }) {
   const canvas = document.createElement("canvas");
   canvas.setAttribute("aria-label", "Floor Fever: four lanes, left, down, up, right");
   const hint = document.createElement("p");
-  hint.textContent = "← ↓ ↑ →  OR  A S W D  ·  ESC TO STOP";
+  hint.textContent = "ARROW KEYS OR A S W D  ·  ESC TO STOP";
   wrap.append(canvas, hint);
   document.body.append(wrap);
   const g = canvas.getContext("2d");

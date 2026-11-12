@@ -47,7 +47,7 @@ export function buildRunsWorld(scene) {
   scene.add(root);
   const iron = new THREE.MeshStandardMaterial({ color: 0x24302e, roughness: 0.55, metalness: 0.5 });
   const pole = new THREE.CylinderGeometry(0.07, 0.09, 6.2, 8);
-  const shaftGeo = new THREE.CylinderGeometry(0.55, 0.55, 14, 12, 1, true);
+  const shaftGeo = new THREE.CylinderGeometry(0.28, 0.28, 14, 12, 1, true);
   const lineTex = chequer(2, 12);
 
   // A banner across the road and a chequered line at every start. (Banners and the line are see-through
@@ -75,8 +75,7 @@ export function buildRunsWorld(scene) {
     line.renderOrder = 1;
     g.add(line);
     // A column of light you can see from down the street.
-    const shaft = new THREE.Mesh(shaftGeo, glow(0.08));
-    shaft.material.side = THREE.DoubleSide;
+    const shaft = new THREE.Mesh(shaftGeo, glow(0.04));
     shaft.position.set(0, 7, reach);
     g.add(shaft);
     g.traverse((o) => { o.userData.noShadow = true; });
@@ -126,7 +125,7 @@ export function buildRunsWorld(scene) {
     ghost,
     /** run: the state from runs.js (or null when you're not racing). */
     update(dt, t, run) {
-      for (const f of flags) f.shaft.material.opacity = 0.07 + 0.035 * Math.sin(t * 1.6 + f.phase);
+      for (const f of flags) f.shaft.material.opacity = 0.04 + 0.015 * Math.sin(t * 1.6 + f.phase);
       const course = run && !run.done ? courseById(run.course) : null;
       for (let k = 0; k < gates.length; k++) {
         const g = gates[k], i = course ? run.next + k : -1;

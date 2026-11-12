@@ -124,3 +124,5 @@
 @media (prefers-reduced-motion: reduce) {
     .run-count.pop, .game-card { animation: none; }
 }
+
+.mobile-actions button[hidden] { display: none; }
