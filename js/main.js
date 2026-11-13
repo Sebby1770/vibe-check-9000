@@ -808,7 +808,7 @@ async function boot() {
     recordsWorld.setFound(commerce.games.records);
     const MEDAL_NAME = ["NO MEDAL", "BRONZE", "SILVER", "GOLD"], MEDAL_COLOR = ["#8d8676", "#c98a52", "#cfd3d6", "#f2c14a"];
     const pay = (amount, why) => { if (amount > 0) commerce.life = credit(commerce.life, amount, why); };
-    let run = null, fever = null, recordCall = 4, gamePins = [];
+    let run = null, fever = null, recordCall = 4, gamePins = [], routeBeforeRun = null;
     /** After anything in commerce.games changes: the map's pins and the pause screen's line. */
     function showGames() {
         const g = commerce.games;
@@ -832,6 +832,7 @@ async function boot() {
             taxiEvents(r.events);
         }
         run = createRun(course, commerce.games.runs[course.id] || null);
+        routeBeforeRun = destination?.id === "run-gate" ? null : destination; // the gates borrow the wayfinder
         driving.setHeld(true);
         gamesUI.closeCard();
         gamesUI.runStart(course);
@@ -842,7 +843,8 @@ async function boot() {
         run = null;
         driving.setHeld(false);
         gamesUI.runEnd();
-        if (destination?.id === "run-gate") destination = null;
+        if (destination?.id === "run-gate") destination = routeBeforeRun;
+        routeBeforeRun = null;
         if (message) hud.toast(message, "#e0b25a");
     }
     function finishRun(course, ev) {
