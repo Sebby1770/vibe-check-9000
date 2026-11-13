@@ -935,6 +935,62 @@ export function createAudio() {
             nodes.push(o, og);
             last.onended = () => { for (const n of nodes) n.disconnect(); };
         },
+        /** The club's beat, for Floor Fever: when the next bar starts on the audio clock, how long a beat lasts and
+            how late the speakers are. Null when the house groove isn't running (your own records on the deck, or
+            sound never started), and the game keeps its own time instead. */
+        beatClock() {
+            if (!ctx || ctx.state !== "running" || !started || usingDeck) return null;
+            const beatLen = 60 / state.bpm, swing = 0.54, k = (8 - (((step % 8) + 8) % 8)) % 8; // steps to the next bar
+            const untilBar = step % 2 ? (1 - swing) * beatLen + ((k - 1) / 2) * beatLen : (k / 2) * beatLen;
+            return { now: ctx.currentTime, nextBar: Math.max(nextNote, ctx.currentTime) + untilBar, beatLen, swing, latency: ctx.outputLatency || ctx.baseLatency || 0 };
+        },
+        /** A few bell notes in a row (Hz), for the games: countdowns, gates, medals, a record found. With `at`
+            {x, z} they come from that spot in the street; otherwise they're in your ear. */
+        chime(notes, { gap = 0.11, dur = 0.5, level = 0.07, type = "sine", at = null } = {}) {
+            if (!ctx || ctx.state !== "running" || muted || !notes?.length) return;
+            cityGraph();
+            const t0 = ctx.currentTime + 0.01, nodes = [];
+            let out = foleyBus;
+            if (at) {
+                out = streetPanner();
+                out.refDistance = 6;
+                place(out, at.x, 1, at.z);
+                out.connect(trafficLp);
+                nodes.push(out);
+            }
+            let last = null;
+            notes.forEach((f, i) => {
+                for (const [mult, share] of [[1, 1], [2, 0.3], [3, 0.12]]) {
+                    const o = ctx.createOscillator(), g = ctx.createGain(), t = t0 + i * gap;
+                    o.type = type;
+                    o.frequency.value = f * mult;
+                    g.gain.setValueAtTime(0.0001, t);
+                    g.gain.exponentialRampToValueAtTime(level * share, t + 0.008);
+                    g.gain.exponentialRampToValueAtTime(0.0001, t + dur / mult);
+                    o.connect(g); g.connect(out);
+                    o.start(t); o.stop(t + dur / mult + 0.02);
+                    nodes.push(o, g);
+                    if (mult === 1) last = o;
+                }
+            });
+            last.onended = () => { for (const n of nodes) n.disconnect(); };
+        },
+        /** Floor Fever: a rim click on a hit, brighter the better the hit. */
+        feverHit(result) {
+            if (!ctx || ctx.state !== "running" || muted) return;
+            cityGraph();
+            const t = ctx.currentTime, src = ctx.createBufferSource(), bp = ctx.createBiquadFilter(), g = ctx.createGain();
+            src.buffer = noiseBuf;
+            bp.type = "bandpass";
+            bp.frequency.value = result === "perfect" ? 3400 : result === "great" ? 2600 : 1900;
+            bp.Q.value = 3;
+            g.gain.setValueAtTime(0.0001, t);
+            g.gain.exponentialRampToValueAtTime(result === "perfect" ? 0.09 : 0.06, t + 0.003);
+            g.gain.exponentialRampToValueAtTime(0.0001, t + 0.05);
+            src.connect(bp); bp.connect(g); g.connect(foleyBus);
+            src.start(t, Math.random() * 0.8); src.stop(t + 0.07);
+            src.onended = () => { src.disconnect(); bp.disconnect(); g.disconnect(); };
+        },
         /** How hard it's raining (0–1, weather.js): the rain bed follows it. */
         setWeather(rain) {
             if (Math.abs(rain - weatherRain) < 0.01) return;

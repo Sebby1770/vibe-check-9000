@@ -239,6 +239,10 @@ Delivered in v37.0.0: weather through the night (rain that follows you, ripples,
 thunder, umbrellas), tyre grip with skids, squeal and crash sounds, the warm-up dealt across four title frames, and
 muted browser tests.
 
+Delivered in v38.0.0: three games. Midnight Runs (three street races with gates, medals, splits and a ghost of
+your best run), Floor Fever (a rhythm round on the dance floor, on the club's own beat) and the Lost 45s (ten
+hidden records), with map pins and a `games` section in the save.
+
 Not done yet (next steps):
 
 - Instanced far-LOD crowds (`createCrowd`).

@@ -38,7 +38,7 @@ export function createDriving({ scene, camera, colliders, city, audio, hud, aven
     // Your car's headlights are the same soft beams the traffic wears (vehicles/night-lights.js), lit only while
     // you drive it.
 
-    let car = null, lastCar = null, speed = 0, steer = 0, firstPerson = false, hornCool = 0, skid = 0, crashCool = 0;
+    let car = null, lastCar = null, speed = 0, steer = 0, firstPerson = false, hornCool = 0, skid = 0, crashCool = 0, held = false;
     const skids = createSkids(scene);
     const keys = {};
     const camPos = new THREE.Vector3();
@@ -82,6 +82,8 @@ export function createDriving({ scene, camera, colliders, city, audio, hud, aven
         /** The car you last got out of, wherever you left it (traffic treats it as solid). */
         get lastCar() { return lastCar; },
         get speed() { return speed; },
+        /** Holds the car where it is (a race countdown): the engine revs, the wheels don't turn. */
+        setHeld(v) { held = !!v; if (held) speed = 0; },
         /** How hard the tyres are sliding (0–1), and the marks they've left. */
         get skid() { return skid; },
         skids,
@@ -110,6 +112,7 @@ export function createDriving({ scene, camera, colliders, city, audio, hud, aven
         /** Steps out on whichever kerb side is clear. Returns {x, z, lookX, lookZ}. */
         exit() {
             if (!car) return null;
+            held = false;
             skid = 0;
             audio.setSkid?.(0);
             const c = car, spec = c.userData.spec;
@@ -141,7 +144,7 @@ export function createDriving({ scene, camera, colliders, city, audio, hud, aven
             else if (throttle < 0) speed += (speed > 0 ? -16 * brakeGrip(wet) : -5 * (1 + speed / 7)) * -throttle * dt;
             else speed -= Math.sign(speed) * Math.min(Math.abs(speed), (2 + Math.abs(speed) * 0.08) * dt);
             if (handbrake) speed -= Math.sign(speed) * Math.min(Math.abs(speed), 20 * brakeGrip(wet) * dt);
-            speed = Math.max(-7, Math.min(26, speed));
+            speed = held ? 0 : Math.max(-7, Math.min(26, speed));
             const lock = 0.55 / (1 + Math.abs(speed) * 0.06);
             steer += (turn * lock - steer) * Math.min(1, dt * 7);
             const yawRate = (speed / spec.wheelbase) * Math.tan(steer) * (handbrake ? 1.35 : 1);

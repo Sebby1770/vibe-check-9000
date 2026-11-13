@@ -180,7 +180,34 @@ function drawLabels(ctx, view, mini) {
 }
 
 /** You, your marked route and the story's next stop. Off-screen targets get an arrow on the frame edge. */
-export function drawMarkers(ctx, view, { player = null, destination = null, objective = null, t = 0, mini = false } = {}) {
+export function drawMarkers(ctx, view, { player = null, destination = null, objective = null, pins = [], t = 0, mini = false } = {}) {
+  // The night's games: a chequered flag where a Midnight Run starts, a disc for each Lost 45 you've found and a
+  // dashed circle to search for each one you haven't. The minimap keeps only the flags.
+  for (const pin of pins) {
+    const p = toMap(view, pin.x, pin.z), reach = (pin.r || 0) * view.s + 24;
+    if (p.x < -reach || p.y < -reach || p.x > view.w + reach || p.y > view.h + reach) continue;
+    if (pin.kind === "zone") {
+      if (mini) continue;
+      ctx.save();
+      ctx.beginPath(); ctx.arc(p.x, p.y, pin.r * view.s, 0, Math.PI * 2);
+      ctx.fillStyle = "rgba(183, 40, 43, 0.07)"; ctx.fill();
+      ctx.setLineDash([5, 4]); ctx.lineWidth = 1.4; ctx.strokeStyle = "rgba(154, 52, 32, 0.75)"; ctx.stroke();
+      ctx.restore();
+      halo(ctx, "45?", p.x, p.y, { size: 11, weight: 700, color: "#9a3420" });
+    } else if (pin.kind === "record") {
+      if (mini) continue;
+      ctx.beginPath(); ctx.arc(p.x, p.y, 5, 0, Math.PI * 2); ctx.fillStyle = MAP_INK; ctx.fill();
+      ctx.beginPath(); ctx.arc(p.x, p.y, 1.8, 0, Math.PI * 2); ctx.fillStyle = C.tungsten; ctx.fill();
+    } else if (pin.kind === "flag") {
+      const k = mini ? 0.8 : 1;
+      ctx.save(); ctx.translate(p.x, p.y);
+      ctx.fillStyle = MAP_INK; ctx.fillRect(-0.8 * k, -13 * k, 1.6 * k, 13 * k);
+      for (let i = 0; i < 3; i++) for (let j = 0; j < 2; j++) { ctx.fillStyle = (i + j) % 2 ? "#fff8e6" : MAP_INK; ctx.fillRect((0.8 + i * 3.2) * k, (-13 + j * 3.2) * k, 3.2 * k, 3.2 * k); }
+      ctx.lineWidth = 0.8; ctx.strokeStyle = MAP_INK; ctx.strokeRect(0.8 * k, -13 * k, 9.6 * k, 6.4 * k);
+      ctx.restore();
+      if (!mini && pin.name) halo(ctx, pin.name, p.x + 13, p.y - 9, { size: 11, weight: 700, color: MAP_INK, align: "left" });
+    }
+  }
   const edge = (p) => {
     const m = mini ? 10 : 18, cx = view.w / 2, cy = view.h / 2;
     if (p.x >= m && p.y >= m && p.x <= view.w - m && p.y <= view.h - m) return null;

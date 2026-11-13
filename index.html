@@ -44,6 +44,7 @@
     <link rel="stylesheet" href="panels.css">
     <link rel="stylesheet" href="story.css">
     <link rel="stylesheet" href="map.css">
+    <link rel="stylesheet" href="games.css">
 </head>
 <body data-zone="club" data-phase="boot" class="pre-night">
     <button id="cameraCapture" class="camera-trigger" type="button" hidden>CAMERA [C]</button>
@@ -100,7 +101,7 @@
 
         <section id="boot" class="overlay boot" aria-labelledby="bootTitle">
             <div class="boot-frame" aria-hidden="true"></div>
-            <p class="boot-build" id="bootBuild" data-build="dev">v37.0.0 · local</p>
+            <p class="boot-build" id="bootBuild" data-build="dev">v38.0.0 · local</p>
             <div class="boot-card">
                 <h1 id="bootTitle" class="boot-logo" aria-label="Vibe Check 9000">
                     <span class="flap-row" data-flaps="VIBE CHECK" aria-hidden="true">VIBE CHECK</span>
@@ -183,6 +184,7 @@
                 <h2>NIGHT AIR</h2>
                 <p class="dim" id="pauseBill">Pointer lock off. The night is still going.</p>
                 <p class="bill-line" id="pauseClock">10:00 PM</p>
+                <p class="dim" id="pauseGames"></p>
                 <div class="result-actions"><button type="button" class="btn-secondary" id="waitMorningBtn">WAIT UNTIL 7 AM</button><button type="button" class="btn-secondary" id="waitEveningBtn">WAIT UNTIL 10 PM</button><button type="button" class="btn-secondary" id="waitMidnightBtn">WAIT UNTIL MIDNIGHT</button></div>
                 <p class="dim" id="pauseLook">STOCK VISOR</p>
                 <p class="boot-dare" id="pauseDare"></p>
@@ -303,7 +305,7 @@
         </section>
 
         <div id="wayfinder" class="wayfinder" hidden></div>
-        <div class="mobile-actions"><button id="mobileInteract" type="button">USE</button><button id="mobileDance" type="button">DANCE</button></div>
+        <div class="mobile-actions"><button id="mobileInteract" type="button">USE</button><button id="mobileDance" type="button">DANCE</button><button id="mobileFever" type="button" hidden>FEVER</button></div>
         <div id="mobile-controls" class="mobile-controls hidden">
             <div id="stick" class="stick" aria-label="Move stick"><div id="stick-knob" class="stick-knob"></div></div>
             <div id="look-pad" class="look-pad" aria-label="Look pad">LOOK</div>

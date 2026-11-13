@@ -4,6 +4,18 @@ All notable changes to VIBE CHECK 9000™ are documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
+## [38.0.0] - 2026-11-12
+
+### Three games for the night
+
+- **Midnight Runs** (`js/runs.js`, `js/runs-world.js`). Three street races on real streets, each about 570 m: *The Block* (round the club), *Broadway Dash* (up Broadway, across 50th, down West Avenue) and *River Run* (the Garment District to the end of Pier 47 Road). Stop at a chequered banner in any car and press **E**: the car is held for a three-count, then you race through ten or twelve glowing gates against the clock, with the wayfinder and minimap pointing at the next one. Gold, silver and bronze come from each course's length (gold is an average of about 14 m/s; The Block's is 0:40); each medal pays once per course ($10, $20, $40). Your best time, its split at every gate and a ghost of the run are saved: next time a pale ghost car drives your best line and each gate shows how far ahead or behind you are. Get out to give up. Rain makes it harder, as it should.
+- **Floor Fever** (`js/fever.js`, `js/fever-ui.js`). Press **G** on the club's dance floor for a sixteen-bar rhythm round: arrows fall in four lanes on the club's own beat (the chart is scheduled on the audio clock, with the speakers' latency taken off, and swings its off-beats like the groove does), and you hit them with the arrow keys or A S W D (or tap the lanes). It builds from quarter notes to eighths and chords and ends on a four-lane chord; a different chart each round. Perfect, great and good windows are 60, 110 and 160 ms; a combo multiplies the score up to four times; every 25 in a row the crowd cheers and the floor flashes. Rounds are graded S to D and each grade pays once ($5, $15, $25 and $50 for an S). Your feet stay planted while you play, and Esc stops the round. With your own records on the deck it keeps its own time.
+- **The Lost 45s** (`js/lost45s.js`, `js/lost45s-world.js`). Ten records from labels that never made it, each turning above a crate somewhere in the city, from Times Square to Pier 47 Road. One nearby plays a few notes of itself, from where it lies. Walk (or drive) over one to pick it up: Rex pays $15 each and $100 more for the set. The map circles roughly where each unfound one is and marks the ones you have.
+- **The map** shows a chequered flag at each run's start (the minimap too), a dashed circle to search for each unfound record and a disc for each found one. The pause screen sums up your runs, your Floor Fever grade and your records.
+- New sounds (`audio.chime`, `audio.feverHit`, `audio.beatClock`): count-down beeps, gate bells, medal and record fanfares, and a rim click on every hit. All follow Mute.
+- Saves: a `games` section beside the rest (`js/games.js`), normalised on load like the others.
+- Tests: `tests/games.test.js` (every gate on a real road with nothing solid between gates, timing, splits, ghosts, medals paying once; charts, judging, combos and grades; every record outdoors, off the asphalt and clear of walls; saves) and `tests/games-browser.test.js` (`npm run test:games`, muted: a gold run with the car held for the count, the ghost on the second run, a record picked up, a perfect Floor Fever round on the beat, and everything surviving a reload).
+
 ## [37.0.0] - 2026-11-08
 
 ### Weather and the drive

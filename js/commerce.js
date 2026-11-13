@@ -1,3 +1,4 @@
+import { normalizeGames } from "./games.js";
 import { normalizeNeighborhood } from './neighborhood.js';
 import { EAST_COUNTERS } from './district-layout.js';
 import { DISTRICT_PLACES } from './district-layout.js';
@@ -329,6 +330,7 @@ export function normalizeCommerce(data = {}) {
     expansion: normalizeExpansion(data.expansion),
     life: normalizeLife(data.life),
     neighborhood: normalizeNeighborhood(data.neighborhood),
+    games: normalizeGames(data.games),
     playingRecord:
       findItem(playing?.id)?.kind === "record" ? findItem(playing.id) : null,
     inventory: Array.isArray(data.inventory)
