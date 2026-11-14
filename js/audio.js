@@ -522,7 +522,7 @@ export function createAudio() {
         elVoice = { pan, g, clatG };
     }
     // Your tyres: a squeal past the limit on a dry street, a hiss of spray on a wet one. Built on first slide.
-    let skidVoice = null;
+    let skidVoice = null, sirenVoice = null;
     function skidGraph() {
         if (skidVoice || !ctx) return;
         cityGraph();
@@ -974,6 +974,31 @@ export function createAudio() {
                 }
             });
             last.onended = () => { for (const n of nodes) n.disconnect(); };
+        },
+        /** Muldoon's siren: a mechanical wail rising and falling, from wherever the cruiser is. at {x, z}, or null
+            to wind it down. */
+        siren(at) {
+            if (!ctx || ctx.state !== "running") return;
+            if (!at && !sirenVoice) return;
+            cityGraph();
+            if (!sirenVoice) {
+                const pan = streetPanner(), g = ctx.createGain(), lp = ctx.createBiquadFilter(), o = ctx.createOscillator(), lfo = ctx.createOscillator(), depth = ctx.createGain();
+                pan.refDistance = 10;
+                g.gain.value = 0;
+                lp.type = "lowpass";
+                lp.frequency.value = 2400;
+                o.type = "sawtooth";
+                o.frequency.value = 780;
+                lfo.frequency.value = 0.42;
+                depth.gain.value = 300;
+                lfo.connect(depth); depth.connect(o.frequency);
+                o.connect(lp); lp.connect(g); g.connect(pan); pan.connect(trafficLp);
+                o.start(); lfo.start();
+                sirenVoice = { pan, g };
+            }
+            const t = ctx.currentTime;
+            sirenVoice.g.gain.setTargetAtTime(at && !muted ? 0.12 : 0, t, at ? 0.15 : 0.6);
+            if (at) place(sirenVoice.pan, at.x, 1.6, at.z);
         },
         /** Floor Fever: a rim click on a hit, brighter the better the hit. */
         feverHit(result) {

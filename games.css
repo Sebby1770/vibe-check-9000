@@ -126,3 +126,61 @@
 }
 
 .mobile-actions button[hidden] { display: none; }
+
+/* A chase */
+.heat-bar {
+    position: absolute;
+    top: 64px;
+    left: 50%;
+    transform: translateX(-50%);
+    display: grid;
+    grid-template-columns: auto auto;
+    gap: 2px 14px;
+    align-items: baseline;
+    padding: 8px 16px 9px;
+    border-left: 3px solid #e2483a;
+    border-radius: 2px;
+    background: rgba(18, 8, 9, 0.86);
+    font-weight: 700;
+    letter-spacing: 0.07em;
+    white-space: nowrap;
+}
+.heat-bar[hidden], .ledger-panel[hidden] { display: none; }
+.heat-title { font: 900 20px/1 "Big Shoulders Display", "Oswald", sans-serif; color: #ff8a7a; }
+.heat-dist { font-size: 14px; color: rgba(239, 227, 196, 0.86); font-variant-numeric: tabular-nums; }
+.heat-meter { grid-column: 1 / -1; height: 4px; background: rgba(239, 227, 196, 0.15); border-radius: 2px; overflow: hidden; }
+.heat-meter i { display: block; height: 100%; width: 0; background: #a6d99c; transition: width 0.2s linear; }
+
+/* The Night Ledger */
+.ledger-panel {
+    position: fixed;
+    left: 50%;
+    top: 50%;
+    z-index: 70;
+    transform: translate(-50%, -50%);
+    width: min(94vw, 640px);
+    max-height: min(86vh, 720px);
+    overflow: auto;
+    padding: 18px 22px 16px;
+    border-left: 4px solid var(--tungsten, #f2a541);
+    border-radius: 2px;
+    background: rgba(10, 9, 12, 0.97);
+    box-shadow: 0 20px 60px rgba(0, 0, 0, 0.6);
+    color: var(--paper, #efe3c4);
+    font-family: "Big Shoulders Text", "Oswald", sans-serif;
+}
+.ledger-panel header { display: flex; align-items: baseline; gap: 14px; margin-bottom: 10px; }
+.ledger-panel h3 { margin: 0; font: 900 34px/1 "Big Shoulders Display", "Oswald", sans-serif; letter-spacing: 0.03em; }
+.ledger-count { flex: 1; color: var(--tungsten, #f2a541); font-weight: 700; letter-spacing: 0.12em; }
+.ledger-list { list-style: none; margin: 0; padding: 0; display: grid; grid-template-columns: 1fr 1fr; gap: 6px 18px; }
+.ledger-list li { display: grid; grid-template-columns: 20px 1fr; gap: 0 8px; padding: 6px 0; border-bottom: 1px solid rgba(239, 227, 196, 0.1); }
+.ledger-list .tick { grid-row: span 2; color: #a6d99c; font-weight: 900; }
+.ledger-list strong { font-size: 16px; letter-spacing: 0.05em; color: rgba(239, 227, 196, 0.62); }
+.ledger-list li.done strong { color: var(--paper, #efe3c4); }
+.ledger-list .hint { font-size: 13px; font-weight: 500; letter-spacing: 0.03em; color: rgba(239, 227, 196, 0.55); }
+.ledger-foot { margin: 12px 0 0; font-size: 13px; color: rgba(239, 227, 196, 0.55); letter-spacing: 0.05em; }
+@media (max-width: 720px) {
+    .heat-bar { top: 108px; padding: 7px 12px 8px; }
+    .heat-title { font-size: 17px; }
+    .ledger-list { grid-template-columns: 1fr; }
+}

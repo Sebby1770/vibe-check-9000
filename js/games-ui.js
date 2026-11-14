@@ -21,9 +21,25 @@ export function createGamesUI() {
   const card = el("div", "game-card");
   card.hidden = true;
   card.setAttribute("role", "status");
-  root.append(bar, count, card);
-  document.body.append(root);
-  let countTimer = 0, deltaTimer = 0, cardTimer = 0, shownTime = "", shownGate = "";
+  // A chase: who's after you, how far back, and how close you are to shaking him.
+  const heat = el("div", "heat-bar"), heatTitle = el("strong", "heat-title", "MULDOON'S ON YOUR TAIL"), heatDist = el("span", "heat-dist"), heatMeter = el("span", "heat-meter"), heatFill = el("i");
+  heatMeter.append(heatFill);
+  heat.append(heatTitle, heatDist, heatMeter);
+  heat.hidden = true;
+  root.append(bar, heat, count, card);
+  // The Night Ledger: a list over the pause screen.
+  const ledger = el("section", "ledger-panel");
+  ledger.hidden = true;
+  ledger.setAttribute("role", "dialog");
+  ledger.setAttribute("aria-label", "The Night Ledger");
+  const ledgerHead = el("header"), ledgerTitle = el("h3", "", "THE NIGHT LEDGER"), ledgerCount = el("span", "ledger-count"), ledgerClose = el("button", "btn-secondary", "CLOSE");
+  ledgerClose.type = "button";
+  ledgerHead.append(ledgerTitle, ledgerCount, ledgerClose);
+  const ledgerList = el("ol", "ledger-list");
+  ledger.append(ledgerHead, ledgerList, el("p", "ledger-foot", "Each one pays $10 the first time."));
+  document.body.append(root, ledger);
+  ledgerClose.addEventListener("click", () => { ledger.hidden = true; });
+  let countTimer = 0, deltaTimer = 0, cardTimer = 0, shownTime = "", shownGate = "", shownDist = "";
 
   return {
     root,
@@ -76,6 +92,31 @@ export function createGamesUI() {
     closeCard() {
       clearTimeout(cardTimer);
       card.hidden = true;
+    },
+    heatStart(why) {
+      heatTitle.textContent = why === "crash" ? "MULDOON SAW THAT" : "MULDOON'S ON YOUR TAIL";
+      heat.hidden = false;
+      shownDist = "";
+    },
+    /** dist in metres; shake 0–1: how far through the eight clear seconds you are. */
+    heatUpdate(dist, shake, loseRange) {
+      const text = dist > loseRange ? `${Math.round(dist)} M BACK · KEEP GOING` : `${Math.round(dist)} M BACK · GET ${loseRange} M CLEAR`;
+      if (text !== shownDist) heatDist.textContent = shownDist = text;
+      heatFill.style.width = `${Math.round(Math.max(0, Math.min(1, shake)) * 100)}%`;
+    },
+    heatEnd() { heat.hidden = true; },
+    get ledgerOpen() { return !ledger.hidden; },
+    closeLedger() { ledger.hidden = true; },
+    /** goals: ledger.js GOALS; done: the ids ticked. */
+    openLedger(goals, done) {
+      ledgerCount.textContent = `${done.length} OF ${goals.length}`;
+      ledgerList.replaceChildren(...goals.map((g) => {
+        const li = el("li", done.includes(g.id) ? "done" : "");
+        li.append(el("span", "tick", done.includes(g.id) ? "✓" : ""), el("strong", "", g.name), el("span", "hint", g.hint));
+        return li;
+      }));
+      ledger.hidden = false;
+      ledgerClose.focus();
     },
   };
 }

@@ -5,7 +5,7 @@ import { EAST_COUNTERS } from './district-layout.js';
 import {createSaveUI} from './save-ui.js';
 import {restoreBackup} from './save-backup.js';
 import { createLifeUI } from './life-ui.js';
-import { credit, startShift, submitShift, prepareDiner, firstEvening, buyHome, buyFurnishing, updateLife, money, JOBS } from './life.js';
+import { credit, spend, startShift, submitShift, prepareDiner, firstEvening, buyHome, buyFurnishing, updateLife, money, JOBS } from './life.js';
 import { LIFE_PROPS } from './life-world.js';
 import { createExpansionUI } from "./expansion-ui.js";
 import { finishCounter, followSignal, takeSnack, finishDuet, addPhoto, removePhoto, SIGNAL_SET, STREET_PLACES } from "./expansion.js";
@@ -32,7 +32,10 @@ import * as Fever from "./fever.js";
 import { createFeverUI } from "./fever-ui.js";
 import { RECORDS, pickUp, within, searchZone } from "./lost45s.js";
 import { buildLost45s } from "./lost45s-world.js";
-import { recordRun, recordFever, collectRecord, RECORD_PAY, COLLECTION_PAY } from "./games.js";
+import { recordRun, recordFever, collectRecord, tickGoal, bump, RECORD_PAY, COLLECTION_PAY } from "./games.js";
+import { GOALS } from "./ledger.js";
+import { drawsHeat, createChase, stepChase, FINE, LOSE_RANGE, LOSE_TIME } from "./heat.js";
+import { buildCruiser } from "./heat-world.js";
 import { createGamesUI } from "./games-ui.js";
 import { randomPedestrian, animateHuman } from "./human.js";
 import { SUBWAY_STATIONS, boardingPoint } from "./openworld/stations.js";
@@ -273,6 +276,7 @@ async function boot() {
             document.documentElement.classList.toggle("reduced-fx", s.reduced);
         },
         onInteract: () => tryInteract(),
+        onEscape: () => closeLedger(),
         onTalkChoice: (i) => handleChoice(i),
         onFiles: (files) => {
             if (shopUI?.isOpen) { shopUI.close(); stopPreview(); }
@@ -637,6 +641,7 @@ async function boot() {
     function rideSubway(id) {
         const st = SUBWAY_STATIONS.find((s) => s.id === id);
         if (!st || subwayRide) return;
+        goal("underground");
         mapUI.close();
         hud.setPhase("activity");
         const card = document.getElementById("rideCard");
@@ -668,12 +673,14 @@ async function boot() {
         if (driving.active === wasDriving) return;
         wasDriving = driving.active;
         audio.setRadio(driving.active ? station : null);
+        if (driving.active) heardStation(station);
     }
     window.addEventListener("keydown", (e) => {
         if (e.key.toLowerCase() !== "r" || e.repeat || hud.phase !== "explore" || !driving.active) return;
         e.preventDefault();
         const list = audio.stations;
         station = list[(list.indexOf(station) + 1) % list.length];
+        heardStation(station);
         try { localStorage.setItem(RADIO_KEY, station); } catch { /* storage blocked */ }
         audio.setRadio(station);
         hud.toast(audio.stationName(station), "#f2a541");
@@ -757,6 +764,10 @@ async function boot() {
                 showWallet();
                 audio.playShopSound("bell");
                 hud.toast(`+$${ev.pay} · fare to ${ev.dest.name} · tonight ${taxi.fares} ${taxi.fares === 1 ? "fare" : "fares"}, $${taxi.earned}`, "#bdd3b2");
+                commerce = { ...commerce, games: bump(commerce.games, "fares") };
+                persistCommerce();
+                goal("first-fare");
+                if (commerce.games.stats.fares >= 10) goal("night-shift");
             } else if (ev.type === "gave-up") {
                 if (waiting) waiting.visible = false;
                 waiting = null;
@@ -818,13 +829,14 @@ async function boot() {
         ];
         const medals = COURSES.map((c) => `${c.name} ${g.runs[c.id] ? `${raceClock(g.runs[c.id].best)} ${MEDAL_NAME[g.runs[c.id].medal].toLowerCase()}` : "—"}`).join("  ·  ");
         const line = document.getElementById("pauseGames");
-        if (line) line.textContent = `RUNS: ${medals}.  FLOOR FEVER: ${g.fever.grade ? `grade ${g.fever.grade}, ${g.fever.best.toLocaleString("en-US")} points` : "—"}.  LOST 45s: ${g.records.length} of ${RECORDS.length}.`;
+        if (line) line.textContent = `RUNS: ${medals}.  FLOOR FEVER: ${g.fever.grade ? `grade ${g.fever.grade}, ${g.fever.best.toLocaleString("en-US")} points` : "—"}.  LOST 45s: ${g.records.length} of ${RECORDS.length}.  LEDGER: ${g.ledger.length} of ${GOALS.length}.`;
     }
     showGames();
 
     // Midnight Runs: stop at a flag in any car and press E.
     const flagNear = () => (driving.active && !run ? COURSES.find((c) => nearStart(c, driving.car.position, driving.speed)) || null : null);
     function startRun(course) {
+        if (chase) { hud.toast("SHAKE MULDOON FIRST", "#ff8a7a"); return; }
         if (taxi.on) {
             if (taxi.stage === "ride") { hud.toast("DROP YOUR FARE FIRST", "#e0b25a"); return; }
             const r = toggleTaxi(taxi, driving.car.position);
@@ -863,6 +875,8 @@ async function boot() {
                 { text: "Back to the flag to go again. Your best run rides with you as a ghost.", cls: "foot" },
             ],
         });
+        if (ev.medal >= 1) goal("podium");
+        if (COURSES.every((c) => commerce.games.runs[c.id]?.medal === 3)) goal("gold-standard");
         audio.chime(ev.medal === 3 ? [523.25, 659.25, 783.99, 1046.5, 1318.5] : ev.medal === 2 ? [523.25, 659.25, 783.99, 1046.5] : ev.medal === 1 ? [523.25, 659.25, 783.99] : [392, 329.63], { gap: 0.1, dur: 0.7, level: 0.09 });
         endRun();
     }
@@ -937,6 +951,8 @@ async function boot() {
         });
         audio.chime(g === "S" ? [523.25, 659.25, 783.99, 1046.5, 1318.5] : g === "A" ? [523.25, 659.25, 783.99, 1046.5] : [523.25, 659.25, 783.99], { gap: 0.1, dur: 0.7, level: 0.09 });
         if (g === "S" || g === "A") { audio.cheer(); world.flashFloor(); }
+        goal("floor-fever");
+        if (g === "S") goal("sensational");
     }
     function feverFrame() {
         if (!fever) return;
@@ -978,6 +994,8 @@ async function boot() {
                 ],
             });
             audio.chime([523.25, 659.25, 783.99, 1046.5], { gap: 0.09, dur: 0.8, level: 0.09 });
+            goal("crate-digger");
+            if (res.complete) goal("whole-set");
             return;
         }
         recordCall -= dt;
@@ -987,6 +1005,93 @@ async function boot() {
         if (!near) return;
         const i = RECORDS.indexOf(near), scale = [523.25, 587.33, 659.25, 783.99, 880];
         audio.chime([scale[i % 5], scale[(i * 2 + 2) % 5], scale[(i * 3 + 4) % 5]], { gap: 0.17, dur: 0.6, level: 0.06, at: near });
+    }
+
+    // The Night Ledger: sixteen goals (ledger.js), each ticked once for $10.
+    function goal(id) {
+        if (commerce.games.ledger.includes(id)) return;
+        const r = tickGoal(commerce.games, id);
+        if (!r.fresh) return;
+        commerce = { ...commerce, games: r.games };
+        pay(r.reward, `Night Ledger · ${r.goal.name}`);
+        persistCommerce();
+        showGames();
+        hud.toast(`LEDGER ✓ ${r.goal.name.toUpperCase()}  ·  +$${r.reward}${r.complete ? "  ·  EVERY LINE TICKED" : ""}`, "#a6d99c");
+        audio.chime([659.25, 987.77], { gap: 0.08, dur: 0.5, level: 0.06 });
+    }
+    const heard = new Set();
+    function heardStation(id) { heard.add(id); if (heard.size >= audio.stations.length) goal("dial-twister"); }
+    let stormSec = 0, skidSec = 0;
+    function ledgerFrame(dt) {
+        if (hud.phase !== "explore" || !hud.run.entered) return;
+        if (driving.active && world.weather.state.rain > 0.8 && (stormSec += dt) >= 30) goal("storm-chaser");
+        if (driving.active && driving.skid > 0.5 && (skidSec += dt) >= 5) goal("burn-rubber");
+        if (daylightAt(clock.seconds).label === "DAWN") goal("night-owl");
+        if (commerce.life.wallet >= 500) goal("high-roller");
+    }
+    document.getElementById("pauseLedgerBtn")?.addEventListener("click", () => gamesUI.openLedger(GOALS, commerce.games.ledger));
+    /** Esc with the ledger open closes just the ledger (the HUD asks before leaving the pause screen). */
+    function closeLedger() {
+        try { if (!gamesUI.ledgerOpen) return false; } catch { return false; } // not built yet
+        gamesUI.closeLedger();
+        return true;
+    }
+
+    // Heat: speed past a patrol car, or crash near one, and Muldoon comes after you (heat.js).
+    const cruiser = buildCruiser(world.scene, world.colliders);
+    let chase = null, heatCool = 0;
+    function startChase(why) {
+        const car = driving.car, h = new Vector3(1, 0, 0).applyQuaternion(car.quaternion);
+        chase = createChase({ x: car.position.x, z: car.position.z }, { x: h.x, z: h.z }, why);
+        gamesUI.heatStart(why);
+        hud.toast(why === "crash" ? "A PATROL CAR SAW THAT CRASH  ·  LOSE HIM OR PULL OVER" : "SPEEDING PAST A PATROL CAR  ·  LOSE HIM OR PULL OVER", "#ff8a7a");
+    }
+    function endChase(how) {
+        chase = null;
+        heatCool = 30;
+        gamesUI.heatEnd();
+        audio.siren(null);
+        if (how === "caught") {
+            const fine = Math.min(FINE, commerce.life.wallet);
+            if (fine > 0) { const r = spend(commerce.life, fine, "Ticket · Officer Muldoon"); if (r.ok) commerce.life = r.state; }
+            commerce = { ...commerce, games: bump(commerce.games, "tickets") };
+            persistCommerce();
+            gamesUI.card({ kicker: "PULLED OVER", title: "OFFICER MULDOON", color: "#e2483a", ms: 8000, lines: [
+                { text: "“License, registration, and an explanation I haven't heard before.”", cls: "strong" },
+                fine ? `A ticket for $${fine}` : "Your wallet's empty, so he lets you off with a warning.",
+                { text: "Patrol cars sit outside the club and on 45th Street. Take it easy past them.", cls: "foot" },
+            ] });
+            audio.chime([392, 329.63, 261.63], { gap: 0.16, dur: 0.6, level: 0.07, type: "triangle" });
+            goal("red-handed");
+        } else {
+            commerce = { ...commerce, games: bump(commerce.games, "chasesLost") };
+            persistCommerce();
+            gamesUI.card({ kicker: how === "gaveup" ? "HE GAVE UP" : "CLEAN GETAWAY", title: "YOU LOST HIM", color: "#a6d99c", ms: 6000, lines: [
+                how === "gaveup" ? "Muldoon's gone back to his coffee." : "The siren fades somewhere behind you.",
+            ] });
+            audio.chime([523.25, 659.25, 783.99], { gap: 0.1, dur: 0.6, level: 0.07 });
+            goal("shake-a-tail");
+        }
+    }
+    function heatFrame(dt, t) {
+        heatCool -= dt;
+        const impact = driving.active ? driving.takeImpact() : 0;
+        if (!chase && heatCool <= 0 && driving.active && hud.phase === "explore") {
+            const c = driving.car.position, hit = drawsHeat({ x: c.x, z: c.z, speed: driving.speed, crash: impact, racing: !!run });
+            if (hit) startChase(hit.why);
+        }
+        if (chase && hud.phase === "explore") {
+            const pos = driving.active ? driving.car.position : world.camera.position;
+            const r = stepChase(chase, { player: { x: pos.x, z: pos.z, v: driving.active ? driving.speed : 0 }, dt });
+            chase = r.state;
+            const ev = r.events[0];
+            if (ev) endChase(ev.type === "caught" ? "caught" : ev.gaveUp ? "gaveup" : "lost");
+            else {
+                gamesUI.heatUpdate(Math.hypot(pos.x - chase.cop.x, pos.z - chase.cop.z), chase.far / LOSE_TIME, LOSE_RANGE);
+                audio.siren(chase.cop);
+            }
+        } else if (!chase) audio.siren(null);
+        cruiser.update(dt, t, chase, { reduced: hud.reducedFx });
     }
     document.getElementById("hudMap").addEventListener("click", () => { if (hud.phase === "explore") openMap("map"); });
     function applyExpansion(result){
@@ -1315,7 +1420,9 @@ async function boot() {
             games(){const g=commerce.games;return {run:run&&{course:run.course,countdown:run.countdown,t:run.t,next:run.next,ghostShown:runsWorld.ghost.visible,gateShown:runsWorld.gates[0].visible},
                 fever:fever&&{now:fever.now(),first:fever.first,last:fever.last,score:fever.round.score,combo:fever.round.combo,onBeat:!!audio.beatClock(),notes:fever.round.notes.map(n=>[n.lane,+n.time.toFixed(4),n.result])},
                 saved:{runs:Object.fromEntries(Object.entries(g.runs).map(([k,v])=>[k,{best:v.best,medal:v.medal,splits:v.splits.length,ghost:v.ghost.length/3}])),fever:g.fever,records:g.records},
-                card:gamesUI.cardOpen?gamesUI.root.querySelector(".game-card").textContent:"",frozen:controls.frozen,pins:gamePins.length};},
+                card:gamesUI.cardOpen?gamesUI.root.querySelector(".game-card").textContent:"",frozen:controls.frozen,pins:gamePins.length,
+                chase:chase&&{why:chase.why,phase:chase.phase,cop:chase.cop,far:chase.far,shown:cruiser.car.visible},ledger:g.ledger,stats:g.stats};},
+            startHeat(why="speeding"){if(driving.active&&!chase)startChase(why);return !!chase;},
             skid(){return {skid:driving.skid,marks:driving.skids.count,speed:driving.speed};},
             taxi(){return {on:taxi.on,stage:taxi.stage,fares:taxi.fares,earned:taxi.earned,fare:taxi.fare?{pickup:taxi.fare.pickup,dest:taxi.fare.dest?.name,kerb:taxi.fare.dest?.kerb}:null,npc:!!waiting?.visible,rider:!!rider,riderInCab:!!rider&&rider.parent===driving.car,alighted:alighted.size};},
             get destination(){return destination;},
@@ -1447,6 +1554,7 @@ async function boot() {
             dancing: move.dancing && onFloor,
             // Avenue cars stop for you on foot, or for the car you're driving.
             trafficObstacles: [
+                ...(chase ? [{ x: chase.cop.x, z: chase.cop.z, r: 3.4, w: 1.1 }] : []),
                 ...(driving.active ? [{ x: driving.car.position.x, z: driving.car.position.z, r: 3.4, w: 1.1 }]
                     : fy < 0.5 && fy > -0.5 ? [{ x: p.x, z: p.z, r: 0.7, w: 0.45 }] : []),
                 ...(!driving.active && driving.lastCar ? [{ x: driving.lastCar.position.x, z: driving.lastCar.position.z, r: 3.4, w: 1.1 }] : []),
@@ -1471,6 +1579,8 @@ async function boot() {
         audio.setWeather(world.weather.state.rain);
         for (const strike of world.weather.state.strikes) { audio.thunder(strike); thunderHeard++; }
         if (hud.phase === "explore") runFrame(dt);
+        heatFrame(dt, t);
+        ledgerFrame(dt);
         feverFrame();
         runsWorld.update(dt, t, run);
         recordsFrame(dt, t, driving.active ? driving.car.position : p, outdoors, driving.active || Math.abs(fy) < 0.6);

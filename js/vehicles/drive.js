@@ -38,7 +38,7 @@ export function createDriving({ scene, camera, colliders, city, audio, hud, aven
     // Your car's headlights are the same soft beams the traffic wears (vehicles/night-lights.js), lit only while
     // you drive it.
 
-    let car = null, lastCar = null, speed = 0, steer = 0, firstPerson = false, hornCool = 0, skid = 0, crashCool = 0, held = false;
+    let car = null, lastCar = null, speed = 0, steer = 0, firstPerson = false, hornCool = 0, skid = 0, crashCool = 0, held = false, lastImpact = 0;
     const skids = createSkids(scene);
     const keys = {};
     const camPos = new THREE.Vector3();
@@ -84,6 +84,8 @@ export function createDriving({ scene, camera, colliders, city, audio, hud, aven
         get speed() { return speed; },
         /** Holds the car where it is (a race countdown): the engine revs, the wheels don't turn. */
         setHeld(v) { held = !!v; if (held) speed = 0; },
+        /** The hardest crash since you last asked (m/s), then forgotten. */
+        takeImpact() { const i = lastImpact; lastImpact = 0; return i; },
         /** How hard the tyres are sliding (0–1), and the marks they've left. */
         get skid() { return skid; },
         skids,
@@ -159,7 +161,7 @@ export function createDriving({ scene, camera, colliders, city, audio, hud, aven
             else {
                 if (!blocked(car.position.x, car.position.z, yaw, spec)) { car.rotation.y = yaw; speed *= -0.25; }
                 else speed *= -0.3;
-                if (impact > 2.5 && crashCool <= 0) { audio.crash?.(impact); crashCool = 0.45; }
+                if (impact > 2.5 && crashCool <= 0) { audio.crash?.(impact); crashCool = 0.45; lastImpact = Math.max(lastImpact, impact); }
             }
             audio.setSkid?.(skid, { wet });
             skids.mark(car, skid, wet);

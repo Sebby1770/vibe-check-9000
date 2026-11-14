@@ -365,6 +365,7 @@ export function createHud(hooks) {
                 return;
             }
             if (e.key === "Escape") {
+                if (hooks.onEscape?.()) return; // something of the game's own took it (the Night Ledger)
                 $("modalBg").classList.remove("active");
                 if (run.phase === "settings" || run.phase === "deck" || run.phase === "talk" || run.phase === "paper" || run.phase === "wardrobe" || run.phase === "recap" || run.phase === "ads") {
                     leaveOverlay();
