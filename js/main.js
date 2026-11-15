@@ -853,6 +853,7 @@ async function boot() {
     }
     function endRun(message) {
         run = null;
+        heatCool = Math.max(heatCool, 10); // the run's off the books right up to the line and a little past it
         driving.setHeld(false);
         gamesUI.runEnd();
         if (destination?.id === "run-gate") destination = routeBeforeRun;
@@ -905,6 +906,7 @@ async function boot() {
     const feverUI = createFeverUI({ onLane: (lane) => feverTap(lane) });
     function startFever() {
         if (fever || hud.phase !== "explore" || !onTheFloor()) return;
+        if (chase) { hud.toast("SHAKE MULDOON FIRST", "#ff8a7a"); return; }
         // On the club's own beat when the house groove is playing; otherwise the game keeps time itself.
         const bc = audio.beatClock(), beatLen = bc ? bc.beatLen : 60 / (audio.bpm || 120);
         const now = bc ? () => audio.context.currentTime - bc.latency : () => performance.now() / 1000;
@@ -1016,17 +1018,36 @@ async function boot() {
         pay(r.reward, `Night Ledger · ${r.goal.name}`);
         persistCommerce();
         showGames();
-        hud.toast(`LEDGER ✓ ${r.goal.name.toUpperCase()}  ·  +$${r.reward}${r.complete ? "  ·  EVERY LINE TICKED" : ""}`, "#a6d99c");
+        gamesUI.stamp({ name: r.goal.name, reward: r.reward, complete: r.complete });
         audio.chime([659.25, 987.77], { gap: 0.08, dur: 0.5, level: 0.06 });
     }
     const heard = new Set();
     function heardStation(id) { heard.add(id); if (heard.size >= audio.stations.length) goal("dial-twister"); }
-    let stormSec = 0, skidSec = 0;
+    let stormSec = 0, skidSec = 0, owlSec = null, owlNight = false, caughtUp = false;
+    /** Goals a save from before the ledger had already earned (records found, medals won, a Fever grade). */
+    function catchUpLedger() {
+        const g = commerce.games;
+        if (g.records.length) goal("crate-digger");
+        if (g.records.length >= RECORDS.length) goal("whole-set");
+        if (COURSES.some((c) => g.runs[c.id]?.medal >= 1)) goal("podium");
+        if (COURSES.every((c) => g.runs[c.id]?.medal === 3)) goal("gold-standard");
+        if (g.fever.rounds > 0) goal("floor-fever");
+        if (g.fever.grade === "S") goal("sensational");
+    }
     function ledgerFrame(dt) {
         if (hud.phase !== "explore" || !hud.run.entered) return;
+        if (!caughtUp) { caughtUp = true; catchUpLedger(); }
+        const done = commerce.games.ledger;
         if (driving.active && world.weather.state.rain > 0.8 && (stormSec += dt) >= 30) goal("storm-chaser");
         if (driving.active && driving.skid > 0.5 && (skidSec += dt) >= 5) goal("burn-rubber");
-        if (daylightAt(clock.seconds).label === "DAWN") goal("night-owl");
+        if (!done.includes("night-owl")) {
+            // Stay out until dawn: the night has to run out on its own. WAIT UNTIL MORNING (or sleeping) doesn't count.
+            const sec = clock.seconds, dawn = daylightAt(sec).label === "DAWN";
+            if (owlSec !== null && sec - owlSec > 600) owlNight = false;
+            else if (!dawn) owlNight = true;
+            else if (owlNight) goal("night-owl");
+            owlSec = sec;
+        }
         if (commerce.life.wallet >= 500) goal("high-roller");
     }
     document.getElementById("pauseLedgerBtn")?.addEventListener("click", () => gamesUI.openLedger(GOALS, commerce.games.ledger));
@@ -1073,11 +1094,14 @@ async function boot() {
             goal("shake-a-tail");
         }
     }
+    const traps = [];
     function heatFrame(dt, t) {
         heatCool -= dt;
         const impact = driving.active ? driving.takeImpact() : 0;
         if (!chase && heatCool <= 0 && driving.active && hud.phase === "explore") {
-            const c = driving.car.position, hit = drawsHeat({ x: c.x, z: c.z, speed: driving.speed, crash: impact, racing: !!run });
+            traps.length = 0;
+            for (const p of driving.patrols) if (p !== driving.car && p.visible) traps.push(p.position);
+            const c = driving.car.position, hit = drawsHeat({ x: c.x, z: c.z, speed: driving.speed, crash: impact, racing: !!run, traps });
             if (hit) startChase(hit.why);
         }
         if (chase && hud.phase === "explore") {
@@ -1090,7 +1114,7 @@ async function boot() {
                 gamesUI.heatUpdate(Math.hypot(pos.x - chase.cop.x, pos.z - chase.cop.z), chase.far / LOSE_TIME, LOSE_RANGE);
                 audio.siren(chase.cop);
             }
-        } else if (!chase) audio.siren(null);
+        } else audio.siren(null); // no chase, or one frozen behind a menu or a subway ride: quiet
         cruiser.update(dt, t, chase, { reduced: hud.reducedFx });
     }
     document.getElementById("hudMap").addEventListener("click", () => { if (hud.phase === "explore") openMap("map"); });
@@ -1420,7 +1444,7 @@ async function boot() {
             games(){const g=commerce.games;return {run:run&&{course:run.course,countdown:run.countdown,t:run.t,next:run.next,ghostShown:runsWorld.ghost.visible,gateShown:runsWorld.gates[0].visible},
                 fever:fever&&{now:fever.now(),first:fever.first,last:fever.last,score:fever.round.score,combo:fever.round.combo,onBeat:!!audio.beatClock(),notes:fever.round.notes.map(n=>[n.lane,+n.time.toFixed(4),n.result])},
                 saved:{runs:Object.fromEntries(Object.entries(g.runs).map(([k,v])=>[k,{best:v.best,medal:v.medal,splits:v.splits.length,ghost:v.ghost.length/3}])),fever:g.fever,records:g.records},
-                card:gamesUI.cardOpen?gamesUI.root.querySelector(".game-card").textContent:"",frozen:controls.frozen,pins:gamePins.length,
+                card:gamesUI.cardOpen?gamesUI.root.querySelector(".game-card").textContent:"",stamps:[...gamesUI.root.querySelectorAll(".ledger-stamp strong")].map(s=>s.textContent),frozen:controls.frozen,pins:gamePins.length,
                 chase:chase&&{why:chase.why,phase:chase.phase,cop:chase.cop,far:chase.far,shown:cruiser.car.visible},ledger:g.ledger,stats:g.stats};},
             startHeat(why="speeding"){if(driving.active&&!chase)startChase(why);return !!chase;},
             skid(){return {skid:driving.skid,marks:driving.skids.count,speed:driving.speed};},

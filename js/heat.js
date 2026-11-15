@@ -13,6 +13,8 @@ export const TRAPS = [
 export const TRAP_RANGE = 45, TRAP_SPEED = 17.9, CRASH_RANGE = 60, CRASH_SPEED = 8;
 export const CATCH_RANGE = 7, LOSE_RANGE = 140, LOSE_TIME = 8, GIVE_UP = 150, FINE = 15;
 const TOP = 21, CORNER = 9, ACCEL = 6, BRAKE = 12, TURN = 2.4;
+/** He pulls up this far from you, centre to centre: a car's length off your bumper, never in your car. */
+export const GAP = 5.5;
 
 // --- The road graph: a node at every road end and every crossing or T, edges along the roads between them.
 function cross(a, b) {
@@ -62,6 +64,25 @@ export function onRoad(x, z, slack = 0) {
   return roadGraph().roads.some((r) => segDist(x, z, r.a, r.b) < r.width / 2 + slack);
 }
 
+/** The nearest spot on the asphalt to a point: the point itself on a road, else a step in from the nearest kerb. */
+export function kerb(x, z) {
+  let best = null, bd = Infinity;
+  for (const r of roadGraph().roads) {
+    const [ax, az] = r.a, dx = r.b[0] - ax, dz = r.b[1] - az;
+    const t = Math.max(0, Math.min(1, ((x - ax) * dx + (z - az) * dz) / (dx * dx + dz * dz || 1)));
+    const px = ax + t * dx, pz = az + t * dz, d = Math.hypot(x - px, z - pz), out = d - r.width / 2;
+    if (out <= 0) return [x, z];
+    if (out < bd) { bd = out; const k = Math.max(0, r.width / 2 - 1.5) / d; best = [px + (x - px) * k, pz + (z - pz) * k]; }
+  }
+  return best || [x, z];
+}
+/** A straight line that stays on the streets (no cutting through a building on the corner). */
+export function clearLine(ax, az, bx, bz) {
+  const n = Math.max(1, Math.ceil(Math.hypot(bx - ax, bz - az) / 3));
+  for (let i = 1; i < n; i++) if (!onRoad(ax + (bx - ax) * i / n, az + (bz - az) * i / n, 0.5)) return false;
+  return true;
+}
+
 /** The stretch of street (an edge between two junctions) nearest a point. */
 function nearestEdge(x, z) {
   const { nodes, edges } = roadGraph();
@@ -101,10 +122,11 @@ export function route(ax, az, bx, bz) {
   return [...path, [bx, bz]];
 }
 
-/** Did that just draw heat? A crash near a trap (impact in m/s), or speeding past one. */
-export function drawsHeat({ x, z, speed = 0, crash = 0, racing = false }) {
+/** Did that just draw heat? A crash near a trap (impact in m/s), or speeding past one. traps: where the parked
+    patrol cars are now (main.js passes the live ones, leaving out the one you're driving). */
+export function drawsHeat({ x, z, speed = 0, crash = 0, racing = false, traps = TRAPS }) {
   if (racing) return null;
-  for (const t of TRAPS) {
+  for (const t of traps) {
     const d = Math.hypot(x - t.x, z - t.z);
     if (crash >= CRASH_SPEED && d < CRASH_RANGE) return { trap: t, why: "crash" };
     if (Math.abs(speed) >= TRAP_SPEED && d < TRAP_RANGE) return { trap: t, why: "speeding" };
@@ -145,11 +167,14 @@ export function stepChase(state, { player, dt = 0 }) {
   const t = state.t + dt;
   replan -= dt;
   const d = Math.hypot(player.x - cop.x, player.z - cop.z);
+  // He keeps to the asphalt: off the street (a doorway, the club), he heads for the kerb nearest you.
+  const goal = kerb(player.x, player.z);
   if (replan <= 0 || !path.length) {
-    replan = 0.5;
-    // Close and on the same stretch of road: straight at you. Otherwise along the streets.
-    path = d < 35 ? [[player.x, player.z]] : route(cop.x, cop.z, player.x, player.z);
-  } else path = [...path.slice(0, -1), [player.x, player.z]];
+    // Close, with clear street between you: straight at you. Otherwise along the streets.
+    const straight = d < 35 && clearLine(cop.x, cop.z, goal[0], goal[1]);
+    replan = straight ? 0.25 : 0.5;
+    path = straight ? [goal] : route(cop.x, cop.z, goal[0], goal[1]);
+  } else path = [...path.slice(0, -1), goal];
   while (path.length > 1 && Math.hypot(path[0][0] - cop.x, path[0][1] - cop.z) < 5) path = path.slice(1);
   const [tx, tz] = path[0], toTarget = Math.hypot(tx - cop.x, tz - cop.z);
   // Brake for a corner ahead (or for you, close in); otherwise flat out.
@@ -160,15 +185,22 @@ export function stepChase(state, { player, dt = 0 }) {
     if (turn > Math.PI) turn = Math.PI * 2 - turn;
     if (turn > 0.6 && toTarget < (cop.v * cop.v - CORNER * CORNER) / (2 * BRAKE) + 6) want = CORNER;
   }
-  if (d < 14) want = Math.min(want, Math.max(2, Math.abs(player.v) + 2));
+  // Closing in, no faster than he can stop: a bumper's length off you (matching your speed if you're rolling),
+  // or at the kerb when you're off the street.
+  const offStreet = goal[0] !== player.x || goal[1] !== player.z;
+  const room = offStreet ? (path.length === 1 ? toTarget - 2 : Infinity) : d - GAP - 0.5;
+  if (room < 40) want = Math.min(want, (offStreet ? 0 : Math.abs(player.v)) + Math.sqrt(2 * BRAKE * 0.7 * Math.max(0, room)));
   cop.v += Math.max(-BRAKE * dt, Math.min(ACCEL * dt, want - cop.v));
   const aim = Math.atan2(-(tz - cop.z), tx - cop.x);
   let dy = aim - cop.yaw;
   while (dy > Math.PI) dy -= Math.PI * 2;
   while (dy < -Math.PI) dy += Math.PI * 2;
-  cop.yaw += Math.max(-TURN * dt, Math.min(TURN * dt, dy));
-  cop.x += Math.cos(cop.yaw) * cop.v * dt;
-  cop.z -= Math.sin(cop.yaw) * cop.v * dt;
+  const turn = TURN * Math.min(1, Math.abs(cop.v) / 3) * dt; // a car steers by rolling: stopped, he stays put
+  cop.yaw += Math.max(-turn, Math.min(turn, dy));
+  const nx = cop.x + Math.cos(cop.yaw) * cop.v * dt, nz = cop.z - Math.sin(cop.yaw) * cop.v * dt;
+  // Never into your car: closer than GAP, he stops where he is.
+  if (Math.hypot(player.x - nx, player.z - nz) < Math.min(GAP, d)) cop.v = 0;
+  else { cop.x = nx; cop.z = nz; }
   const after = Math.hypot(player.x - cop.x, player.z - cop.z);
   near = after < CATCH_RANGE && Math.abs(player.v) < 4 ? near + dt : after < 4 ? near + dt * 0.5 : 0;
   // Getting away means driving away: sitting still doesn't lose him, however he's had to come round.

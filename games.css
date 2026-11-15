@@ -184,3 +184,31 @@
     .heat-title { font-size: 17px; }
     .ledger-list { grid-template-columns: 1fr; }
 }
+
+/* Night Ledger stamps */
+.ledger-stamps {
+    position: absolute;
+    left: 24px;
+    bottom: 28px;
+    display: flex;
+    flex-direction: column-reverse;
+    gap: 8px;
+}
+.ledger-stamp {
+    display: grid;
+    grid-template-columns: auto auto;
+    gap: 0 14px;
+    align-items: baseline;
+    padding: 7px 14px 8px;
+    border-left: 3px solid #a6d99c;
+    border-radius: 2px;
+    background: rgba(10, 9, 12, 0.88);
+    animation: card-in 0.25s ease-out both;
+    transition: opacity 0.6s;
+}
+.ledger-stamp.gone { opacity: 0; }
+.ledger-stamp .kicker { grid-column: 1 / -1; color: #a6d99c; font-size: 11px; font-weight: 700; letter-spacing: 0.16em; }
+.ledger-stamp strong { font: 900 19px/1.1 "Big Shoulders Display", "Oswald", sans-serif; letter-spacing: 0.03em; }
+.ledger-stamp .pay { color: var(--tungsten, #f2a541); font-weight: 700; letter-spacing: 0.06em; }
+@media (max-width: 720px) { .ledger-stamps { left: 16px; bottom: 214px; } }
+@media (prefers-reduced-motion: reduce) { .ledger-stamp { animation: none; } }

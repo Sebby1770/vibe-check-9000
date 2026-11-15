@@ -35,6 +35,9 @@ export function createDriving({ scene, camera, colliders, city, audio, hud, aven
         placeCollider(car, spec);
     }
 
+    // The parked patrol cars: wherever they are now is where the speed traps are (heat.js).
+    const patrols = cars.filter((c) => c.userData.kind === "police");
+
     // Your car's headlights are the same soft beams the traffic wears (vehicles/night-lights.js), lit only while
     // you drive it.
 
@@ -81,6 +84,7 @@ export function createDriving({ scene, camera, colliders, city, audio, hud, aven
         get car() { return car; },
         /** The car you last got out of, wherever you left it (traffic treats it as solid). */
         get lastCar() { return lastCar; },
+        patrols,
         get speed() { return speed; },
         /** Holds the car where it is (a race countdown): the engine revs, the wheels don't turn. */
         setHeld(v) { held = !!v; if (held) speed = 0; },

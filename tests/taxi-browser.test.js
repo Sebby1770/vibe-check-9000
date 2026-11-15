@@ -37,7 +37,9 @@ try{
  // Pull up at their kerb; read everything in the same breath, before the toast or the kerb moment moves on.
  const {after,toasts}=ev(`(async()=>{const seen=[],el=document.getElementById('toast'),mo=new MutationObserver(()=>seen.push(el.textContent));mo.observe(el,{childList:true,characterData:true,subtree:true});__vibeInspect.moveCar(${tx.fare.kerb.cabX},${tx.fare.kerb.cabZ});for(let i=0;i<8;i++)await new Promise(r=>requestAnimationFrame(r));mo.disconnect();return {after:__vibeInspect.taxi(),toasts:seen};})()`);
  assert.equal(after.fares,1);assert.ok(after.earned>=3);
- assert.equal(state().commerce.life.wallet,wallet+after.earned);
+ assert.equal(state().commerce.life.wallet,wallet+after.earned+10,'the fare, and $10 for the Night Ledger\'s first fare');
+ assert.ok(ev('__vibeInspect.games().ledger').includes('first-fare'));
+ assert.equal(ev('__vibeInspect.games().stats.fares'),1);
  assert.equal(after.stage,'pickup','the next fare is already hailing');
  assert.equal(after.rider,false);assert.equal(after.alighted,1,'they step out at the kerb');assert.equal(after.npc,true,'and the next one waves');
  assert.ok(toasts.some((t)=>/tonight 1 fare, \$\d+/.test(t)),JSON.stringify(toasts));

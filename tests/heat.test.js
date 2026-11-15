@@ -1,5 +1,5 @@
 import assert from "node:assert/strict";
-import { roadGraph, route, routeLength, onRoad, drawsHeat, spawnPoint, createChase, stepChase, TRAPS, TRAP_RANGE, LOSE_RANGE } from "../js/heat.js";
+import { roadGraph, route, routeLength, onRoad, kerb, clearLine, drawsHeat, spawnPoint, createChase, stepChase, TRAPS, TRAP_RANGE, LOSE_RANGE, GAP } from "../js/heat.js";
 
 // The street graph: one connected network, every stretch of it on a road.
 const g = roadGraph();
@@ -34,6 +34,16 @@ assert.equal(drawsHeat({ x: trap.x + TRAP_RANGE + 5, z: trap.z, speed: 25 }), nu
 assert.equal(drawsHeat({ x: trap.x + 40, z: 22.8, crash: 10 })?.why, "crash");
 assert.equal(drawsHeat({ x: trap.x + 40, z: 22.8, crash: 5 }), null, "a scrape isn't a crash");
 assert.equal(drawsHeat({ x: trap.x + 20, z: 22.8, speed: 25, racing: true }), null, "the runs are off the books");
+// The traps are wherever the patrol cars are parked now: drive one off and its trap goes with it.
+assert.equal(drawsHeat({ x: trap.x + 20, z: 22.8, speed: 25, traps: [] }), null, "no patrol car, no trap");
+assert.equal(drawsHeat({ x: 200, z: 150, speed: 25, traps: [{ x: 210, z: 154 }] })?.why, "speeding", "a patrol car parked somewhere new");
+
+// The kerb: a point on a road is itself; off the street it's a step in from the nearest kerb.
+assert.deepEqual(kerb(30, 96), [30, 96]);
+const k = kerb(0, 0);
+assert.ok(onRoad(k[0], k[1]) && Math.hypot(k[0], k[1]) < 30, `the kerb nearest the dance floor is ${k.map((v) => v.toFixed(1))}`);
+assert.ok(clearLine(-40, 22.8, 40, 22.8), "along 47th Street");
+assert.ok(!clearLine(0, 22.8, 0, 96), "not through the block");
 
 // Where he turns up: a junction 70–130 m off, behind you when one is.
 for (const [p, h] of [[{ x: 0, z: 22.8 }, { x: 1, z: 0 }], [{ x: -120, z: -110 }, { x: -1, z: 0 }], [{ x: -250, z: 60 }, { x: 0, z: 1 }], [{ x: 30, z: 96 }, { x: 1, z: 0 }]]) {
@@ -46,9 +56,10 @@ for (const [p, h] of [[{ x: 0, z: 22.8 }, { x: 1, z: 0 }], [{ x: -120, z: -110 }
 
 // Sitting still anywhere on the streets, he always gets to you (never "lost" because his route went round).
 for (const [x, z, hx, hz] of [[30, 96, 1, 0], [-99, -100, 0, -1], [240, 22.8, 1, 0], [-280, 150, -1, 0], [60, -200, 0, 1], [187, 150, 0, 1]]) {
-  let c = createChase({ x, z }, { x: hx, z: hz });
-  for (let i = 0; i < 60 * 90 && c.phase === "chase"; i++) c = stepChase(c, { player: { x, z, v: 0 }, dt: 1 / 60 }).state;
+  let c = createChase({ x, z }, { x: hx, z: hz }), closest = Infinity;
+  for (let i = 0; i < 60 * 90 && c.phase === "chase"; i++) { c = stepChase(c, { player: { x, z, v: 0 }, dt: 1 / 60 }).state; closest = Math.min(closest, Math.hypot(c.cop.x - x, c.cop.z - z)); }
   assert.equal(c.phase, "caught", `stopped at ${x},${z}: ${c.phase}`);
+  assert.ok(closest >= GAP - 0.01, `he pulls up ${closest.toFixed(2)} m off, not into your car`);
 }
 
 // A driver who stops is caught; the cruiser keeps to the streets on the way.
@@ -62,7 +73,33 @@ assert.equal(chase.phase, "caught", `phase ${chase.phase} after ${(n / 60).toFix
 assert.deepEqual(events.map((e) => e.type), ["caught"]);
 assert.ok(n / 60 < 30, `caught in ${(n / 60).toFixed(1)} s`);
 assert.ok(off / n < 0.03, `${(100 * off / n).toFixed(1)}% of the time off the streets`);
-assert.ok(Math.hypot(chase.cop.x - 109, chase.cop.z - 60) < 8, "pulled up beside you");
+const pulledUp = Math.hypot(chase.cop.x - 109, chase.cop.z - 60);
+assert.ok(pulledUp < 8 && pulledUp >= GAP - 0.01, `pulled up ${pulledUp.toFixed(1)} m off your bumper`);
+
+// Driving along with him on your tail, he follows; he doesn't ram you.
+{
+  let x = -200, c = { ...createChase({ x, z: 150 }, { x: 1, z: 0 }), cop: { x: x - 30, z: 150, yaw: 0, v: 15 } }, closest = Infinity;
+  for (let i = 0; i < 60 * 12 && c.phase === "chase"; i++) {
+    x += 12 / 60;
+    c = stepChase(c, { player: { x, z: 150, v: 12 }, dt: 1 / 60 }).state;
+    closest = Math.min(closest, Math.hypot(c.cop.x - x, c.cop.z - 150));
+  }
+  assert.equal(c.phase, "chase", "cruising isn't stopping");
+  assert.ok(closest >= GAP - 0.01, `tailed at ${closest.toFixed(2)} m, never rammed`);
+}
+
+// Out of the car and onto the dance floor: he waits at the kerb. No cruiser through the club wall.
+{
+  let c = createChase({ x: -6, z: 22.8 }, { x: 1, z: 0 }), offRoad = 0, steps = 0;
+  for (let i = 0; i < 60 * 40 && c.phase === "chase"; i++) {
+    c = stepChase(c, { player: { x: 0, z: 0, v: 0 }, dt: 1 / 60 }).state;
+    steps++;
+    if (!onRoad(c.cop.x, c.cop.z, 2.5)) offRoad++;
+  }
+  assert.equal(offRoad, 0, `${offRoad} of ${steps} frames off the streets`);
+  assert.equal(c.phase, "chase", "he can't write you up through a wall");
+  assert.ok(Math.hypot(c.cop.x - k[0], c.cop.z - k[1]) < 6, "parked at the kerb outside");
+}
 
 // Rolling past slowly with him close isn't a stop; he only writes you up once you've stopped.
 chase = { ...createChase({ x: 0, z: 150 }, { x: 1, z: 0 }), cop: { x: -6, z: 150, yaw: 0, v: 4 } };

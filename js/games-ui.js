@@ -26,7 +26,10 @@ export function createGamesUI() {
   heatMeter.append(heatFill);
   heat.append(heatTitle, heatDist, heatMeter);
   heat.hidden = true;
-  root.append(bar, heat, count, card);
+  // Night Ledger ticks: small stamps in the corner that stack and fade, so they never cover the toast line.
+  const stamps = el("div", "ledger-stamps");
+  stamps.setAttribute("aria-live", "polite");
+  root.append(bar, heat, count, card, stamps);
   // The Night Ledger: a list over the pause screen.
   const ledger = el("section", "ledger-panel");
   ledger.hidden = true;
@@ -105,6 +108,14 @@ export function createGamesUI() {
       heatFill.style.width = `${Math.round(Math.max(0, Math.min(1, shake)) * 100)}%`;
     },
     heatEnd() { heat.hidden = true; },
+    /** A ledger line ticked: {name, reward, complete}. */
+    stamp({ name, reward, complete = false }) {
+      const s = el("div", "ledger-stamp");
+      s.append(el("span", "kicker", complete ? "NIGHT LEDGER · EVERY LINE TICKED" : "NIGHT LEDGER"), el("strong", "", `✓ ${name}`), el("span", "pay", `+$${reward}`));
+      stamps.append(s);
+      setTimeout(() => s.classList.add("gone"), 4200);
+      setTimeout(() => stamps.removeChild(s), 4800);
+    },
     get ledgerOpen() { return !ledger.hidden; },
     closeLedger() { ledger.hidden = true; },
     /** goals: ledger.js GOALS; done: the ids ticked. */
