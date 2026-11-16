@@ -4,6 +4,7 @@
 import { COURSES, courseById, medalFor, GHOST_MAX } from "./runs.js";
 import { GRADES } from "./fever.js";
 import { RECORDS } from "./lost45s.js";
+import { normalizeLedger, tick } from "./ledger.js";
 
 export const MEDAL_PAY = [0, 10, 20, 40];             // bronze, silver, gold
 export const GRADE_PAY = { D: 0, C: 5, B: 15, A: 25, S: 50 };
@@ -31,7 +32,10 @@ export function normalizeGames(data = {}) {
   };
   const known = new Set(RECORDS.map((r) => r.id));
   const records = Array.isArray(data.records) ? [...new Set(data.records.filter((id) => known.has(id)))] : [];
-  return { runs, fever, records };
+  const s = data.stats && typeof data.stats === "object" ? data.stats : {};
+  const count = (v) => Math.max(0, Math.floor(num(v, 0, 1e7) ?? 0));
+  const stats = { fares: count(s.fares), chasesLost: count(s.chasesLost), tickets: count(s.tickets) };
+  return { runs, fever, records, ledger: normalizeLedger(data.ledger), stats };
 }
 
 /** A finished run. Keeps it if it's your best (splits and ghost too) and pays for any medal tier won for the first
@@ -65,4 +69,17 @@ export function collectRecord(games, id) {
   if (!RECORDS.some((r) => r.id === id) || g.records.includes(id)) return { games: g, reward: 0, complete: false, fresh: false };
   const records = [...g.records, id], complete = records.length === RECORDS.length;
   return { games: { ...g, records }, reward: RECORD_PAY + (complete ? COLLECTION_PAY : 0), complete, fresh: true };
+}
+
+/** Ticks a Night Ledger goal (see ledger.js): {games, fresh, reward, goal, complete}. */
+export function tickGoal(games, id) {
+  const g = normalizeGames(games), r = tick(g.ledger, id);
+  return { games: { ...g, ledger: r.ledger }, fresh: r.fresh, reward: r.reward, goal: r.goal, complete: r.complete };
+}
+
+/** Adds to one of the running counts (fares, chasesLost, tickets). */
+export function bump(games, stat, by = 1) {
+  const g = normalizeGames(games);
+  if (!(stat in g.stats)) return g;
+  return { ...g, stats: { ...g.stats, [stat]: g.stats[stat] + by } };
 }

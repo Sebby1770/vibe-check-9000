@@ -4,6 +4,19 @@ All notable changes to VIBE CHECK 9000™ are documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
+## [39.0.0] - 2026-11-15
+
+### Heat and the Night Ledger
+
+- **Officer Muldoon gives chase** (`js/heat.js`, `js/heat-world.js`). Two patrol cars sit parked in the city, one outside the club and one on 45th Street. Pass one at over 40 mph (within 45 m), or crash within 60 m of one, and a black-and-white cruiser comes after you from a junction behind, light bar flashing and siren wailing from wherever he is. He drives the real streets: a graph of 79 junctions and 111 stretches of road, re-planned twice a second, braking for corners, and straight at you only when there is clear street between you.
+- **Pull over or lose him.** Stop, and he pulls up a car's length off your bumper and writes a $15 ticket (less if that's all you have; a warning if your wallet's empty). Get 140 m clear and keep moving for eight seconds and you've lost him; he gives up on his own after two and a half minutes. A bar at the top of the screen shows how far back he is and fills as you get clear. Off the street (a doorway, the dance floor) he waits at the kerb.
+- **Fair play.** No heat during a Midnight Run, for ten seconds after one, or for half a minute after a chase. You can't start a run or a Floor Fever round with Muldoon on your tail. The speed traps are wherever the patrol cars are now: drive one away and its trap goes with it. Traffic stops for the cruiser, and he is solid like any other car.
+- **The Night Ledger** (`js/ledger.js`). Sixteen things to do in the city, each ticked once for $10: your first taxi fare and your tenth, a medal and all three golds on the Midnight Runs, a Floor Fever round and a grade S, one Lost 45 and all ten, losing Muldoon and getting pulled over, half a minute's driving in a downpour, every station on the radio, five seconds of sliding, staying out until dawn (waiting until morning doesn't count), $500 in your wallet, and a ride on the subway or the El. The pause screen has a **LEDGER** button listing all sixteen with what's ticked; **Esc** closes it and leaves the pause screen up.
+- **Ledger stamps.** A tick shows as a small stamp in the corner of the screen and a two-note chime, so it never covers a fare or shop message. Saves from before v39 are ticked for what they had already done (records found, medals, Fever grades) the first time they're loaded.
+- New sound: `audio.siren`, placed in the street like the traffic and following Mute. It goes quiet behind menus.
+- Saves: the `games` section gains `ledger` and `stats` (fares, chases lost, tickets), normalised on load.
+- Tests: `tests/heat.test.js` (the street graph is connected and every edge is on a road, routes stay on the streets and take the short way, what draws heat, the spawn, six stopped cars all caught without being rammed, a tailed driver never rammed, a driver flat out loses him, the kerb wait, the give-up timer), ledger cases in `tests/games.test.js`, and `tests/heat-browser.test.js` (`npm run test:heat`, muted: caught with a ticket, a getaway down Eighth Avenue, the ledger panel and Esc, and everything surviving a reload).
+
 ## [38.0.0] - 2026-11-12
 
 ### Three games for the night

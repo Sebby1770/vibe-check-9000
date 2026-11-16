@@ -41,7 +41,9 @@ try{
  assert.ok(best&&best.best<medalTimes(block).gold,'a gold time is on the board');
  assert.equal(best.medal,3);assert.equal(best.splits,block.gates.length);assert.ok(best.ghost>=2);
  assert.match(finished.card,/MIDNIGHT RUN\s+·\s+THE BLOCK.*GOLD.*\+\$70/);
- assert.equal(state().commerce.life.wallet,wallet0+70,'bronze, silver and gold pay once');
+ // $70 for the medals, $10 for the Night Ledger's "On the Podium".
+ assert.equal(state().commerce.life.wallet,wallet0+70+10,'bronze, silver and gold pay once');
+ assert.ok(finished.ledger.includes('podium'));
  console.log(`ok  The Block: count-in holds the car, ten gates, ${best.best}s, gold, $70`);
 
  // Again: the ghost of that run rides along, a slower run pays nothing and keeps the best.
@@ -52,7 +54,7 @@ try{
  const second=ev(`(async()=>{const gates=${JSON.stringify(block.gates)};for(const [x,z] of gates){__vibeInspect.moveCar(x,z);for(let i=0;i<4;i++)await new Promise(r=>requestAnimationFrame(r));}return __vibeInspect.games();})()`);
  assert.equal(second.saved.runs.block.best,best.best);
  assert.match(second.card,/YOUR BEST IS/);
- assert.equal(state().commerce.life.wallet,wallet0+70);
+ assert.equal(state().commerce.life.wallet,wallet0+80);
  // Getting out gives the run up.
  ev(`__vibeInspect.moveCar(${block.start.x},${block.start.z},${block.start.yaw})`);frames();tap('e');frames();
  assert.ok(games().run);tap('f');frames();
@@ -67,7 +69,7 @@ try{
  g=games();
  assert.deepEqual(g.saved.records,['rivoli']);
  assert.match(g.card,/LOST 45\s+·\s+1 OF 10.*Midnight at the Rivoli.*Rex pays \$15/);
- assert.equal(state().commerce.life.wallet,wallet0+85);
+ assert.equal(state().commerce.life.wallet,wallet0+80+15+10,'$15 from Rex, $10 for "Crate Digger"');
  cli('screenshot',out+'/record.png');
  console.log('ok  a Lost 45 is picked up by walking onto it and pays $15');
 
@@ -96,7 +98,8 @@ try{
  assert.equal(result.saved.fever.grade,'S',result.card);
  assert.equal(result.saved.fever.rounds,1);
  assert.match(result.card,/FLOOR FEVER.*GRADE S.*NEW BEST.*0 missed.*\+\$95/);
- assert.equal(state().commerce.life.wallet,wallet0+85+95);
+ assert.equal(state().commerce.life.wallet,wallet0+105+95+20,'$95 for the grades, $20 for two ledger lines');
+ assert.ok(result.ledger.includes('floor-fever')&&result.ledger.includes('sensational'));
  console.log(`ok  Floor Fever: ${result.saved.fever.best} points, grade S, $95 for the grades`);
 
  // Esc stops a round without a result.

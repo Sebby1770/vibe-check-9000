@@ -187,4 +187,23 @@ assert.deepEqual(commerce.games.records, ["pier"]);
 assert.equal(commerce.games.fever.grade, "B");
 assert.deepEqual(normalizeCommerce({}).games, normalizeGames({}));
 
+// --- The Night Ledger: sixteen goals, each pays once; counts kept with the save.
+const { GOALS, GOAL_PAY } = await import("../js/ledger.js");
+const { tickGoal, bump } = await import("../js/games.js");
+assert.equal(GOALS.length, 16);
+assert.equal(new Set(GOALS.map((x) => x.id)).size, 16);
+let led = normalizeGames({});
+let t1 = tickGoal(led, "shake-a-tail");
+assert.ok(t1.fresh); assert.equal(t1.reward, GOAL_PAY); assert.deepEqual(t1.games.ledger, ["shake-a-tail"]);
+assert.equal(tickGoal(t1.games, "shake-a-tail").reward, 0, "a goal pays once");
+assert.equal(tickGoal(t1.games, "nonsense").fresh, false);
+let all = normalizeGames({});
+for (const goal of GOALS) { const r = tickGoal(all, goal.id); all = r.games; if (goal === GOALS.at(-1)) assert.ok(r.complete); }
+assert.deepEqual(all.ledger, GOALS.map((x) => x.id), "kept in the ledger's own order");
+led = bump(bump(normalizeGames({}), "fares"), "fares", 2);
+assert.equal(led.stats.fares, 3);
+assert.deepEqual(bump(led, "nope").stats, led.stats);
+assert.deepEqual(normalizeGames({ ledger: ["red-handed", "x", "red-handed"], stats: { fares: -2, tickets: 3.6 } }).ledger, ["red-handed"]);
+assert.deepEqual(normalizeGames({ stats: { fares: -2, tickets: 3.6 } }).stats, { fares: 0, chasesLost: 0, tickets: 3 });
+
 console.log(`games: ${COURSES.length} runs on real streets (${COURSES.map((c) => `${c.id} ${courseLength(c).toFixed(0)} m, gold ${medalTimes(c).gold}s`).join("; ")}), splits and ghosts, medals pay once; Floor Fever ${chart.length}-note chart, judging, combos, grades; ${RECORDS.length} Lost 45s in the open; saves`);
