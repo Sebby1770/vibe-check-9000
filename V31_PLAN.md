@@ -243,6 +243,10 @@ Delivered in v38.0.0: three games. Midnight Runs (three street races with gates,
 your best run), Floor Fever (a rhythm round on the dance floor, on the club's own beat) and the Lost 45s (ten
 hidden records), with map pins and a `games` section in the save.
 
+Delivered in v39.0.0: heat and the Night Ledger. Officer Muldoon's cruiser chases you through a graph of the real
+streets when you speed past or crash near a parked patrol car (a ticket if you stop, a getaway if you get 140 m
+clear), and sixteen ledger goals pay $10 each, listed on the pause screen and saved.
+
 Not done yet (next steps):
 
 - Instanced far-LOD crowds (`createCrowd`).

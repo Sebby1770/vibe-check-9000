@@ -18,6 +18,11 @@ The parks have four usable benches. The club plays original jazz-house, while a 
 
 No install. Click **ENTER THE NIGHT**.
 
+## New in v39: heat and the Night Ledger
+
+- **Officer Muldoon.** Two patrol cars sit parked in the city: one outside the club, one on 45th Street. Speed past one (over 40 mph) or crash near one and a cruiser comes after you through the real streets, siren going. Stop and he writes you a $15 ticket. Get 140 m clear for eight seconds and you've lost him.
+- **The Night Ledger.** Sixteen things to do in the city, from your first taxi fare to staying out until dawn. Each pays $10 the first time. Press **Esc** and choose **LEDGER** to see what's ticked and what's left.
+
 ## New in v38: three games for the night
 
 - **Midnight Runs.** Three street races through the city. Stop at a chequered banner in any car and press **E**; after a three-count you race through glowing gates against the clock. Gold, silver and bronze pay out, and your best run comes back as a ghost car to beat.
