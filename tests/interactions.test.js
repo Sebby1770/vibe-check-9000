@@ -83,3 +83,29 @@ assert.equal(
   false,
   "upstairs ice machine can be used without its own body occluding the controls",
 );
+
+// The same check against every collider the game builds (world.js feeds the interiors into buildColliders):
+// the 2F cabinet box holds the machine's own target, so it must stay furniture-height (< 2 m) to be exempt.
+{
+  const { register } = await import("node:module");
+  const three = new URL("../vendor/three/build/three.module.js", import.meta.url).href;
+  const hook = `export async function resolve(s, c, n) { return s === "three" ? { url: ${JSON.stringify(three)}, shortCircuit: true } : n(s, c); }`;
+  register("data:text/javascript," + encodeURIComponent(hook));
+  const { interiorColliders } = await import("../js/interiors/index.js");
+  const { PROPS } = await import("../js/people.js");
+  const { resolveMovement } = await import("../js/collision.js");
+  const world = buildColliders(interiorColliders());
+  const ice = PROPS.find((t) => t.id === "ice");
+  const eye = { x: 32, y: 4.4 + 1.7, z: -7.1 };
+  const target = selectInteraction({
+    position: eye,
+    forward: { x: 0, y: 0, z: -1 },
+    floorY: 4.4,
+    candidates: [{ ...ice, type: "prop", aimY: 1.05, reach: ice.r }],
+    boxes: world.boxes,
+  });
+  assert.equal(target?.id, "ice", "E at the 4B ice machine finds it with every interior collider in place");
+  const walked = resolveMovement({ x: 32, y: eye.y, z: -8.5 }, { x: 32, y: eye.y, z: -7.1 }, world);
+  assert.ok(walked.z >= -7.56, `walking into the ice cabinet stops at its front (z ${walked.z.toFixed(2)})`);
+  console.log("ok  the 4B ice machine answers E with every interior collider, and stays solid");
+}
