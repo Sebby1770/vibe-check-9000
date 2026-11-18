@@ -3,7 +3,8 @@ import * as THREE from 'three';
 import {roomDecor} from './decor.js';
 import {SECOND_Y} from '../zones.js';
 export function colliders(){return [
- {minX:30.55,maxX:33.45,minZ:-9.45,maxZ:-7.55,minY:4.4,maxY:6.5,sightMaxY:5.95},
+ // Ice cabinet: under 2 m tall so it may hold its own [E] target (interactions.js), still above eye height (6.1).
+ {minX:30.55,maxX:33.45,minZ:-9.45,maxZ:-7.55,minY:4.4,maxY:6.3,sightMaxY:5.95},
  {minX:19.65,maxX:22.75,minZ:6.8,maxZ:8.2,minY:4.4,maxY:6.4,sightMaxY:5.65},
  {minX:20.5,maxX:21.9,minZ:9.7,maxZ:10.6,minY:4.4,maxY:6.4,sightMaxY:5.1},
  {minX:29.6,maxX:32.6,minZ:7.5,maxZ:8.65,minY:4.4,maxY:6.4,sightMaxY:5.7},
